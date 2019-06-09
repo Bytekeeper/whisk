@@ -1,17 +1,53 @@
 package org.whisk.rule
 
-import org.whisk.Node
-import org.whisk.model.*
+import org.whisk.model.RuleModel
+import javax.inject.Inject
+import kotlin.reflect.KClass
 
-object Processor {
-    fun process(node: Node): RuleResult {
-        return when (val r = node.rule) {
-            is PrebuiltJar -> RuleResult(r, listOf(r.binary_jar))
-            is KotlinLibrary -> KotlinLibraryHandler.process(r, node.result)
-            is RemoteFile -> RemoteFileHandler.process(r, node.result)
-            is JavaBinary -> JavaBinaryHandler.process(r, node.result)
-            is MavenLibrary -> MavenLibraryHandler.process(r, node.result)
-            else -> throw IllegalStateException("Invalid rule: $r")
-        }
+data class RuleInput(val results: Map<Any, List<RuleResult>>) {
+    fun allResults() = results.values.flatten()
+}
+
+class Execution(val rule: RuleModel, val ruleInput: RuleInput)
+
+
+class RuleProcessorRegistry @Inject constructor(
+    prebuiltJarHandler: PrebuiltJarHandler,
+    kotlinCompileHandler: KotlinCompileHandler,
+    kotlinTestHandler: KotlinTestHandler,
+    remoteFileHandler: RemoteFileHandler,
+    javaBinaryHandler: JavaBinaryHandler,
+    mavenLibraryHandler: MavenLibraryHandler
+) {
+    private val processors = mutableMapOf<KClass<out RuleModel>, RuleHandler<out RuleModel>>()
+
+    init {
+        register(prebuiltJarHandler)
+        register(kotlinCompileHandler)
+        register(kotlinTestHandler)
+        register(remoteFileHandler)
+        register(javaBinaryHandler)
+        register(mavenLibraryHandler)
     }
+
+    inline fun <reified T : RuleModel> register(ruleHandler: RuleHandler<T>) {
+        val kClass = T::class
+        register(kClass, ruleHandler)
+
+    }
+
+    fun <T : RuleModel> register(kClass: KClass<T>, ruleHandler: RuleHandler<T>) {
+        processors.put(kClass, ruleHandler)
+    }
+
+    fun getRuleProcessor(model: RuleModel) = processors[model::class] as RuleHandler<RuleModel> ?: throw UnsupportedRuleModel(model)
+}
+
+class UnsupportedRuleModel(model: RuleModel) :
+    RuntimeException("No processor for '${model.name}' of type '${model::class.simpleName}' was registered!")
+
+class Processor @Inject constructor(private val ruleProcessorRegistry: RuleProcessorRegistry) {
+    fun process(execution: Execution): RuleResult =
+        ruleProcessorRegistry.getRuleProcessor(execution.rule).build(execution.rule, execution.ruleInput)
+    fun retrieveDependencyReferences(rule: RuleModel) = ruleProcessorRegistry.getRuleProcessor(rule).dependencyReferences(rule)
 }
