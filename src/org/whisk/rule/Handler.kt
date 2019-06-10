@@ -1,22 +1,10 @@
 package org.whisk.rule
 
+import junit.framework.TestCase
 import org.apache.logging.log4j.LogManager
-import org.apache.maven.repository.internal.MavenRepositorySystemUtils
-import org.eclipse.aether.DefaultRepositorySystemSession
-import org.eclipse.aether.RepositorySystem
-import org.eclipse.aether.artifact.DefaultArtifact
-import org.eclipse.aether.collection.CollectRequest
-import org.eclipse.aether.connector.basic.BasicRepositoryConnectorFactory
-import org.eclipse.aether.graph.Dependency
-import org.eclipse.aether.repository.LocalRepository
-import org.eclipse.aether.repository.RemoteRepository
-import org.eclipse.aether.spi.connector.RepositoryConnectorFactory
-import org.eclipse.aether.spi.connector.transport.TransporterFactory
-import org.eclipse.aether.transport.http.HttpTransporterFactory
-import org.eclipse.aether.util.graph.visitor.PreorderNodeListGenerator
 import org.junit.internal.TextListener
 import org.junit.runner.JUnitCore
-import org.tomlj.Toml
+import org.junit.runner.RunWith
 import org.whisk.kotlin.KotlinCompiler
 import org.whisk.model.*
 import java.io.File
@@ -25,15 +13,15 @@ import java.io.PrintWriter
 import java.net.URL
 import java.net.URLClassLoader
 import java.nio.charset.StandardCharsets
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
-import java.nio.file.StandardCopyOption
+import java.nio.file.*
 import java.util.jar.JarEntry
 import java.util.jar.JarInputStream
 import java.util.jar.JarOutputStream
 import javax.inject.Inject
 import kotlin.streams.toList
+
+
+class InvalidChecksumError(message: String) : Exception(message)
 
 data class RuleResult(
     val fromRule: RuleModel,
@@ -43,12 +31,12 @@ data class RuleResult(
 data class DependencyReferences(val refs: Map<Any, List<String>>)
 
 interface RuleHandler<T : RuleModel> {
-    fun build(rule: T, ruleInput: RuleInput): RuleResult
+    fun build(execution: Execution<T>): RuleResult
     fun dependencyReferences(rule: T): DependencyReferences =
         DependencyReferences(mapOf("DEPS" to rule.deps))
 }
 
-private fun download(whiskDir: Path, url: URL): Path {
+internal fun download(whiskDir: Path, url: URL): Path {
     val log = LogManager.getLogger()
     val targetFile = whiskDir.resolve(url.path.substring(1))
     if (targetFile.toFile().exists()) {
@@ -64,7 +52,10 @@ private fun download(whiskDir: Path, url: URL): Path {
 }
 
 class PrebuiltJarHandler @Inject constructor() : RuleHandler<PrebuiltJar> {
-    override fun build(rule: PrebuiltJar, ruleInput: RuleInput): RuleResult {
+    override fun build(
+        execution: Execution<PrebuiltJar>
+    ): RuleResult {
+        val rule = execution.rule
         if (!File(rule.binary_jar).exists()) throw java.lang.IllegalStateException("${rule.name} file does not exist!")
         return RuleResult(rule, listOf(rule.binary_jar))
     }
@@ -74,8 +65,11 @@ class PrebuiltJarHandler @Inject constructor() : RuleHandler<PrebuiltJar> {
 class RemoteFileHandler @Inject constructor() : RuleHandler<RemoteFile> {
     private val log = LogManager.getLogger()
 
-    override fun build(rule: RemoteFile, ruleInput: RuleInput): RuleResult {
-        val whiskDir = Paths.get(".whisk")
+    override fun build(
+        execution: Execution<RemoteFile>
+    ): RuleResult {
+        val rule = execution.rule
+        val whiskDir = execution.cacheDir
         val url = URL(rule.url)
         val targetFile = download(whiskDir, url)
         return RuleResult(rule, listOf(targetFile.toAbsolutePath().toString()))
@@ -86,8 +80,12 @@ class RemoteFileHandler @Inject constructor() : RuleHandler<RemoteFile> {
 class JavaBinaryHandler @Inject constructor() : RuleHandler<JavaBinary> {
     private val log = LogManager.getLogger()
 
-    override fun build(rule: JavaBinary, ruleInput: RuleInput): RuleResult {
-        val whiskOut = Paths.get("whisk-out")
+    override fun build(
+        execution: Execution<JavaBinary>
+    ): RuleResult {
+        val rule = execution.rule
+        val ruleInput = execution.ruleInput
+        val whiskOut = execution.targetPath
         val jarDir = whiskOut.resolve("jar")
 
         val jarName = jarDir.resolve("${rule.name}.jar")
@@ -147,8 +145,13 @@ class KotlinCompileHandler @Inject constructor(private val kotlinCompiler: Kotli
     private val EXPORTED_DEPS = "exported_deps"
     private val PROVIDED_DEPS = "provided_deps"
 
-    override fun build(rule: KotlinCompile, ruleInput: RuleInput): RuleResult {
-        val whiskOut = Paths.get("whisk-out")
+    override fun build(
+        execution: Execution<KotlinCompile>
+    ): RuleResult {
+        val rule = execution.rule
+        val ruleInput = execution.ruleInput
+
+        val whiskOut = execution.targetPath
         val classesDir = whiskOut.resolve("classes")
         val jarDir = whiskOut.resolve("jar")
 //
@@ -205,28 +208,24 @@ class KotlinCompileHandler @Inject constructor(private val kotlinCompiler: Kotli
 }
 
 class KotlinTestHandler @Inject constructor(private val kotlinCompiler: KotlinCompiler) : RuleHandler<KotlinTest> {
-    override fun build(rule: KotlinTest, ruleInput: RuleInput): RuleResult {
-//        val compiler = Kotlin()
-        val whiskOut = Paths.get("whisk-out")
+    override fun build(
+        execution: Execution<KotlinTest>
+    ): RuleResult {
+        val rule = execution.rule
+        val ruleInput = execution.ruleInput
+        val whiskOut = execution.targetPath
         val classesDir = whiskOut.resolve("test-classes")
         val jarDir = whiskOut.resolve("jar")
 
-        val matcher = org.whisk.PathMatcher.toRegex(rule.srcs[0])
-        val base = Paths.get(".")
+        val fileSystem = FileSystems.getDefault()
+        val sourceMatcher = rule.srcs.map { fileSystem.getPathMatcher("glob:$it") }
+            .let { matchers -> { path: Path -> matchers.any { matcher -> matcher.matches(path) } } }
+        val base = execution.modulePath
         val srcs = Files.walk(base)
             .use {
-                it.map { base.relativize(it) }
-                    .filter {
-                        matcher.matches(it.toString())
-                    }.toList()
+                it.filter { sourceMatcher(base.relativize(it))}.toList()
             }
 
-//        val arguments = Params(
-//            classpath = ruleInput.flatMap { it.files }.map { File(it) },
-//            srcs = srcs.map { it.toString() },
-//            apClasspath = ruleInput.flatMap { it.files }.filter { it.contains("dagger-compiler") }
-//        )
-//
         val dependencies = ruleInput.allResults().flatMap { it.files }
         val params = srcs.map { it.toString() }
 
@@ -236,15 +235,36 @@ class KotlinTestHandler @Inject constructor(private val kotlinCompiler: KotlinCo
             File(it).toURI().toURL()
         } + classesDir.toUri().toURL()).toTypedArray()))
 
+
+        val testAnnotation = try {
+            cl.loadClass(org.junit.Test::javaClass.name) as Class<Annotation>
+        } catch (e: ClassNotFoundException) {
+            null
+        }
+        val runWith = try {
+            cl.loadClass(RunWith::javaClass.name) as Class<Annotation>
+        } catch (e: ClassNotFoundException) {
+            null
+        }
+        val testCase = try {
+            cl.loadClass(TestCase::javaClass.name)
+        } catch (e: ClassNotFoundException) {
+            null
+        }
+        val classMatcher = fileSystem.getPathMatcher("glob:**.class")
         val classes = Files.walk(classesDir).use { path ->
-            path.filter { Files.isRegularFile(it) && it.endsWith(".class") && !it.toString().contains("$")}
-                .map { path ->
-                    val rel = classesDir.relativize(path)
+            path.filter { Files.isRegularFile(it) && classMatcher.matches(it) && !it.toString().contains("$") }
+                .map { candidate ->
+                    val rel = classesDir.relativize(candidate)
                     cl.loadClass(
                         rel.toString()
                             .replace('/', '.')
                             .replace(".class", "")
                     )
+                }.filter { c ->
+                    (runWith == null || c.isAnnotationPresent(runWith))
+                            && (testCase == null || testCase.isAssignableFrom(c))
+                            && (testAnnotation == null || c.methods.any { it.isAnnotationPresent(testAnnotation) })
                 }.toList().toTypedArray()
         }
 
@@ -256,75 +276,3 @@ class KotlinTestHandler @Inject constructor(private val kotlinCompiler: KotlinCo
     }
 }
 
-class MavenLibraryHandler @Inject constructor() : RuleHandler<MavenLibrary> {
-    private val log = LogManager.getLogger()
-    private val session: DefaultRepositorySystemSession
-    private val system: RepositorySystem
-
-    init {
-        val locator = MavenRepositorySystemUtils.newServiceLocator()
-        locator.addService(RepositoryConnectorFactory::class.java, BasicRepositoryConnectorFactory::class.java)
-        locator.addService(TransporterFactory::class.java, HttpTransporterFactory::class.java)
-        system = locator.getService(RepositorySystem::class.java)
-        session = MavenRepositorySystemUtils.newSession()
-        session.localRepositoryManager = system.newLocalRepositoryManager(session, LocalRepository("out/m2repo"))
-    }
-
-    override fun build(rule: MavenLibrary, ruleInput: RuleInput): RuleResult {
-        val depFile = Paths.get("${rule.name}-dep.toml")
-
-        if (!depFile.toFile().exists()) {
-            val remoteRepository = RemoteRepository.Builder(
-                "central", "default",
-                rule.repositoryUrl ?: "https://repo.maven.apache.org/maven2/"
-            ).build()
-
-            log.info("Resolving maven dependencies for ${rule.name}")
-            log.warn("TODO: DO NOT DOWNLOAD WHILE BUILDING! A separate command should be done")
-            val collectRequest = CollectRequest(
-                rule.artifacts
-                    .map { DefaultArtifact(it) }
-                    .map { Dependency(it, "") },
-                null, listOf(remoteRepository)
-            )
-            val result = system.collectDependencies(session, collectRequest)
-            val listGenerator = PreorderNodeListGenerator()
-            result.root.accept(listGenerator)
-            val artifacts = listGenerator.nodes.map { it.artifact }.sortedBy { it.toString() }
-            PrintWriter(Files.newBufferedWriter(depFile, StandardCharsets.UTF_8))
-                .use { out ->
-                    out.println("root_artifacts=${rule.artifacts.sorted().joinToString("\", \"", "[\"", "\"]")}")
-                    artifacts.forEach { a ->
-                        out.println("[[maven_artifact]]")
-                        out.println("name=\"${a.groupId}_${a.artifactId}\"")
-                        // http://central.maven.org/maven2/org/apache/maven/resolver/maven-resolver-connector-basic/1.3.3/maven-resolver-connector-basic-1.3.3.jar
-                        val groupPath = a.groupId.replace('.', '/')
-                        out.println("url=\"http://central.maven.org/maven2/$groupPath/${a.artifactId}/${a.version}/${a.artifactId}-${a.version}.jar\"")
-                        out.println("sha1=\"\"")
-                        out.println()
-                    }
-                }
-        } else {
-            log.debug("Dependency file for ${rule.name} exists, using it...")
-        }
-        val depFileTable = Toml.parse(depFile)
-        if (depFileTable.getArray("root_artifacts")?.toList() != rule.artifacts.sorted())
-            throw MavenDependencyChanged("Maven artifact list of ${rule.name} has changed, delete '$depFile' and refetch!")
-        val mavenArtifactsList = depFileTable.getArray("maven_artifact")
-            ?: throw IllegalStateException("Invalid dependency file: $depFile")
-        val forwardDeps = mutableListOf<String>()
-        for (i in 0 until mavenArtifactsList.size()) {
-            val artifact = mavenArtifactsList.getTable(i)
-            val download =
-                download(
-                    Paths.get(".whisk"),
-                    URL(artifact.getString("url") ?: throw IllegalStateException("URL missing"))
-                )
-            forwardDeps += download.toString()
-
-        }
-        return RuleResult(rule, forwardDeps)
-    }
-
-    class MavenDependencyChanged(message: String) : Exception(message)
-}

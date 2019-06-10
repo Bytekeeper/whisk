@@ -1,6 +1,7 @@
 package org.whisk.rule
 
 import org.whisk.model.RuleModel
+import java.nio.file.Path
 import javax.inject.Inject
 import kotlin.reflect.KClass
 
@@ -8,7 +9,13 @@ data class RuleInput(val results: Map<Any, List<RuleResult>>) {
     fun allResults() = results.values.flatten()
 }
 
-class Execution(val rule: RuleModel, val ruleInput: RuleInput)
+class Execution<T : RuleModel>(
+    val cacheDir: Path,
+    val modulePath: Path,
+    val rule: T,
+    val ruleInput: RuleInput,
+    val targetPath: Path
+)
 
 
 class RuleProcessorRegistry @Inject constructor(
@@ -40,14 +47,17 @@ class RuleProcessorRegistry @Inject constructor(
         processors.put(kClass, ruleHandler)
     }
 
-    fun getRuleProcessor(model: RuleModel) = processors[model::class] as RuleHandler<RuleModel> ?: throw UnsupportedRuleModel(model)
+    fun getRuleProcessor(model: RuleModel) =
+        processors[model::class] as RuleHandler<RuleModel> ?: throw UnsupportedRuleModel(model)
 }
 
 class UnsupportedRuleModel(model: RuleModel) :
     RuntimeException("No processor for '${model.name}' of type '${model::class.simpleName}' was registered!")
 
 class Processor @Inject constructor(private val ruleProcessorRegistry: RuleProcessorRegistry) {
-    fun process(execution: Execution): RuleResult =
-        ruleProcessorRegistry.getRuleProcessor(execution.rule).build(execution.rule, execution.ruleInput)
-    fun retrieveDependencyReferences(rule: RuleModel) = ruleProcessorRegistry.getRuleProcessor(rule).dependencyReferences(rule)
+    fun process(execution: Execution<RuleModel>): RuleResult =
+        ruleProcessorRegistry.getRuleProcessor(execution.rule).build(execution)
+
+    fun retrieveDependencyReferences(rule: RuleModel) =
+        ruleProcessorRegistry.getRuleProcessor(rule).dependencyReferences(rule)
 }

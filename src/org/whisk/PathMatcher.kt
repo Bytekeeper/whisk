@@ -34,4 +34,4 @@ fun Path.sha1() = Files.newInputStream(this)
         }.digest()
     }
 
-fun ByteArray.toHex() = BigInteger(this).toString(16).padStart(40, '0')
+fun ByteArray.toHex() = BigInteger(1, this).toString(16).padStart(40, '0')

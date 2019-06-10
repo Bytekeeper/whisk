@@ -1,56 +1,62 @@
 package org.whisk
 
 import org.apache.logging.log4j.LogManager
-import org.whisk.model.RuleModel
 import org.whisk.rule.Execution
 import org.whisk.rule.RuleInput
 import org.whisk.rule.RuleResult
 import java.nio.file.Paths
 import java.util.*
 
-class TaskNode(
-    val rule: RuleModel,
-    val children: MutableList<TaskNode> = mutableListOf(),
-    val parents: MutableMap<Any, MutableList<TaskNode>> = mutableMapOf(),
+class NodeExecutionContext(
+    val node: Node,
     val input: MutableMap<Any, MutableList<RuleResult>> = mutableMapOf(),
-    var executable : Boolean = false
+    var remainingChildren: Int = node.children.map { it.value.size }.sum(),
+    val parents: MutableMap<Any, MutableList<NodeExecutionContext>> = mutableMapOf(),
+    var executable: Boolean = false
 )
 
 fun main(vararg args: String) {
     val log = LogManager.getLogger()
     val application = DaggerApplication.create()
-    val ruleParser = application.ruleParser()
     val processor = application.processor()
+    val graph = application.graph()
 
-    val rules = ruleParser.parse(Paths.get("WHISK.toml"))
-    val nodes = rules.map { it.key to TaskNode(it.value) }.toMap()
-    val workingSet = ArrayDeque<TaskNode>()
-    nodes.values.forEach { n ->
-        val dependencyReferences = processor.retrieveDependencyReferences(n.rule)
-        dependencyReferences.refs.forEach { group, deps ->
-            n.children += deps.map {
-                nodes[it.substring(1)]
-                    ?: throw IllegalStateException("Rule '${n.rule.name}' depends on non-existent fromRule '$it'")
-            }
-            n.children.forEach { child ->
-                child.parents.computeIfAbsent(group) { mutableListOf() } += n
+    val projectRoot = Paths.get(".")
+    val cacheDir = Paths.get(".whisk")
+    val targetPath = Paths.get("whisk-out")
+    val buildGraph = graph.load(projectRoot)
+    val executions = buildGraph.values.map { it to NodeExecutionContext(it) }.toMap()
+    executions.forEach { node, parent ->
+        node.children.forEach { (group, children) ->
+            children.forEach { child ->
+                executions[child]!!.parents.computeIfAbsent(group) { mutableListOf() } += parent
             }
         }
-        if (n.children.isEmpty()) workingSet += n
     }
 
+    val workingSet = ArrayDeque<NodeExecutionContext>(executions.values.filter { it.remainingChildren == 0 })
 
     while (workingSet.isNotEmpty()) {
         val next = workingSet.pop()
 
 //        println(next.fromRule.name + " / " + workingSet.map { it.fromRule.name })
-        val ruleResult = processor.process(Execution(next.rule, RuleInput(next.input)))
+        val childNode = next.node
+        val ruleResult = processor.process(
+            Execution(
+                cacheDir,
+                projectRoot.resolve(childNode.rule.module.substring(1)),
+                childNode.ruleModel,
+                RuleInput(next.input),
+                targetPath.resolve(childNode.rule.module.substring(1))
+            )
+        )
 
         next.parents.forEach { (group, parents) ->
             parents.forEach { parent ->
-                parent.children -= next
+                parent.remainingChildren--
+                if (parent.remainingChildren < 0) throw IllegalStateException()
                 parent.input.computeIfAbsent(group) { mutableListOf() } += ruleResult
-                if (!parent.executable && parent.children.isEmpty()) {
+                if (!parent.executable && parent.remainingChildren == 0) {
                     workingSet += parent
                     parent.executable = true
                 }

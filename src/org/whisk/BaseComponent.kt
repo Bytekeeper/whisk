@@ -12,6 +12,8 @@ interface Application {
     fun ruleParser(): RuleParser
 
     fun processor(): Processor
+
+    fun graph() : Graph
 }
 
 @Module

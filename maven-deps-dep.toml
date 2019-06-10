@@ -1,116 +1,116 @@
 root_artifacts=["com.google.dagger:dagger:2.22.1", "org.apache.maven.resolver:maven-resolver-connector-basic:1.3.3", "org.apache.maven.resolver:maven-resolver-transport-http:1.3.3", "org.apache.maven:maven-resolver-provider:3.6.1"]
 [[maven_artifact]]
 name="com.google.dagger_dagger"
-url="http://central.maven.org/maven2/com/google/dagger/dagger/2.22.1/dagger-2.22.1.jar"
-sha1=""
+url="https://repo.maven.apache.org/maven2/com/google/dagger/dagger/2.22.1/dagger-2.22.1.jar"
+sha1="b5df4215f441908335e482f869bbf90c529eeaaf"
 
 [[maven_artifact]]
 name="commons-codec_commons-codec"
-url="http://central.maven.org/maven2/commons-codec/commons-codec/1.10/commons-codec-1.10.jar"
-sha1=""
+url="https://repo.maven.apache.org/maven2/commons-codec/commons-codec/1.10/commons-codec-1.10.jar"
+sha1="4b95f4897fa13f2cd904aee711aeafc0c5295cd8"
 
 [[maven_artifact]]
 name="javax.inject_javax.inject"
-url="http://central.maven.org/maven2/javax/inject/javax.inject/1/javax.inject-1.jar"
-sha1=""
+url="https://repo.maven.apache.org/maven2/javax/inject/javax.inject/1/javax.inject-1.jar"
+sha1="6975da39a7040257bd51d21a231b76c915872d38"
 
 [[maven_artifact]]
 name="org.apache.commons_commons-lang3"
-url="http://central.maven.org/maven2/org/apache/commons/commons-lang3/3.8.1/commons-lang3-3.8.1.jar"
-sha1=""
+url="https://repo.maven.apache.org/maven2/org/apache/commons/commons-lang3/3.8.1/commons-lang3-3.8.1.jar"
+sha1="6505a72a097d9270f7a9e7bf42c4238283247755"
 
 [[maven_artifact]]
 name="org.apache.httpcomponents_httpclient"
-url="http://central.maven.org/maven2/org/apache/httpcomponents/httpclient/4.5.6/httpclient-4.5.6.jar"
-sha1=""
+url="https://repo.maven.apache.org/maven2/org/apache/httpcomponents/httpclient/4.5.6/httpclient-4.5.6.jar"
+sha1="1afe5621985efe90a92d0fbc9be86271efbe796f"
 
 [[maven_artifact]]
 name="org.apache.httpcomponents_httpcore"
-url="http://central.maven.org/maven2/org/apache/httpcomponents/httpcore/4.4.10/httpcore-4.4.10.jar"
-sha1=""
+url="https://repo.maven.apache.org/maven2/org/apache/httpcomponents/httpcore/4.4.10/httpcore-4.4.10.jar"
+sha1="acc54d9b28bdffe4bbde89ed2e4a1e86b5285e2b"
 
 [[maven_artifact]]
 name="org.apache.maven.resolver_maven-resolver-api"
-url="http://central.maven.org/maven2/org/apache/maven/resolver/maven-resolver-api/1.3.3/maven-resolver-api-1.3.3.jar"
-sha1=""
+url="https://repo.maven.apache.org/maven2/org/apache/maven/resolver/maven-resolver-api/1.3.3/maven-resolver-api-1.3.3.jar"
+sha1="f25d09e9c8395aef394fbb1073e2baac715cec67"
 
 [[maven_artifact]]
 name="org.apache.maven.resolver_maven-resolver-connector-basic"
-url="http://central.maven.org/maven2/org/apache/maven/resolver/maven-resolver-connector-basic/1.3.3/maven-resolver-connector-basic-1.3.3.jar"
-sha1=""
+url="https://repo.maven.apache.org/maven2/org/apache/maven/resolver/maven-resolver-connector-basic/1.3.3/maven-resolver-connector-basic-1.3.3.jar"
+sha1="cdf513647ba75a4c36105ed8da590112d4386bb6"
 
 [[maven_artifact]]
 name="org.apache.maven.resolver_maven-resolver-impl"
-url="http://central.maven.org/maven2/org/apache/maven/resolver/maven-resolver-impl/1.3.3/maven-resolver-impl-1.3.3.jar"
-sha1=""
+url="https://repo.maven.apache.org/maven2/org/apache/maven/resolver/maven-resolver-impl/1.3.3/maven-resolver-impl-1.3.3.jar"
+sha1="1e6abcc8a6025294b6531d803f7fc8cabb541a60"
 
 [[maven_artifact]]
 name="org.apache.maven.resolver_maven-resolver-spi"
-url="http://central.maven.org/maven2/org/apache/maven/resolver/maven-resolver-spi/1.3.3/maven-resolver-spi-1.3.3.jar"
-sha1=""
+url="https://repo.maven.apache.org/maven2/org/apache/maven/resolver/maven-resolver-spi/1.3.3/maven-resolver-spi-1.3.3.jar"
+sha1="d9c852603595a21b0e6fdc10e37823c1b3256f69"
 
 [[maven_artifact]]
 name="org.apache.maven.resolver_maven-resolver-transport-http"
-url="http://central.maven.org/maven2/org/apache/maven/resolver/maven-resolver-transport-http/1.3.3/maven-resolver-transport-http-1.3.3.jar"
-sha1=""
+url="https://repo.maven.apache.org/maven2/org/apache/maven/resolver/maven-resolver-transport-http/1.3.3/maven-resolver-transport-http-1.3.3.jar"
+sha1="c8c314595b0d6d0328742372c953cac1d0722f6c"
 
 [[maven_artifact]]
 name="org.apache.maven.resolver_maven-resolver-util"
-url="http://central.maven.org/maven2/org/apache/maven/resolver/maven-resolver-util/1.3.3/maven-resolver-util-1.3.3.jar"
-sha1=""
+url="https://repo.maven.apache.org/maven2/org/apache/maven/resolver/maven-resolver-util/1.3.3/maven-resolver-util-1.3.3.jar"
+sha1="035662ec912ce5f66287bd6b0b4230063e904832"
 
 [[maven_artifact]]
 name="org.apache.maven_maven-artifact"
-url="http://central.maven.org/maven2/org/apache/maven/maven-artifact/3.6.1/maven-artifact-3.6.1.jar"
-sha1=""
+url="https://repo.maven.apache.org/maven2/org/apache/maven/maven-artifact/3.6.1/maven-artifact-3.6.1.jar"
+sha1="4603471881d2f033b80c13ada7a31f56df7435e5"
 
 [[maven_artifact]]
 name="org.apache.maven_maven-builder-support"
-url="http://central.maven.org/maven2/org/apache/maven/maven-builder-support/3.6.1/maven-builder-support-3.6.1.jar"
-sha1=""
+url="https://repo.maven.apache.org/maven2/org/apache/maven/maven-builder-support/3.6.1/maven-builder-support-3.6.1.jar"
+sha1="f9b2077f48698cd09181d20d1e1885c934382d5a"
 
 [[maven_artifact]]
 name="org.apache.maven_maven-model-builder"
-url="http://central.maven.org/maven2/org/apache/maven/maven-model-builder/3.6.1/maven-model-builder-3.6.1.jar"
-sha1=""
+url="https://repo.maven.apache.org/maven2/org/apache/maven/maven-model-builder/3.6.1/maven-model-builder-3.6.1.jar"
+sha1="b9fb23c9f9a143e1a3e5ed89aef47cc019b48db4"
 
 [[maven_artifact]]
 name="org.apache.maven_maven-model"
-url="http://central.maven.org/maven2/org/apache/maven/maven-model/3.6.1/maven-model-3.6.1.jar"
-sha1=""
+url="https://repo.maven.apache.org/maven2/org/apache/maven/maven-model/3.6.1/maven-model-3.6.1.jar"
+sha1="88ccb36b2c861ae3a53c20672d68aae78d65ae43"
 
 [[maven_artifact]]
 name="org.apache.maven_maven-repository-metadata"
-url="http://central.maven.org/maven2/org/apache/maven/maven-repository-metadata/3.6.1/maven-repository-metadata-3.6.1.jar"
-sha1=""
+url="https://repo.maven.apache.org/maven2/org/apache/maven/maven-repository-metadata/3.6.1/maven-repository-metadata-3.6.1.jar"
+sha1="aa2daf37743c5d7f72f3af49de9d45c896040119"
 
 [[maven_artifact]]
 name="org.apache.maven_maven-resolver-provider"
-url="http://central.maven.org/maven2/org/apache/maven/maven-resolver-provider/3.6.1/maven-resolver-provider-3.6.1.jar"
-sha1=""
+url="https://repo.maven.apache.org/maven2/org/apache/maven/maven-resolver-provider/3.6.1/maven-resolver-provider-3.6.1.jar"
+sha1="e94a36120b2bd376883b15476448e089a5ade803"
 
 [[maven_artifact]]
 name="org.codehaus.plexus_plexus-component-annotations"
-url="http://central.maven.org/maven2/org/codehaus/plexus/plexus-component-annotations/1.7.1/plexus-component-annotations-1.7.1.jar"
-sha1=""
+url="https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-component-annotations/1.7.1/plexus-component-annotations-1.7.1.jar"
+sha1="862abca6deff0fff241a835a33d22559e9132069"
 
 [[maven_artifact]]
 name="org.codehaus.plexus_plexus-interpolation"
-url="http://central.maven.org/maven2/org/codehaus/plexus/plexus-interpolation/1.25/plexus-interpolation-1.25.jar"
-sha1=""
+url="https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.25/plexus-interpolation-1.25.jar"
+sha1="3b37b3335e6a97e11e690bbdc22ade1a5deb74d6"
 
 [[maven_artifact]]
 name="org.codehaus.plexus_plexus-utils"
-url="http://central.maven.org/maven2/org/codehaus/plexus/plexus-utils/3.2.0/plexus-utils-3.2.0.jar"
-sha1=""
+url="https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-utils/3.2.0/plexus-utils-3.2.0.jar"
+sha1="d69e11d69dfce0c964587ab97b559187b3c27a6f"
 
 [[maven_artifact]]
 name="org.slf4j_jcl-over-slf4j"
-url="http://central.maven.org/maven2/org/slf4j/jcl-over-slf4j/1.7.25/jcl-over-slf4j-1.7.25.jar"
-sha1=""
+url="https://repo.maven.apache.org/maven2/org/slf4j/jcl-over-slf4j/1.7.25/jcl-over-slf4j-1.7.25.jar"
+sha1="f8c32b13ff142a513eeb5b6330b1588dcb2c0461"
 
 [[maven_artifact]]
 name="org.slf4j_slf4j-api"
-url="http://central.maven.org/maven2/org/slf4j/slf4j-api/1.7.25/slf4j-api-1.7.25.jar"
-sha1=""
+url="https://repo.maven.apache.org/maven2/org/slf4j/slf4j-api/1.7.25/slf4j-api-1.7.25.jar"
+sha1="da76ca59f6a57ee3102f8f9bd9cee742973efa8a"
 

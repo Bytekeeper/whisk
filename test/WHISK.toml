@@ -1,0 +1,5 @@
+[[kotlin_test]]
+name="whisk-test"
+srcs=["**.kt"]
+deps=["/:whisk-core"]
+

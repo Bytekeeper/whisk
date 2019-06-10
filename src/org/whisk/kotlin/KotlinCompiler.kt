@@ -1,6 +1,7 @@
 package org.whisk.kotlin
 
 import dagger.Reusable
+import org.apache.logging.log4j.LogManager
 import java.io.File
 import java.io.PrintStream
 import java.lang.reflect.Method
@@ -10,6 +11,7 @@ import javax.tools.ToolProvider
 
 @Reusable
 class KotlinCompiler @Inject constructor() {
+    private val log = LogManager.getLogger()
     private var emptyService: Any
     private var exec: Method
     private var compiler: Any
@@ -37,7 +39,11 @@ class KotlinCompiler @Inject constructor() {
         compiler = compilerClass.newInstance()
     }
 
-    fun compile(args: List<String>, compileClasspath: List<String>, kaptAPClasspath: List<String>, kaptClasspath: List<String>, target: String) {
+    fun compile(srcs: List<String>, compileClasspath: List<String>, kaptAPClasspath: List<String>, kaptClasspath: List<String>, target: String) {
+        if (srcs.isEmpty()) {
+            log.error("No source files!")
+            return
+        }
         val kaptParameters = if (kaptAPClasspath.isNotEmpty()) {
             val realArgs = listOf(
                 "sources=whisk-out/kapt/sources", "classes=whisk-out/kapt/classes",
@@ -55,7 +61,7 @@ class KotlinCompiler @Inject constructor() {
             target,
             "-no-stdlib",
             "-Xreport-output-files"
-        ) + kaptParameters + kaptClasspath.map { "-Xplugin=$it" } + args
+        ) + kaptParameters + kaptClasspath.map { "-Xplugin=$it" } + srcs
 
         exec.invoke(compiler, System.out, emptyService, params.toTypedArray())
     }
