@@ -1,7 +1,6 @@
 package org.whisk.model
 
 import java.io.InputStream
-import java.lang.RuntimeException
 import java.nio.file.Files
 import java.nio.file.Path
 import javax.inject.Inject
@@ -9,8 +8,6 @@ import kotlin.reflect.KClass
 
 interface RuleModel {
     val name: String
-    val deps: List<String>
-        get() = emptyList()
 }
 
 interface RuleParser {
@@ -21,16 +18,25 @@ interface RuleParser {
 data class KotlinCompile(
     override val name: String,
     val srcs: List<String> = listOf("src/**/*.kt"),
-    override val deps: List<String>,
+    val cp: List<String> = emptyList(),
     var exported_deps: List<String> = emptyList(),
     val kapt_deps: List<String> = emptyList(),
+    val provided_deps: List<String> = emptyList()
+) : RuleModel
+
+data class JavaCompile(
+    override val name: String,
+    val srcs: List<String> = listOf("src/**/*.java"),
+    val cp: List<String> = emptyList(),
+    var exported_deps: List<String> = emptyList(),
+    val apt_deps: List<String> = emptyList(),
     val provided_deps: List<String> = emptyList()
 ) : RuleModel
 
 data class KotlinTest(
     override val name: String,
     val srcs: List<String> = listOf("test/**/*.kt"),
-    override val deps: List<String>
+    val cp: List<String> = emptyList()
 ) : RuleModel
 
 data class PrebuiltJar(
@@ -46,7 +52,7 @@ data class RemoteFile(
 
 data class JavaBinary(
     override val name: String,
-    override val deps: List<String>,
+    val files: List<String>,
     val mainClass: String?
 ) : RuleModel
 
@@ -54,6 +60,12 @@ data class MavenLibrary(
     override val name: String,
     val artifacts: List<String>,
     val repositoryUrl: String?
+) : RuleModel
+
+data class ProtobufCompile(
+    override val name: String,
+    val srcs: List<String> = listOf("proto/**.proto"),
+    val imports: List<String>
 ) : RuleModel
 
 class RuleModelRegistry @Inject constructor() {
@@ -66,6 +78,8 @@ class RuleModelRegistry @Inject constructor() {
         register<RemoteFile>()
         register<JavaBinary>()
         register<MavenLibrary>()
+        register<JavaCompile>()
+        register<ProtobufCompile>()
     }
 
     inline fun <reified T : RuleModel> register() {
@@ -81,4 +95,4 @@ class RuleModelRegistry @Inject constructor() {
     fun getRuleClass(name: String) = models[name] ?: throw UnsupportedRule(name)
 }
 
-class UnsupportedRule(val ruleName: String) : RuntimeException("No fromRule '$ruleName' was registered!")
+class UnsupportedRule(val ruleName: String) : RuntimeException("No rule '$ruleName' was registered!")

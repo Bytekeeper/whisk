@@ -1,11 +1,11 @@
 [[java_binary]]
 name="main"
-deps=[":whisk-core", ":maven-deps", "/test:whisk-test"]
+files=[":whisk-core", ":maven-deps", "/test:whisk-test"]
 main_class = "org.whisk.MainKt"
 
 [[kotlin_compile]]
 name="whisk-core"
-deps=[":tomlj", ":antlr4", ":annotations", ":kotlin-stdlib", ":kotlin-compiler", ":kotlin-stdlib-common", ":kotlin-stdlib-jdk7", ":kotlin-stdlib-jdk8", ":trove4j",
+cp=[":tomlj", ":antlr4", ":annotations", ":kotlin-stdlib", ":kotlin-compiler", ":kotlin-stdlib-common", ":kotlin-stdlib-jdk7", ":kotlin-stdlib-jdk8", ":trove4j",
     ":log4j2-api", ":log4j2-core", ":maven-deps", ":junit4", ":hamcrest", ":kotlin-reflect"]
 exported_deps=[":tomlj", ":antlr4", ":annotations", ":kotlin-compiler", ":kotlin-stdlib", ":kotlin-stdlib-common", ":kotlin-stdlib-jdk7", ":kotlin-stdlib-jdk8", ":trove4j",
     ":log4j2-api", ":log4j2-core", ":junit4", ":hamcrest", ":kap"]

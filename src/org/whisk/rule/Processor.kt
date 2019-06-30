@@ -21,10 +21,12 @@ class Execution<T : RuleModel>(
 class RuleProcessorRegistry @Inject constructor(
     prebuiltJarHandler: PrebuiltJarHandler,
     kotlinCompileHandler: KotlinCompileHandler,
+    javaCompileHandler: JavaCompileHandler,
     kotlinTestHandler: KotlinTestHandler,
     remoteFileHandler: RemoteFileHandler,
     javaBinaryHandler: JavaBinaryHandler,
-    mavenLibraryHandler: MavenLibraryHandler
+    mavenLibraryHandler: MavenLibraryHandler,
+    protobufCompilerHandler: ProtobufCompilerHandler
 ) {
     private val processors = mutableMapOf<KClass<out RuleModel>, RuleHandler<out RuleModel>>()
 
@@ -32,9 +34,11 @@ class RuleProcessorRegistry @Inject constructor(
         register(prebuiltJarHandler)
         register(kotlinCompileHandler)
         register(kotlinTestHandler)
+        register(javaCompileHandler)
         register(remoteFileHandler)
         register(javaBinaryHandler)
         register(mavenLibraryHandler)
+        register(protobufCompilerHandler)
     }
 
     inline fun <reified T : RuleModel> register(ruleHandler: RuleHandler<T>) {
@@ -48,11 +52,11 @@ class RuleProcessorRegistry @Inject constructor(
     }
 
     fun getRuleProcessor(model: RuleModel) =
-        processors[model::class] as RuleHandler<RuleModel> ?: throw UnsupportedRuleModel(model)
+        processors[model::class] as? RuleHandler<RuleModel> ?: throw UnsupportedRuleModel(model)
 }
 
 class UnsupportedRuleModel(model: RuleModel) :
-    RuntimeException("No processor for '${model.name}' of type '${model::class.simpleName}' was registered!")
+    RuntimeException("No processor for '${model.name}' of type '${model::class.simpleName}' was registered! Is the handler registered and implementing the correct interface?")
 
 class Processor @Inject constructor(private val ruleProcessorRegistry: RuleProcessorRegistry) {
     fun process(execution: Execution<RuleModel>): RuleResult =

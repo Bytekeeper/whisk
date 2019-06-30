@@ -28,18 +28,18 @@ class TomlRuleParser @Inject constructor(private val ruleRegistry: RuleModelRegi
 
     private fun mapToRule(ruleClass: KClass<out RuleModel>, table: TomlTable): RuleModel {
         val primaryConstructor = ruleClass.primaryConstructor
-            ?: throw java.lang.IllegalStateException("Invalid fromRule ${ruleClass.simpleName}, no primary constructor found!")
+            ?: throw java.lang.IllegalStateException("Invalid rule ${ruleClass.simpleName}, no primary constructor found!")
         val arguments = primaryConstructor.parameters
             .mapNotNull {
                 val value = when (it.type.classifier) {
                     String::class -> table.getString(it.name!!)
                     List::class -> mapToList(it.type.arguments.firstOrNull(), it.name!!, table)
-                    else -> throw IllegalArgumentException("Invalid fromRule parameter '${it.name}' with type '${it.type}' for fromRule '${ruleClass.simpleName}'!")
+                    else -> throw IllegalArgumentException("Invalid rule parameter '${it.name}' with type '${it.type}' for from rule '${ruleClass.simpleName}'!")
                 }
                 if (value == null) {
                     if (it.isOptional) null
                     else if (it.type.isMarkedNullable) it to null
-                    else throw IllegalStateException("Missing value for fromRule parameter '${it.name}' for fromRule '${ruleClass.simpleName}'!")
+                    else throw IllegalStateException("Missing value for rule parameter '${it.name}' for from rule '${ruleClass.simpleName}'!")
                 } else
                     it to value
             }.toMap()
@@ -53,7 +53,7 @@ class TomlRuleParser @Inject constructor(private val ruleRegistry: RuleModelRegi
     ) =
         when (projection?.type?.classifier) {
             String::class -> table.getArray(name)?.toList()
-            else -> throw IllegalArgumentException("Invalid fromRule parameter '${name}', type '${projection?.type}' is not supported!")
+            else -> throw IllegalArgumentException("Invalid rule parameter '${name}', type '${projection?.type}' is not supported!")
         }
 
 

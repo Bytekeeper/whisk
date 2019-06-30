@@ -33,12 +33,12 @@ data class DependencyReferences(val refs: Map<Any, List<String>>)
 interface RuleHandler<T : RuleModel> {
     fun build(execution: Execution<T>): RuleResult
     fun dependencyReferences(rule: T): DependencyReferences =
-        DependencyReferences(mapOf("DEPS" to rule.deps))
+        DependencyReferences(emptyMap())
 }
 
-internal fun download(whiskDir: Path, url: URL): Path {
+internal fun download(target: Path, url: URL): Path {
     val log = LogManager.getLogger()
-    val targetFile = whiskDir.resolve(url.path.substring(1))
+    val targetFile = target.resolve(url.path.substring(1))
     if (targetFile.toFile().exists()) {
         log.debug("{} exists, not downloading...", targetFile)
     } else {
@@ -59,7 +59,6 @@ class PrebuiltJarHandler @Inject constructor() : RuleHandler<PrebuiltJar> {
         if (!File(rule.binary_jar).exists()) throw java.lang.IllegalStateException("${rule.name} file does not exist!")
         return RuleResult(rule, listOf(rule.binary_jar))
     }
-
 }
 
 class RemoteFileHandler @Inject constructor() : RuleHandler<RemoteFile> {
@@ -136,75 +135,8 @@ class JavaBinaryHandler @Inject constructor() : RuleHandler<JavaBinary> {
         return RuleResult(rule, listOf(jarName.toString()))
     }
 
-}
-
-class KotlinCompileHandler @Inject constructor(private val kotlinCompiler: KotlinCompiler) :
-    RuleHandler<KotlinCompile> {
-    private val DEPS = "deps"
-    private val KAPT_DEPS = "kapt_deps"
-    private val EXPORTED_DEPS = "exported_deps"
-    private val PROVIDED_DEPS = "provided_deps"
-
-    override fun build(
-        execution: Execution<KotlinCompile>
-    ): RuleResult {
-        val rule = execution.rule
-        val ruleInput = execution.ruleInput
-
-        val whiskOut = execution.targetPath
-        val classesDir = whiskOut.resolve("classes")
-        val jarDir = whiskOut.resolve("jar")
-//
-        val matcher = org.whisk.PathMatcher.toRegex(rule.srcs[0])
-        val base = Paths.get(".")
-        val srcs = Files.walk(base)
-            .use {
-                it.map { base.relativize(it) }
-                    .filter {
-                        matcher.matches(it.toString())
-                    }.toList()
-            }
-
-        val deps = ruleInput.results[DEPS] ?: emptyList()
-        val exportedDeps: List<RuleResult> = ruleInput.results[EXPORTED_DEPS] ?: emptyList()
-        val providedDeps: List<RuleResult> = ruleInput.results[PROVIDED_DEPS] ?: emptyList()
-        val dependencies = (deps + exportedDeps + providedDeps).flatMap { it.files }
-        val kapt = (ruleInput.results[KAPT_DEPS] ?: emptyList()).flatMap { it.files }
-        val kaptClasspath = dependencies//.filter { !it.contains("kotlin-compiler") }
-        val params = srcs.map { it.toString() }
-        kotlinCompiler.compile(params, dependencies, kaptClasspath, kapt, classesDir.toString())
-
-        Files.createDirectories(jarDir)
-        val jarName = jarDir.resolve("${rule.name}.jar")
-        JarOutputStream(Files.newOutputStream(jarName))
-            .use { out ->
-                Files.walk(classesDir).use { pathStream ->
-                    pathStream
-                        .forEach { path ->
-                            val relativePath = classesDir.relativize(path)
-                            if (Files.isRegularFile(path)) {
-                                out.putNextEntry(JarEntry(relativePath.toString()));
-                                Files.copy(path, out)
-                            } else if (Files.isDirectory(path)) {
-                                out.putNextEntry(JarEntry("$relativePath/"))
-                            }
-                        }
-                }
-            }
-
-        val exportedFiles = exportedDeps.flatMap { it.files }
-        return RuleResult(rule, exportedFiles + jarName.toString())
-    }
-
-    override fun dependencyReferences(rule: KotlinCompile): DependencyReferences =
-        DependencyReferences(
-            mapOf(
-                DEPS to (rule.deps - rule.exported_deps),
-                KAPT_DEPS to rule.kapt_deps,
-                EXPORTED_DEPS to rule.exported_deps,
-                PROVIDED_DEPS to rule.provided_deps
-            )
-        )
+    override fun dependencyReferences(rule: JavaBinary): DependencyReferences =
+        DependencyReferences(mapOf("files" to rule.files))
 }
 
 class KotlinTestHandler @Inject constructor(private val kotlinCompiler: KotlinCompiler) : RuleHandler<KotlinTest> {
@@ -274,5 +206,9 @@ class KotlinTestHandler @Inject constructor(private val kotlinCompiler: KotlinCo
 
         return RuleResult(rule, emptyList())
     }
+
+    override fun dependencyReferences(rule: KotlinTest): DependencyReferences =
+        DependencyReferences(mapOf("classpath" to rule.cp))
+
 }
 
