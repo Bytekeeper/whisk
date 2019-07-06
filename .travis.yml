@@ -1,0 +1,5 @@
+language: java
+script:
+  - ./gradlew build --scan -s
+  - cp whisk-out/jar/main.jar .
+  - java -cp main.jar:$(find $JAVA_HOME -name 'tools.jar') org.whisk.MainKt /:main

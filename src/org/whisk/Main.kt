@@ -21,10 +21,13 @@ fun main(vararg args: String) {
     val processor = application.processor()
     val graph = application.graph()
 
+    val entryRule = args[0]
+    val entryModule = entryRule.substringBefore(':')
+
     val projectRoot = Paths.get(".")
     val cacheDir = Paths.get(".whisk")
     val targetPath = Paths.get("whisk-out")
-    val buildGraph = graph.load(projectRoot)
+    val buildGraph = graph.load(projectRoot, entryModule)
     val executions = buildGraph.values.map { it to NodeExecutionContext(it) }.toMap()
     executions.forEach { node, parent ->
         node.children.forEach { (group, children) ->
@@ -34,7 +37,7 @@ fun main(vararg args: String) {
         }
     }
     val taskList = mutableSetOf<NodeExecutionContext>()
-    val openList = ArrayDeque(executions.filter { (k, v) ->  k.rule.toString() == args[0]}.map { it.value })
+    val openList = ArrayDeque(executions.filter { (k, v) -> k.rule.toString() == entryRule }.map { it.value })
     while (openList.isNotEmpty()) {
         val executionContext = openList.pop()
         if (!taskList.contains(executionContext)) {
@@ -50,6 +53,7 @@ fun main(vararg args: String) {
 
 //        println(next.fromRule.name + " / " + workingSet.map { it.fromRule.name })
         val childNode = next.node
+        var stopWatch = StopWatch()
         val ruleResult = processor.process(
             Execution(
                 cacheDir,
@@ -59,6 +63,7 @@ fun main(vararg args: String) {
                 targetPath.resolve(childNode.rule.module.substring(1))
             )
         )
+        log.info("${childNode.rule}: ${stopWatch.stop()} ms")
 
         next.parents.forEach { (group, parents) ->
             parents.forEach { parent ->
@@ -73,6 +78,4 @@ fun main(vararg args: String) {
         }
     }
     println("DONE")
-    /*
-*/
 }

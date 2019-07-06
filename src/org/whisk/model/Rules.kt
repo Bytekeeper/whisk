@@ -16,56 +16,57 @@ interface RuleParser {
 }
 
 data class KotlinCompile(
-    override val name: String,
-    val srcs: List<String> = listOf("src/**/*.kt"),
-    val cp: List<String> = emptyList(),
-    var exported_deps: List<String> = emptyList(),
-    val kapt_deps: List<String> = emptyList(),
-    val provided_deps: List<String> = emptyList()
+        override val name: String,
+        val srcs: List<String> = listOf("src/**/*.kt"),
+        val cp: List<String> = emptyList(),
+        var exported_deps: List<String> = emptyList(),
+        val kapt_processors: List<String> = emptyList(),
+        val plugins: List<String> = emptyList(),
+        val provided_deps: List<String> = emptyList()
 ) : RuleModel
 
 data class JavaCompile(
-    override val name: String,
-    val srcs: List<String> = listOf("src/**/*.java"),
-    val cp: List<String> = emptyList(),
-    var exported_deps: List<String> = emptyList(),
-    val apt_deps: List<String> = emptyList(),
-    val provided_deps: List<String> = emptyList()
+        override val name: String,
+        val srcs: List<String> = listOf("src/**/*.java"),
+        val cp: List<String> = emptyList(),
+        var exported_deps: List<String> = emptyList(),
+        val apt_deps: List<String> = emptyList(),
+        val provided_deps: List<String> = emptyList()
 ) : RuleModel
 
 data class KotlinTest(
-    override val name: String,
-    val srcs: List<String> = listOf("test/**/*.kt"),
-    val cp: List<String> = emptyList()
+        override val name: String,
+        val srcs: List<String> = listOf("test/**/*.kt"),
+        val cp: List<String> = emptyList()
 ) : RuleModel
 
 data class PrebuiltJar(
-    override val name: String,
-    val binary_jar: String
+        override val name: String,
+        val binary_jar: String
 ) : RuleModel
 
 data class RemoteFile(
-    override val name: String,
-    val url: String,
-    val sha1: String
+        override val name: String,
+        val url: String,
+        val sha1: String
 ) : RuleModel
 
 data class JavaBinary(
-    override val name: String,
-    val files: List<String>,
-    val mainClass: String?
+        override val name: String,
+        val files: List<String>,
+        val main_class: String?
 ) : RuleModel
 
 data class MavenLibrary(
-    override val name: String,
-    val artifacts: List<String>,
-    val repositoryUrl: String?
+        override val name: String,
+        val artifacts: List<String>,
+        val repositoryUrl: String?
 ) : RuleModel
 
 data class ProtobufCompile(
-    override val name: String,
-    val srcs: List<String> = listOf("proto/**.proto"),
-    val imports: List<String>
+        override val name: String,
+        val srcs: List<String> = listOf("proto/**.proto"),
+        val imports: List<String>
 ) : RuleModel
 
 class RuleModelRegistry @Inject constructor() {

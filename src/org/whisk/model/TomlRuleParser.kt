@@ -37,12 +37,16 @@ class TomlRuleParser @Inject constructor(private val ruleRegistry: RuleModelRegi
                     else -> throw IllegalArgumentException("Invalid rule parameter '${it.name}' with type '${it.type}' for from rule '${ruleClass.simpleName}'!")
                 }
                 if (value == null) {
-                    if (it.isOptional) null
-                    else if (it.type.isMarkedNullable) it to null
-                    else throw IllegalStateException("Missing value for rule parameter '${it.name}' for from rule '${ruleClass.simpleName}'!")
+                    when {
+                        it.isOptional -> null
+                        it.type.isMarkedNullable -> it to null
+                        else -> throw IllegalStateException("Missing value for rule parameter '${it.name}' for from rule '${ruleClass.simpleName}'!")
+                    }
                 } else
                     it to value
             }.toMap()
+        val invalidKeys = table.keySet() - arguments.map { it.key.name }
+        if (invalidKeys.isNotEmpty()) throw IllegalArgumentException("Invalid rule arguments: ${invalidKeys.joinToString()} for ${ruleClass.simpleName}")
         return primaryConstructor.callBy(arguments)
     }
 

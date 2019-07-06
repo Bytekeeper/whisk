@@ -24,8 +24,8 @@ import kotlin.streams.toList
 class InvalidChecksumError(message: String) : Exception(message)
 
 data class RuleResult(
-    val fromRule: RuleModel,
-    val files: List<String>
+        val fromRule: RuleModel,
+        val files: List<String>
 )
 
 data class DependencyReferences(val refs: Map<Any, List<String>>)
@@ -33,7 +33,7 @@ data class DependencyReferences(val refs: Map<Any, List<String>>)
 interface RuleHandler<T : RuleModel> {
     fun build(execution: Execution<T>): RuleResult
     fun dependencyReferences(rule: T): DependencyReferences =
-        DependencyReferences(emptyMap())
+            DependencyReferences(emptyMap())
 }
 
 internal fun download(target: Path, url: URL): Path {
@@ -53,7 +53,7 @@ internal fun download(target: Path, url: URL): Path {
 
 class PrebuiltJarHandler @Inject constructor() : RuleHandler<PrebuiltJar> {
     override fun build(
-        execution: Execution<PrebuiltJar>
+            execution: Execution<PrebuiltJar>
     ): RuleResult {
         val rule = execution.rule
         if (!File(rule.binary_jar).exists()) throw java.lang.IllegalStateException("${rule.name} file does not exist!")
@@ -65,7 +65,7 @@ class RemoteFileHandler @Inject constructor() : RuleHandler<RemoteFile> {
     private val log = LogManager.getLogger()
 
     override fun build(
-        execution: Execution<RemoteFile>
+            execution: Execution<RemoteFile>
     ): RuleResult {
         val rule = execution.rule
         val whiskDir = execution.cacheDir
@@ -80,7 +80,7 @@ class JavaBinaryHandler @Inject constructor() : RuleHandler<JavaBinary> {
     private val log = LogManager.getLogger()
 
     override fun build(
-        execution: Execution<JavaBinary>
+            execution: Execution<JavaBinary>
     ): RuleResult {
         val rule = execution.rule
         val ruleInput = execution.ruleInput
@@ -91,77 +91,80 @@ class JavaBinaryHandler @Inject constructor() : RuleHandler<JavaBinary> {
         val deps = ruleInput.allResults()
 
         JarOutputStream(Files.newOutputStream(jarName))
-            .use { out ->
-                val usedNames = mutableSetOf<String>()
-                rule.mainClass?.let { mainClass ->
-                    out.putNextEntry(JarEntry("META-INF/MANIFEST.MF"))
-                    val writer = PrintWriter(OutputStreamWriter(out, StandardCharsets.UTF_8))
-                    writer.print("Main-Class: ")
-                    writer.println(mainClass)
-                    writer.flush()
-                    usedNames += "META-INF/"
-                    usedNames += "META-INF/MANIFEST.MF"
-                }
+                .use { out ->
+                    val usedNames = mutableSetOf<String>()
+                    rule.main_class?.let { mainClass ->
+                        out.putNextEntry(JarEntry("META-INF/MANIFEST.MF"))
+                        val writer = PrintWriter(OutputStreamWriter(out, StandardCharsets.UTF_8))
+                        writer.print("Main-Class: ")
+                        writer.println(mainClass)
+                        writer.flush()
+                        usedNames += "META-INF/"
+                        usedNames += "META-INF/MANIFEST.MF"
+                    }
 
-                deps.forEach {
-                    it.files.forEach { file ->
-                        if (!usedNames.contains(file)) {
-                            if (file.endsWith(".jar")) {
-                                JarInputStream(Files.newInputStream(Paths.get(file)))
-                                    .use { jar ->
-                                        var entry = jar.nextJarEntry
-                                        while (entry != null) {
-                                            if (!usedNames.contains(entry.name)) {
-                                                out.putNextEntry(JarEntry(entry.name))
-                                                jar.copyTo(out)
-                                                usedNames += entry.name
-                                            } else {
-                                                log.warn("Duplicate file $file:${entry.name}")
+                    deps.forEach {
+                        it.files.forEach { file ->
+                            if (!usedNames.contains(file)) {
+                                if (file.endsWith(".jar")) {
+                                    JarInputStream(Files.newInputStream(Paths.get(file)))
+                                            .use { jar ->
+                                                var entry = jar.nextJarEntry
+                                                while (entry != null) {
+                                                    if (!usedNames.contains(entry.name)) {
+                                                        out.putNextEntry(JarEntry(entry.name))
+                                                        jar.copyTo(out)
+                                                        usedNames += entry.name
+                                                    } else {
+                                                        log.warn("Duplicate file $file:${entry.name}")
+                                                    }
+                                                    entry = jar.nextJarEntry
+                                                }
                                             }
-                                            entry = jar.nextJarEntry
-                                        }
-                                    }
+                                } else {
+                                    out.putNextEntry(JarEntry(file))
+                                    Files.copy(Paths.get(file), out)
+                                }
+                                usedNames += file
                             } else {
-                                out.putNextEntry(JarEntry(file))
-                                Files.copy(Paths.get(file), out)
+                                log.warn("Duplicate file $file")
                             }
-                            usedNames += file
-                        } else {
-                            log.warn("Duplicate file $file")
                         }
                     }
                 }
-            }
         return RuleResult(rule, listOf(jarName.toString()))
     }
 
     override fun dependencyReferences(rule: JavaBinary): DependencyReferences =
-        DependencyReferences(mapOf("files" to rule.files))
+            DependencyReferences(mapOf("files" to rule.files))
 }
 
 class KotlinTestHandler @Inject constructor(private val kotlinCompiler: KotlinCompiler) : RuleHandler<KotlinTest> {
     override fun build(
-        execution: Execution<KotlinTest>
+            execution: Execution<KotlinTest>
     ): RuleResult {
         val rule = execution.rule
         val ruleInput = execution.ruleInput
         val whiskOut = execution.targetPath
         val classesDir = whiskOut.resolve("test-classes")
+        val kaptDir = whiskOut.resolve("kapt")
+        val kaptClasses = kaptDir.resolve("classes")
         val jarDir = whiskOut.resolve("jar")
 
         val fileSystem = FileSystems.getDefault()
         val sourceMatcher = rule.srcs.map { fileSystem.getPathMatcher("glob:$it") }
-            .let { matchers -> { path: Path -> matchers.any { matcher -> matcher.matches(path) } } }
+                .let { matchers -> { path: Path -> matchers.any { matcher -> matcher.matches(path) } } }
         val base = execution.modulePath
         val srcs = Files.walk(base)
-            .use {
-                it.filter { sourceMatcher(base.relativize(it))}.toList()
-            }
+                .use {
+                    it.filter { sourceMatcher(base.relativize(it)) }.toList()
+                }
 
         val dependencies = ruleInput.allResults().flatMap { it.files }
         val params = srcs.map { it.toString() }
 
-        kotlinCompiler.compile(params, dependencies, emptyList(), emptyList(), classesDir.toString())
+        kotlinCompiler.compile(params, dependencies, emptyList(), emptyList(), classesDir, kaptDir.resolve("sources"),
+                kaptClasses, kaptDir.resolve("kotlinSources"))
 
         val cl = URLClassLoader(((dependencies.map {
             File(it).toURI().toURL()
@@ -186,18 +189,18 @@ class KotlinTestHandler @Inject constructor(private val kotlinCompiler: KotlinCo
         val classMatcher = fileSystem.getPathMatcher("glob:**.class")
         val classes = Files.walk(classesDir).use { path ->
             path.filter { Files.isRegularFile(it) && classMatcher.matches(it) && !it.toString().contains("$") }
-                .map { candidate ->
-                    val rel = classesDir.relativize(candidate)
-                    cl.loadClass(
-                        rel.toString()
-                            .replace('/', '.')
-                            .replace(".class", "")
-                    )
-                }.filter { c ->
-                    (runWith == null || c.isAnnotationPresent(runWith))
-                            && (testCase == null || testCase.isAssignableFrom(c))
-                            && (testAnnotation == null || c.methods.any { it.isAnnotationPresent(testAnnotation) })
-                }.toList().toTypedArray()
+                    .map { candidate ->
+                        val rel = classesDir.relativize(candidate)
+                        cl.loadClass(
+                                rel.toString()
+                                        .replace('/', '.')
+                                        .replace(".class", "")
+                        )
+                    }.filter { c ->
+                        (runWith == null || c.isAnnotationPresent(runWith))
+                                && (testCase == null || testCase.isAssignableFrom(c))
+                                && (testAnnotation == null || c.methods.any { it.isAnnotationPresent(testAnnotation) })
+                    }.toList().toTypedArray()
         }
 
         val jUnitCore = JUnitCore()
@@ -208,7 +211,7 @@ class KotlinTestHandler @Inject constructor(private val kotlinCompiler: KotlinCo
     }
 
     override fun dependencyReferences(rule: KotlinTest): DependencyReferences =
-        DependencyReferences(mapOf("classpath" to rule.cp))
+            DependencyReferences(mapOf("classpath" to rule.cp))
 
 }
 

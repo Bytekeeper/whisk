@@ -1,15 +1,15 @@
 [[java_binary]]
 name="main"
-files=[":whisk-core", ":maven-deps", "/test:whisk-test"]
+files=[":whisk-core"]
 main_class = "org.whisk.MainKt"
 
 [[kotlin_compile]]
 name="whisk-core"
-cp=[":tomlj", ":antlr4", ":annotations", ":kotlin-stdlib", ":kotlin-compiler", ":kotlin-stdlib-common", ":kotlin-stdlib-jdk7", ":kotlin-stdlib-jdk8", ":trove4j",
-    ":log4j2-api", ":log4j2-core", ":maven-deps", ":junit4", ":hamcrest", ":kotlin-reflect"]
+cp=[]
 exported_deps=[":tomlj", ":antlr4", ":annotations", ":kotlin-compiler", ":kotlin-stdlib", ":kotlin-stdlib-common", ":kotlin-stdlib-jdk7", ":kotlin-stdlib-jdk8", ":trove4j",
-    ":log4j2-api", ":log4j2-core", ":junit4", ":hamcrest", ":kap"]
-kapt_deps=[":tools", ":kap", ":dagger"]
+    ":log4j2-api", ":log4j2-core", ":junit4", ":hamcrest", ":kap", ":maven-deps", ":kotlin-reflect"]
+kapt_processors=[":dagger-compiler", ":tools"]
+plugins=[":kap", ":tools"]
 
 [[prebuilt_jar]]
 name="tomlj"
@@ -71,7 +71,7 @@ artifacts=["org.apache.maven:maven-resolver-provider:3.6.1",
            "com.google.dagger:dagger:2.22.1"]
 
 [[maven_library]]
-name="dagger"
+name="dagger-compiler"
 artifacts=["com.google.dagger:dagger-compiler:2.22.1"]
 
 [[remote_file]]

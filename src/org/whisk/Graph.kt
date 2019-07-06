@@ -30,9 +30,9 @@ class Graph @Inject constructor(
     private val ruleParser: RuleParser,
     private val processor: Processor
 ) {
-    fun load(projectRoot: Path): Map<RuleFQN, Node> {
+    fun load(projectRoot: Path, entryPath: String = "/"): Map<RuleFQN, Node> {
         val knownRoots = mutableMapOf<RuleFQN, Node>()
-        load(knownRoots, projectRoot, "/")
+        load(knownRoots, projectRoot, entryPath)
         return knownRoots.toMap()
     }
 
