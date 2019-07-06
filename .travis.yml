@@ -1,5 +1,7 @@
 language: java
 script:
   - ./gradlew build -s
+  - ls -al build/libs
+  - java -cp build/libs/whisk.jar:$(find $JAVA_HOME -name 'tools.jar') org.whisk.MainKt /:main
   - cp whisk-out/jar/main.jar .
   - java -cp main.jar:$(find $JAVA_HOME -name 'tools.jar') org.whisk.MainKt /:main
