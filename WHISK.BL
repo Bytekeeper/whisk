@@ -1,0 +1,13 @@
+export main,jar
+
+kotlin_compile(srcs:[], cp:[])
+maven_library(artifacts, sha1)
+build_jar(files:[],main_class)
+anon glob(srcs:[])
+
+jar = build_jar(files= main, main_class='org.whisk.MainKt')
+main = kotlin_compile(srcs = glob('src/main/kotlin/**.kt'))
+
+dagger_compiler = maven_library(
+    artifacts=['com.google.dagger:dagger-compiler:2.22.1'], sha1=''
+)

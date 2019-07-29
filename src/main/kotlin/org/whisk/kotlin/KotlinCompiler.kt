@@ -9,7 +9,6 @@ import java.io.File
 import java.io.ObjectOutputStream
 import java.io.PrintStream
 import java.lang.reflect.Method
-import java.net.URLClassLoader
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
@@ -23,18 +22,17 @@ class KotlinCompiler @Inject constructor() {
     private var compiler: Any
 
     init {
-        val sl = javaClass.classLoader as URLClassLoader
-        val dependencies = sl.urLs.map { it.toString() }
+//        val sl = javaClass.classLoader as URLClassLoader
+//        val dependencies = sl.urLs.map { it.toString() }
 //        val cl = URLClassLoader(
 //                listOf(
 //                        dependencies.first { it.contains("kotlin-compiler") }
 //                )
-//                        .map { File(it).toURI().toURL() }.toTypedArray()
-//                , ClassLoader.getSystemClassLoader()
-////                , ToolProvider.getSystemToolClassLoader()
+//                        .map { URL(it) }.toTypedArray()
+//                , null
 //        )
-//        val compilerClass = cl.loadClass("org.jetbrains.kotlin.cli.jvm.K2JVMCompiler")
-//        val servicesClass = cl.loadClass("org.jetbrains.kotlin.config.Services")
+//        val compilerClass = Class.forName("org.jetbrains.kotlin.cli.jvm.K2JVMCompiler", true, cl)
+//        val servicesClass = Class.forName("org.jetbrains.kotlin.config.Services", true, cl)
         val compilerClass = K2JVMCompiler::class.java
         val servicesClass = Services::class.java
         emptyService = servicesClass.getField("EMPTY").get(servicesClass)
@@ -49,10 +47,7 @@ class KotlinCompiler @Inject constructor() {
 
     fun compile(srcs: List<String>, compileClasspath: List<String>, kaptAPClasspath: List<String>, kaptPlugins: List<String>,
                 classes: Path, kaptSources: Path, kaptClasses: Path, kaptKotlinSources: Path) {
-        if (srcs.isEmpty()) {
-            log.error("No source files!")
-            return
-        }
+        require(srcs.isNotEmpty())
         Files.createDirectories(classes)
         Files.createDirectories(kaptSources)
         Files.createDirectories(kaptClasses)

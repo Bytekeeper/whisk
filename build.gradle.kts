@@ -7,9 +7,8 @@ plugins {
     kotlin("jvm") version kotlinVersion
     id("com.github.ben-manes.versions") version "0.21.0"
     kotlin("kapt") version kotlinVersion
+    antlr
 }
-
-val schnitzel by configurations.creating
 
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
@@ -18,7 +17,7 @@ dependencies {
 //    implementation(kotlin("compiler"))
 //    implementation(files("/usr/lib/jvm/java-8-openjdk-amd64/lib/tools.jar"))
 //    testImplementation(kotlin("compiler"))
-    implementation("org.tomlj:tomlj:1.0.0")
+//    implementation("org.tomlj:tomlj:1.0.0")
     implementation("org.apache.logging.log4j:log4j-core:2.11.2")
 //    testImplementation("org.jetbrains.kotlin:kotlin-annotation-processing:1.3.31")
     implementation("org.apache.maven:maven-resolver-provider:3.6.1")
@@ -28,7 +27,8 @@ dependencies {
 
     implementation("com.google.dagger:dagger:2.22.1")
     kapt("com.google.dagger:dagger-compiler:2.22.1")
-    testImplementation("com.google.dagger:dagger-compiler:2.22.1")
+    antlr("org.antlr:antlr4:4.7.2")
+    testImplementation("org.assertj:assertj-core:3.11.1")
 }
 
 allprojects {
@@ -39,16 +39,6 @@ allprojects {
     repositories {
         mavenCentral()
         jcenter()
-    }
-
-    sourceSets {
-        main {
-            java.srcDirs("src")
-            resources {
-
-                srcDir(file("resources"))
-            }
-        }
     }
 
 
@@ -74,4 +64,9 @@ tasks {
 
         from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
     }
+}
+
+tasks.generateGrammarSource {
+    outputDirectory = file("build/generated-src/antlr/main/org/whisk/buildlang")
+    arguments = listOf("-visitor")
 }

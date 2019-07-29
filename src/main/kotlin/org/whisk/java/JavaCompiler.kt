@@ -9,6 +9,7 @@ import javax.tools.ToolProvider
 @Reusable
 class JavaCompiler @Inject constructor() {
     fun compile(srcs: List<File>, compileClassPath: List<File>, target: File) {
+        require(srcs.isNotEmpty())
         val compiler = ToolProvider.getSystemJavaCompiler()
         val fileManager = compiler.getStandardFileManager(null, null, null)
         val files = fileManager.getJavaFileObjectsFromFiles(srcs)

@@ -12,7 +12,6 @@ object PathMatcher {
                 .replace("?", "\\w")
                 .replace("**", ".*")
                 .replace("(?<!\\.)\\*".toRegex(), "[^/]+")
-                .toRegex()
 }
 
 fun <T> InputStream.readChunked(initial: T, handler: (T, ByteArray, Int) -> T): T {
