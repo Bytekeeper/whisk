@@ -1,0 +1,28 @@
+export kotlin_compile, maven_library, build_jar, prebuilt_jar, remote_file, glob, antlr_gen
+
+# Define rules with "native" implementation
+# Usually rules are defined by "rule(...) = value", omitting "= value" marks them as being implemented in code
+
+# Rule to compile kotlin (and potentially java)
+kotlin_compile(srcs:[], cp:[], exported_deps:[], kapt_processors: [], plugins: [])
+
+# Rule to depend on maven artifacts (transitively)
+maven_library(artifacts, repository_url, sha1)
+
+# Rule to build a jar from a list of files
+build_jar(files:[],main_class)
+
+# Rule to depend on a locally existing jar file
+prebuilt_jar(binary_jar)
+
+# Rule to depend on a remote file
+remote_file(url, sha1)
+
+# Rules marked with "anon" can also be called within other rule calls, ie. "rule(glob(..))" is allowed while "ruleA(ruleB(..))" will fail unless ruleB is anonymous.
+# Rule to depend on files given a glob pattern (ie. "src/main/**.java")
+anon glob(srcs:[])
+
+# Rule to generate lexers and parsers from ANTLR grammars
+antlr_gen(srcs: [], arguments: [])
+
+

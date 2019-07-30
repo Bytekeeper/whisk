@@ -18,7 +18,7 @@ fun main(vararg args: String) {
     val processor = application.processor()
     val graphBuilder = application.graphBuilder()
 
-    val resolvedGoals = application.resolver().resolve(PathModuleLoader(Paths.get("")), "")
+    val resolvedGoals = application.resolver().resolve(PathModuleLoader(SystemModuleLoader(), Paths.get("")), "")
     val graph = graphBuilder.buildFrom(resolvedGoals, args[0])
     println(graph)
     println(graph.nodes.filter { it.dependencies.isEmpty() })

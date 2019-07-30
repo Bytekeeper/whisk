@@ -54,10 +54,10 @@ class GlobalTable : SymbolTable {
     private val modules = mutableMapOf<String, ModuleTable>()
 
     override fun resolveGoal(modules: List<String>, name: String): ResolvedGoal =
-            (modules + "").mapNotNull { this.modules[it]?.resolveGoal(name) }.single()
+            modules.mapNotNull { this.modules[it]?.resolveGoal(name) }.single()
 
     override fun resolveRule(modules: List<String>, name: String): ResolvedRule =
-            (modules + "").mapNotNull { this.modules[it]?.resolveRule(name) }.singleOrNull()
+            modules.mapNotNull { this.modules[it]?.resolveRule(name) }.singleOrNull()
                     ?: throw RuleNotFoundException("Unknown rule $name")
 
     fun exposedGoalsOf(module: String) =
@@ -87,12 +87,20 @@ class LocalTable(private val parent: GlobalTable) : SymbolTable {
 }
 
 interface ModuleLoader {
-    fun load(module: String): CharStream
+    fun load(module: String): CharStream?
 }
 
-class PathModuleLoader(private val basePath: Path) : ModuleLoader {
+class SystemModuleLoader : ModuleLoader {
+    override fun load(module: String): CharStream? =
+            javaClass.getResourceAsStream("/" + module.replace('.', '/') + "/WHISK.BL")
+                    ?.let {
+                        CharStreams.fromStream(it)
+                    }
+}
+
+class PathModuleLoader(private val parent: ModuleLoader, private val basePath: Path) : ModuleLoader {
     override fun load(module: String): CharStream =
-            CharStreams.fromPath(basePath.resolve(module.replace('.', '/')).resolve("WHISK.BL"))
+            parent.load(module) ?: CharStreams.fromPath(basePath.resolve(module.replace('.', '/')).resolve("WHISK.BL"))
 }
 
 class BuildLangResolver @Inject constructor(
@@ -138,11 +146,12 @@ class BuildLangResolver @Inject constructor(
 
             val imports = buildFile.import.imports.map { it.text }
             imports.forEach(::resolveInternal)
+            val importedModules = listOf(module) + imports
 
             fun resolveValue(value: Value, allowNonAnon: Boolean = false): ResolvedValue<Value> =
                     when (value) {
                         is RuleCall -> {
-                            val rule = localTable.resolveRule(imports, value.rule.text)
+                            val rule = localTable.resolveRule(importedModules, value.rule.text)
                             if (!rule.anon && !allowNonAnon) throw IllegalRuleCall("'${rule.name}' is not anonymously callable, but is called from ${value.rule.ID.toPos(module)}")
                             ResolvedRuleCall(SourceRef(module, value), rule,
                                     value.params.map { param ->
@@ -155,18 +164,18 @@ class BuildLangResolver @Inject constructor(
                                     })
                         }
                         is StringValue -> ResolvedStringValue(SourceRef(module, value), value.value)
-                        is RefValue -> ResolvedGoalCall(SourceRef(module, value), localTable.resolveGoal(imports, value.ref.text))
+                        is RefValue -> ResolvedGoalCall(SourceRef(module, value), localTable.resolveGoal(importedModules, value.ref.text))
                         is ListValue -> ResolvedListValue(SourceRef(module, value), value.items.map { resolveValue(it) })
                         else -> throw InternalBuildLangError("Unknown value $value")
                     }
 
 
             buildFile.declarations.forEach { decl ->
-                val resolvedDeclaration = localTable.resolveGoal(emptyList(), decl.name.text)
+                val resolvedDeclaration = localTable.resolveGoal(importedModules, decl.name.text)
                 resolvedDeclaration.value = resolveValue(decl.value, true)
             }
             buildFile.definitions.forEach { def ->
-                val resolvedDefinition = localTable.resolveRule(emptyList(), def.name.text)
+                val resolvedDefinition = localTable.resolveRule(importedModules, def.name.text)
                 if (def.value != null) {
                     resolvedDefinition.value = resolveValue(def.value, !def.anon)
                 } else {

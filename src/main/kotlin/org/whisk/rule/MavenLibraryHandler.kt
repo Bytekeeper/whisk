@@ -58,7 +58,7 @@ class MavenLibraryHandler @Inject constructor() :
             verifyFiles = true
             val remoteRepository = RemoteRepository.Builder(
                     "central", "default",
-                    rule.repositoryUrl?.string ?: "https://repo.maven.apache.org/maven2/"
+                    rule.repository_url?.string ?: "https://repo.maven.apache.org/maven2/"
             ).build()
             val repositoryLayout = repositoryLayoutProvider.newRepositoryLayout(session, remoteRepository)
 
