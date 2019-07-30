@@ -7,7 +7,7 @@ data class GoalDeclaration(val name: Token, val value: Value)
 data class RuleDefinition(val name: Token, val ruleParamDefs: List<RuleParamDef>, val value: Value?, val anon: Boolean = false)
 data class BuildFile(val import: Import, val export: Export, val declarations: List<GoalDeclaration>, val definitions: List<RuleDefinition>)
 interface Value
-data class RefValue(val ref: Token) : Value
+data class RefValue(val ref: BuildLangParser.QNameContext) : Value
 data class StringValue(val value: String) : Value
 data class ListValue(val items: List<Value> = emptyList()) : Value
 data class RuleCall(val rule: BuildLangParser.QNameContext, val params: List<RuleParam>) : Value
@@ -57,12 +57,12 @@ class BuildLangTransformer @Inject constructor() {
 
 private object ValueVisitor : BuildLangParserBaseVisitor<Value>() {
     override fun visitListItem(ctx: BuildLangParser.ListItemContext): Value {
-        if (ctx.ID() != null) return RefValue(ctx.ID().symbol)
+        if (ctx.qName() != null) return RefValue(ctx.qName())
         return super.visitListItem(ctx)
     }
 
     override fun visitList(ctx: BuildLangParser.ListContext): Value {
-        return ListValue(ctx.items.map { visitChildren(it) })
+        return ListValue(ctx.items.map { visit(it) ?: throw IllegalStateException("null") })
     }
 
     override fun visitString(ctx: BuildLangParser.StringContext): Value {

@@ -2,8 +2,8 @@ package org.whisk.rule
 
 import org.apache.logging.log4j.LogManager
 import org.whisk.PathMatcher
-import org.whisk.execution.FileResource
 import org.whisk.execution.RuleResult
+import org.whisk.execution.StringResource
 import org.whisk.execution.Success
 import org.whisk.model.*
 import java.io.OutputStreamWriter
@@ -48,14 +48,14 @@ internal fun download(target: Path, url: URL): Path {
 
 class GlobHandler @Inject constructor() : RuleExecutor<Glob> {
     override fun execute(execution: Execution<Glob>): RunnableFuture<RuleResult> {
-        val matcher = execution.ruleParameters.srcs.map { PathMatcher.toRegex(it) }.joinToString("|").toRegex()
+        val matcher = execution.ruleParameters.srcs.joinToString("|") { PathMatcher.toRegex(it.string) }.toRegex()
         val base = Paths.get(".")
         val srcs = Files.walk(base)
                 .use {
                     it.map { base.relativize(it) }
                             .filter {
                                 matcher.matches(it.toString())
-                            }.toList().map { FileResource(it) }
+                            }.toList().map { StringResource(it.toAbsolutePath().toString()) }
                 }
         return FutureTask { Success(srcs) }
     }
@@ -67,8 +67,9 @@ class PrebuiltJarHandler @Inject constructor() : RuleExecutor<PrebuiltJar> {
             execution: Execution<PrebuiltJar>
     ): RunnableFuture<RuleResult> {
         val rule = execution.ruleParameters
-        if (!rule.binary_jar.exists) throw java.lang.IllegalStateException("${execution.goalName} file does not exist!")
-        return FutureTask { Success(listOf(rule.binary_jar)) }
+        val file = Paths.get(rule.binary_jar.string)
+        if (!file.toFile().exists()) throw java.lang.IllegalStateException("${execution.goalName} file does not exist!")
+        return FutureTask { Success(listOf(StringResource(file.toAbsolutePath().toString()))) }
     }
 }
 
@@ -82,7 +83,7 @@ class RemoteFileHandler @Inject constructor() : RuleExecutor<RemoteFile> {
         val whiskDir = execution.cacheDir
         val url = URL(rule.url.string)
         val targetFile = download(whiskDir, url)
-        return FutureTask { Success(listOf(FileResource(targetFile.toAbsolutePath()))) }
+        return FutureTask { Success(listOf(StringResource(targetFile.toAbsolutePath().toString()))) }
     }
 
 }
@@ -113,7 +114,7 @@ class JavaBinaryHandler @Inject constructor() : RuleExecutor<BuildJar> {
                     }
 
                     rule.files.forEach { fr ->
-                        val file = fr.toString()
+                        val file = fr.string
                         if (!usedNames.contains(file)) {
                             if (file.endsWith(".jar")) {
                                 JarInputStream(Files.newInputStream(Paths.get(file)))
@@ -140,7 +141,7 @@ class JavaBinaryHandler @Inject constructor() : RuleExecutor<BuildJar> {
                         }
                     }
                 }
-        return FutureTask { Success(listOf(FileResource(jarName.toAbsolutePath()))) }
+        return FutureTask { Success(listOf(StringResource(jarName.toAbsolutePath().toString()))) }
     }
 }
 

@@ -16,7 +16,7 @@ declaration : name=ID ASSIGN value=ruleParamValue;
 ruleCall : name=qName LPAREN ( | param = ruleParamValue | params+=ruleParam (COMMA params+=ruleParam)*) RPAREN;
 ruleParam : name=ID ASSIGN value=ruleParamValue;
 ruleParamValue: (listItem | list);
-listItem: ID | string | ruleCall;
+listItem: qName | string | ruleCall;
 list : LBRACKET (items+=listItem (COMMA items+=listItem)*)? RBRACKET;
 string locals [StringBuilder tmp = new StringBuilder(), String value] : STRING_START (stringPart { $string::tmp.append($stringPart.text); })* STRING_END { $value = $tmp.toString(); };
 stringPart: TEXT | ESCAPE_SINGLE_QUOTE | ESCAPE_BACKSLASH;

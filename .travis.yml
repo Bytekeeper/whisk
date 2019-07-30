@@ -3,5 +3,5 @@ script:
   - ./gradlew build -s
   - ls -al build/libs
   - java -cp build/libs/whisk.jar:$(find $JAVA_HOME -name 'tools.jar') org.whisk.MainKt /:main
-  - cp whisk-out/jar/main.jar .
+  - cp whisk-out/jar/whisk.jar .
   - java -cp main.jar:$(find $JAVA_HOME -name 'tools.jar') org.whisk.MainKt /:main

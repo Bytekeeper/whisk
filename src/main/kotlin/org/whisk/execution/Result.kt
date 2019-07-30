@@ -1,14 +1,13 @@
 package org.whisk.execution
 
-import java.nio.file.Path
-
 interface Resource
+/*
 data class FileResource(val path: Path) : Resource {
     val exists get() = path.toFile().exists()
     val file get() = path.toFile()
     val absolutePath get() = path.toAbsolutePath().toString()
 }
-
+*/
 data class StringResource(val string: String) : Resource
 
 interface RuleResult {

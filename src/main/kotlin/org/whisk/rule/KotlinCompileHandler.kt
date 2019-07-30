@@ -1,7 +1,7 @@
 package org.whisk.rule
 
-import org.whisk.execution.FileResource
 import org.whisk.execution.RuleResult
+import org.whisk.execution.StringResource
 import org.whisk.execution.Success
 import org.whisk.java.JavaCompiler
 import org.whisk.kotlin.KotlinCompiler
@@ -32,16 +32,16 @@ class KotlinCompileHandler @Inject constructor(private val kotlinCompiler: Kotli
         val jarDir = whiskOut.resolve("jar")
 //
 
-        val ruleSrcs = rule.srcs.map { it.path.toAbsolutePath().toString() }
-        val exportedDeps = rule.exported_deps.map { it.path.toString() }
-        val dependencies = rule.cp.map { it.path.toString() } + exportedDeps
-        val kaptAPClasspath = rule.kapt_processors.map { it.path.toAbsolutePath().toString() }
-        val kaptPlugins = rule.plugins.map { it.path.toAbsolutePath().toString() }
+        val ruleSrcs = rule.srcs.map { it.string }
+        val exportedDeps = rule.exported_deps.map { it.string }
+        val dependencies = rule.cp.map { it.string } + exportedDeps
+        val kaptAPClasspath = rule.kapt_processors.map { it.string }
+        val kaptPlugins = rule.plugins.map { it.string }
         kotlinCompiler.compile(ruleSrcs, dependencies, kaptAPClasspath, kaptPlugins, classesDir, kaptDir.resolve("sources"),
                 kaptClasses, kaptDir.resolve("kotlinSources"))
 
         val javaSources = Files.walk(kaptDir.resolve("sources")).use { it.filter { Files.isRegularFile(it) }.map { it.toFile() }.toList() } +
-                ruleSrcs.map { File(it) }
+                ruleSrcs.filter { it.endsWith(".java") }.map { File(it) }
         if (javaSources.isNotEmpty()) {
             javaCompiler.compile(javaSources, dependencies.map { File(it) } + classesDir.toFile(), classesDir.toFile())
         }
@@ -67,6 +67,6 @@ class KotlinCompileHandler @Inject constructor(private val kotlinCompiler: Kotli
                     Files.walk(kaptClasses).use(addToJar)
                 }
 
-        return FutureTask { Success(rule.exported_deps + FileResource(jarName)) }
+        return FutureTask { Success(rule.exported_deps + StringResource(jarName.toAbsolutePath().toString())) }
     }
 }

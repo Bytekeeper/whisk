@@ -27,9 +27,9 @@ class KotlinTestHandler @Inject constructor(private val kotlinCompiler: KotlinCo
         val kaptDir = whiskOut.resolve("kapt")
         val kaptClasses = kaptDir.resolve("classes")
 
-        val dependencies = rule.cp.map { it.absolutePath }
+        val dependencies = rule.cp.map { it.string }
 
-        kotlinCompiler.compile(rule.srcs.map { it.absolutePath }, dependencies, emptyList(), emptyList(), classesDir, kaptDir.resolve("sources"),
+        kotlinCompiler.compile(rule.srcs.map { it.string }, dependencies, emptyList(), emptyList(), classesDir, kaptDir.resolve("sources"),
                 kaptClasses, kaptDir.resolve("kotlinSources"))
 
         val cl = URLClassLoader(((dependencies.map {

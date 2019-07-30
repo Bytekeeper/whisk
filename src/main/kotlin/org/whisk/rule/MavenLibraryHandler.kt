@@ -16,6 +16,7 @@ import org.eclipse.aether.spi.connector.transport.TransporterFactory
 import org.eclipse.aether.transport.http.HttpTransporterFactory
 import org.eclipse.aether.util.graph.visitor.PreorderNodeListGenerator
 import org.whisk.execution.RuleResult
+import org.whisk.execution.StringResource
 import org.whisk.execution.Success
 import org.whisk.model.MavenLibrary
 import java.io.PrintWriter
@@ -50,7 +51,7 @@ class MavenLibraryHandler @Inject constructor() :
             execution: Execution<MavenLibrary>
     ): RunnableFuture<RuleResult> {
         val rule = execution.ruleParameters
-        val depFile = Paths.get("MEH-dep.toml")
+        val depFile = Paths.get("${execution.goalName}.mvn")
         var verifyFiles = false
 
         if (!depFile.toFile().exists()) {
@@ -76,51 +77,25 @@ class MavenLibraryHandler @Inject constructor() :
             val artifacts = listGenerator.nodes.map { it.artifact }.sortedBy { it.toString() }
             PrintWriter(Files.newBufferedWriter(depFile, StandardCharsets.UTF_8))
                     .use { out ->
-                        out.println("root_artifacts=${rule.artifacts.map { it.string }.sorted().joinToString("\", \"", "[\"", "\"]")}")
                         artifacts.forEach { a ->
                             val downloadPath = repositoryLayout.getLocation(a, false)
                             val downloadURL = repositoryUrl + downloadPath
-                            val expectedSHA1 = repositoryLayout.getChecksums(a, false, downloadPath)
-                                    .firstOrNull { it.algorithm == "SHA-1" }
-                                    ?.let { checksum ->
-                                        URL(repositoryUrl + checksum.location).openStream()
-                                                .use { String(it.readBytes(), 0, 40) }
-                                    } ?: ""
-                            out.println("[[maven_artifact]]")
-                            out.println("name=\"${a.groupId}_${a.artifactId}\"")
-                            out.println("url=\"$downloadURL\"")
-                            out.println("sha1=\"$expectedSHA1\"")
-                            out.println()
+                            out.println(downloadURL)
                         }
                     }
         } else {
             log.debug("Dependency file for ${execution.goalName} exists, using it...")
         }
-        /*
-        val depFileTable = Toml.parse(depFile)
-        if (depFileTable.getArray("root_artifacts")?.toList() != rule.artifacts.sorted())
-            throw MavenDependencyChanged("Maven artifact list of ${rule.name} has changed, delete '$depFile' and refetch!")
-        val mavenArtifactsList = depFileTable.getArray("maven_artifact")
-                ?: throw IllegalStateException("Invalid dependency file: $depFile")
-        val forwardDeps = mutableListOf<String>()
-        for (i in 0 until mavenArtifactsList.size()) {
-            val artifact = mavenArtifactsList.getTable(i)
-            val download =
-                    download(
-                            execution.cacheDir,
-                            URL(artifact.getString("url") ?: throw IllegalStateException("URL missing"))
-                    )
-            if (verifyFiles) {
-                val expectedSha1 = artifact.getString("sha1")
-                val actualSha1 = download.sha1().toHex()
-                if (expectedSha1 != actualSha1) {
-                    throw InvalidChecksumError("Maven artifact ${artifact.getString("name")} of rule ${rule.name} has an invalid checksum, expected $expectedSha1, but got $actualSha1!")
+        val forwardDeps = Files.newBufferedReader(depFile)
+                .useLines {
+                    it.map { url ->
+                        download(
+                                execution.cacheDir,
+                                URL(url)
+                        )
+                    }.map { StringResource(it.toAbsolutePath().toString()) }.toList()
                 }
-            }
-            forwardDeps += download.toString()
-
-        }*/
-        return FutureTask { Success(emptyList()) }
+        return FutureTask { Success(forwardDeps) }
     }
 
 }

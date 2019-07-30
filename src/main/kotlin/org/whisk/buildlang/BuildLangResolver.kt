@@ -16,7 +16,7 @@ interface WithSourceRef<out S> {
 }
 
 data class ResolvedGoal(override val source: SourceRef<GoalDeclaration>, val name: String, var value: ResolvedValue<Value>?) : WithSourceRef<GoalDeclaration>
-data class ResolvedRule(override val source: SourceRef<RuleDefinition>, val name: String, val params: List<ResolvedRuleParamDef>, var value: ResolvedValue<Value>?, var nativeHandler: KClass<out RuleParameters>?, val anon: Boolean) : WithSourceRef<RuleDefinition>
+data class ResolvedRule(override val source: SourceRef<RuleDefinition>, val name: String, val params: List<ResolvedRuleParamDef>, var value: ResolvedValue<Value>?, var nativeRule: KClass<out RuleParameters>?, val anon: Boolean) : WithSourceRef<RuleDefinition>
 
 interface ResolvedValue<out S> : WithSourceRef<S>
 data class ResolvedStringValue(override val source: SourceRef<StringValue>, val value: String) : ResolvedValue<StringValue>
@@ -57,7 +57,8 @@ class GlobalTable : SymbolTable {
             (modules + "").mapNotNull { this.modules[it]?.resolveGoal(name) }.single()
 
     override fun resolveRule(modules: List<String>, name: String): ResolvedRule =
-            (modules + "").mapNotNull { this.modules[it]?.resolveRule(name) }.single()
+            (modules + "").mapNotNull { this.modules[it]?.resolveRule(name) }.singleOrNull()
+                    ?: throw RuleNotFoundException("Unknown rule $name")
 
     fun exposedGoalsOf(module: String) =
             modules[module]?.exposedGoals() ?: emptyList()
@@ -145,7 +146,7 @@ class BuildLangResolver @Inject constructor(
                                     value.params.map { param ->
                                         val name = param.name?.text
                                         val paramDef = if (name == null) rule.params.singleOrNull()
-                                                ?: throw InvalidParameterException("'${rule.name}' takes no parameters @ ${value.rule.ID.toPos(module)}.")
+                                                ?: throw InvalidParameterException("'Invalid number of parameters for ${rule.name}' @ ${value.rule.ID.toPos(module)}.")
                                         else rule.params.firstOrNull { it.name == name }
                                                 ?: throw InvalidParameterException("'${rule.name}' has no parameter named '${name}' @ ${param.name.toPos(module)}.")
                                         ResolvedRuleParam(SourceRef(module, param), paramDef, resolveValue(param.value))
@@ -167,7 +168,7 @@ class BuildLangResolver @Inject constructor(
                 if (def.value != null) {
                     resolvedDefinition.value = resolveValue(def.value, !def.anon)
                 } else {
-                    resolvedDefinition.nativeHandler = ruleRegistry.getRuleClass(resolvedDefinition.name)
+                    resolvedDefinition.nativeRule = ruleRegistry.getRuleClass(resolvedDefinition.name)
                 }
             }
         }
@@ -179,3 +180,4 @@ class BuildLangResolver @Inject constructor(
 class InternalBuildLangError(message: String) : IllegalStateException(message)
 class InvalidParameterException(message: String) : RuntimeException(message)
 class IllegalRuleCall(message: String) : java.lang.RuntimeException(message)
+class RuleNotFoundException(message: String) : java.lang.RuntimeException(message)

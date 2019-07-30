@@ -1,7 +1,7 @@
 package org.whisk.rule
 
-import org.whisk.execution.FileResource
 import org.whisk.execution.RuleResult
+import org.whisk.execution.StringResource
 import org.whisk.execution.Success
 import org.whisk.model.ProtobufCompile
 import java.net.URL
@@ -48,14 +48,14 @@ class ProtobufCompilerHandler @Inject constructor() :
         val outputDir = execution.targetPath.resolve("gen").resolve("protobuf")
         Files.createDirectories(outputDir)
         params += outputDir.toString()
-        params += rule.srcs.map { it.absolutePath }
+        params += rule.srcs.map { it.string }
         val protocProcess = ProcessBuilder().command(params)
                 .inheritIO()
                 .start()
         protocProcess.waitFor()
 
         val result = Files.walk(outputDir).use { pathStream ->
-            pathStream.filter { Files.isRegularFile(it) }.map { FileResource(it) }.toList()
+            pathStream.filter { Files.isRegularFile(it) }.map { StringResource(it.toAbsolutePath().toString()) }.toList()
         }
         return FutureTask { Success(result) }
     }
