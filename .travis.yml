@@ -1,6 +1,6 @@
 language: java
+jdk: openjdk8
 script:
-  - jdk_switcher use openjdk8
   - ./gradlew build -s
   - ls -al build/libs
   - java -cp build/libs/whisk.jar:$(find $JAVA_HOME -name 'tools.jar') org.whisk.MainKt whisk
