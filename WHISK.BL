@@ -1,4 +1,4 @@
-export main,jar
+export main,whisk
 
 kotlin_compile(srcs:[], cp:[], exported_deps:[], kapt_processors: [], plugins: [])
 maven_library(artifacts, sha1)

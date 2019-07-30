@@ -114,6 +114,8 @@ class BuildLangResolver @Inject constructor(
             parser.addErrorListener(BLErrorListener())
             val buildFile = buildLangTransformer.buildFileFrom(parser.buildFile())
             val exposed = buildFile.export.exports.map { it.text }.toSet()
+            val invalidExposed = exposed.filter { exp -> buildFile.declarations.none { it.name.text == exp } && buildFile.definitions.none { it.name.text == exp } }
+            if (invalidExposed.isNotEmpty()) throw InvalidExposed("Cannot expose undefined rules/goals: ${invalidExposed.joinToString()}")
 
             buildFile.declarations.forEach { decl ->
                 val goalName = decl.name.text
@@ -181,3 +183,4 @@ class InternalBuildLangError(message: String) : IllegalStateException(message)
 class InvalidParameterException(message: String) : RuntimeException(message)
 class IllegalRuleCall(message: String) : java.lang.RuntimeException(message)
 class RuleNotFoundException(message: String) : java.lang.RuntimeException(message)
+class InvalidExposed(message: String) : java.lang.RuntimeException(message)

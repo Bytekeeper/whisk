@@ -9,7 +9,8 @@ class Graph(val nodes: List<Node>)
 
 class GraphBuilder @Inject constructor() {
     fun buildFrom(availableGoals: List<ResolvedGoal>, goal: String): Graph {
-        val entryGoal = availableGoals.single { it.name == goal }
+        val entryGoal = availableGoals.singleOrNull { it.name == goal }
+                ?: throw IllegalArgumentException("No such goal $goal, valid goals are ${availableGoals.map { it.name }.joinToString()}")
         val graphVisitor = GraphVisitor()
 
         graphVisitor.visitGoal(entryGoal)
