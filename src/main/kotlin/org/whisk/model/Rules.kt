@@ -45,7 +45,7 @@ data class BuildJar(
 ) : RuleParameters
 
 data class MavenLibrary(
-        val artifacts: List<FileResource>,
+        val artifacts: List<StringResource>,
         val repository_url: StringResource?
 ) : RuleParameters
 
