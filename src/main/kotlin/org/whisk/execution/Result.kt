@@ -1,14 +1,6 @@
 package org.whisk.execution
 
-interface Resource
-/*
-data class FileResource(val path: Path) : Resource {
-    val exists get() = path.toFile().exists()
-    val file get() = path.toFile()
-    val absolutePath get() = path.toAbsolutePath().toString()
-}
-*/
-data class StringResource(val string: String) : Resource
+import org.whisk.model.Resource
 
 interface RuleResult {
     val resources: List<Resource>

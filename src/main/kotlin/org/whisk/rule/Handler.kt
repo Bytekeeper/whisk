@@ -1,9 +1,7 @@
 package org.whisk.rule
 
 import org.apache.logging.log4j.LogManager
-import org.whisk.PathMatcher
 import org.whisk.execution.RuleResult
-import org.whisk.execution.StringResource
 import org.whisk.execution.Success
 import org.whisk.model.*
 import java.io.OutputStreamWriter
@@ -20,7 +18,6 @@ import java.util.jar.JarEntry
 import java.util.jar.JarInputStream
 import java.util.jar.JarOutputStream
 import javax.inject.Inject
-import kotlin.streams.toList
 
 
 class InvalidChecksumError(message: String) : Exception(message)
@@ -46,30 +43,14 @@ internal fun download(target: Path, url: URL): Path {
     return targetFile
 }
 
-class GlobHandler @Inject constructor() : RuleExecutor<Glob> {
-    override fun execute(execution: Execution<Glob>): RunnableFuture<RuleResult> {
-        val matcher = execution.ruleParameters.srcs.joinToString("|") { PathMatcher.toRegex(it.string) }.toRegex()
-        val base = Paths.get(".")
-        val srcs = Files.walk(base)
-                .use {
-                    it.map { base.relativize(it) }
-                            .filter {
-                                matcher.matches(it.toString())
-                            }.toList().map { StringResource(it.toAbsolutePath().toString()) }
-                }
-        return FutureTask { Success(srcs) }
-    }
-
-}
-
 class PrebuiltJarHandler @Inject constructor() : RuleExecutor<PrebuiltJar> {
     override fun execute(
             execution: Execution<PrebuiltJar>
     ): RunnableFuture<RuleResult> {
         val rule = execution.ruleParameters
-        val file = Paths.get(rule.binary_jar.string)
-        if (!file.toFile().exists()) throw java.lang.IllegalStateException("${execution.goalName} file does not exist!")
-        return FutureTask { Success(listOf(StringResource(file.toAbsolutePath().toString()))) }
+        val file = FileResource(Paths.get(rule.binary_jar.string).toAbsolutePath())
+        if (!file.exists) throw java.lang.IllegalStateException("${execution.goalName} file does not exist!")
+        return FutureTask { Success(listOf(file)) }
     }
 }
 
@@ -83,7 +64,7 @@ class RemoteFileHandler @Inject constructor() : RuleExecutor<RemoteFile> {
         val whiskDir = execution.cacheDir
         val url = URL(rule.url.string)
         val targetFile = download(whiskDir, url)
-        return FutureTask { Success(listOf(StringResource(targetFile.toAbsolutePath().toString()))) }
+        return FutureTask { Success(listOf(FileResource(targetFile.toAbsolutePath()))) }
     }
 
 }
@@ -114,10 +95,10 @@ class JavaBinaryHandler @Inject constructor() : RuleExecutor<BuildJar> {
                     }
 
                     rule.files.forEach { fr ->
-                        val file = fr.string
+                        val file = fr.relativePath.toString()
                         if (!usedNames.contains(file)) {
                             if (file.endsWith(".jar")) {
-                                JarInputStream(Files.newInputStream(Paths.get(file)))
+                                JarInputStream(Files.newInputStream(fr.path))
                                         .use { jar ->
                                             var entry = jar.nextJarEntry
                                             while (entry != null) {
@@ -131,9 +112,9 @@ class JavaBinaryHandler @Inject constructor() : RuleExecutor<BuildJar> {
                                                 entry = jar.nextJarEntry
                                             }
                                         }
-                            } else {
+                            } else if (!Files.isDirectory(fr.path)) {
                                 out.putNextEntry(JarEntry(file))
-                                Files.copy(Paths.get(file), out)
+                                Files.copy(fr.path, out)
                             }
                             usedNames += file
                         } else {
@@ -141,7 +122,7 @@ class JavaBinaryHandler @Inject constructor() : RuleExecutor<BuildJar> {
                         }
                     }
                 }
-        return FutureTask { Success(listOf(StringResource(jarName.toAbsolutePath().toString()))) }
+        return FutureTask { Success(listOf(FileResource(jarName.toAbsolutePath()))) }
     }
 }
 

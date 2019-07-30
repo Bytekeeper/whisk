@@ -16,8 +16,8 @@ import org.eclipse.aether.spi.connector.transport.TransporterFactory
 import org.eclipse.aether.transport.http.HttpTransporterFactory
 import org.eclipse.aether.util.graph.visitor.PreorderNodeListGenerator
 import org.whisk.execution.RuleResult
-import org.whisk.execution.StringResource
 import org.whisk.execution.Success
+import org.whisk.model.FileResource
 import org.whisk.model.MavenLibrary
 import java.io.PrintWriter
 import java.net.URL
@@ -93,7 +93,7 @@ class MavenLibraryHandler @Inject constructor() :
                                 execution.cacheDir,
                                 URL(url)
                         )
-                    }.map { StringResource(it.toAbsolutePath().toString()) }.toList()
+                    }.map { FileResource(it.toAbsolutePath()) }.toList()
                 }
         return FutureTask { Success(forwardDeps) }
     }

@@ -4,7 +4,7 @@ import whisk
 export main,whisk
 
 # Define goals that can be called
-whisk = build_jar(files= main, main_class='org.whisk.MainKt')
+whisk = build_jar(files= [main, rglob(pattern='**', root='src/main/resources')], main_class='org.whisk.MainKt')
 main = kotlin_compile(srcs = [glob('src/main/kotlin/**.kt'), grammar],
     cp=[],
     exported_deps=[log4j2_api, log4j2_core, kotlin_compiler, kotlin_stdlib, kotlin_reflect, annotations, antlr4,

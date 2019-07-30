@@ -4,8 +4,9 @@ import org.apache.logging.log4j.LogManager
 import org.whisk.buildlang.*
 import org.whisk.execution.Failed
 import org.whisk.execution.RuleResult
-import org.whisk.execution.StringResource
 import org.whisk.execution.Success
+import org.whisk.model.FileResource
+import org.whisk.model.StringResource
 import org.whisk.rule.Execution
 import java.nio.file.Paths
 import kotlin.reflect.full.primaryConstructor
@@ -53,8 +54,16 @@ fun main(vararg args: String) {
                             val kParameters = ctor.parameters.map {
                                 val resources = parameters[it.name]?.resources
                                 it to when {
-                                    resources != null -> if (it.type.classifier == List::class) resources else resources.single()
-                                    it.type.classifier == List::class -> emptyList<StringResource>()
+                                    resources != null ->
+                                        if (it.type.classifier == List::class) resources
+                                        else {
+                                            val resource = resources.single()
+                                            if (it.type.classifier == FileResource::class && resource is StringResource)
+                                                FileResource(Paths.get(resource.string).toAbsolutePath())
+                                            else
+                                                resource
+                                        }
+                                    it.type.classifier == List::class -> emptyList<FileResource>()
                                     else -> null
                                 }
                             }.toMap()

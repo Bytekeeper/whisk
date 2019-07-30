@@ -2,9 +2,9 @@ package org.whisk.rule
 
 import org.antlr.v4.Tool
 import org.whisk.execution.RuleResult
-import org.whisk.execution.StringResource
 import org.whisk.execution.Success
 import org.whisk.model.AntlrGen
+import org.whisk.model.FileResource
 import java.nio.file.Files
 import java.util.concurrent.FutureTask
 import java.util.concurrent.RunnableFuture
@@ -24,12 +24,11 @@ class AntlrGenHandler @Inject constructor() :
         antlr.processGrammarsOnCommandLine()
         val javaSources = Files.walk(srcGenPath).use {
             it.filter { Files.isRegularFile(it) }
-                    .map { it.toAbsolutePath().toString() }
-                    .filter { it.endsWith(".java") }
+                    .filter { it.toString().endsWith(".java") }
                     .toList()
         }
 
-        return FutureTask { Success(javaSources.map { StringResource(it) }) }
+        return FutureTask { Success(javaSources.map { FileResource(it.toAbsolutePath()) }) }
     }
 
 }

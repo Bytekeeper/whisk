@@ -1,34 +1,33 @@
 package org.whisk.model
 
-import org.whisk.execution.StringResource
 import javax.inject.Inject
 import kotlin.reflect.KClass
 
 interface RuleParameters
 
 data class AntlrGen(
-        val srcs: List<StringResource>,
+        val srcs: List<FileResource>,
         val arguments: List<StringResource>
 ) : RuleParameters
 
 data class KotlinCompile(
-        val srcs: List<StringResource>,
-        val cp: List<StringResource> = emptyList(),
-        var exported_deps: List<StringResource> = emptyList(),
-        val kapt_processors: List<StringResource> = emptyList(),
-        val plugins: List<StringResource> = emptyList()
+        val srcs: List<FileResource>,
+        val cp: List<FileResource> = emptyList(),
+        var exported_deps: List<FileResource> = emptyList(),
+        val kapt_processors: List<FileResource> = emptyList(),
+        val plugins: List<FileResource> = emptyList()
 ) : RuleParameters
 
 data class JavaCompile(
-        val srcs: List<StringResource>,
-        val cp: List<StringResource> = emptyList(),
-        var exported_deps: List<StringResource> = emptyList(),
-        val apt_deps: List<StringResource> = emptyList()
+        val srcs: List<FileResource>,
+        val cp: List<FileResource> = emptyList(),
+        var exported_deps: List<FileResource> = emptyList(),
+        val apt_deps: List<FileResource> = emptyList()
 ) : RuleParameters
 
 data class KotlinTest(
-        val srcs: List<StringResource>,
-        val cp: List<StringResource> = emptyList()
+        val srcs: List<FileResource>,
+        val cp: List<FileResource> = emptyList()
 ) : RuleParameters
 
 data class PrebuiltJar(
@@ -41,21 +40,27 @@ data class RemoteFile(
 ) : RuleParameters
 
 data class BuildJar(
-        val files: List<StringResource>,
+        val files: List<FileResource>,
         val main_class: StringResource?
 ) : RuleParameters
 
 data class MavenLibrary(
-        val artifacts: List<StringResource>,
+        val artifacts: List<FileResource>,
         val repository_url: StringResource?
 ) : RuleParameters
 
 data class ProtobufCompile(
-        val srcs: List<StringResource>,
-        val imports: List<StringResource>
+        val srcs: List<FileResource>,
+        val imports: List<FileResource>
 ) : RuleParameters
 
-data class Glob(val srcs: List<StringResource>) : RuleParameters
+data class Glob(val pattern: List<StringResource>) : RuleParameters {
+    init {
+        check(pattern.isNotEmpty()) { "glob() call requires at least one argument" }
+    }
+}
+
+data class RGlob(val pattern: List<StringResource>, val root: FileResource) : RuleParameters
 
 class RuleRegistry @Inject constructor() {
     private val models = mutableMapOf<String, KClass<out RuleParameters>>()
@@ -71,6 +76,7 @@ class RuleRegistry @Inject constructor() {
         register<ProtobufCompile>()
         register<Glob>()
         register<AntlrGen>()
+        register<RGlob>()
     }
 
     inline fun <reified T : RuleParameters> register() {

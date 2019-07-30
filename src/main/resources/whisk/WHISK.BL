@@ -1,4 +1,4 @@
-export kotlin_compile, maven_library, build_jar, prebuilt_jar, remote_file, glob, antlr_gen
+export kotlin_compile, maven_library, build_jar, prebuilt_jar, remote_file, glob, antlr_gen, rglob
 
 # Define rules with "native" implementation
 # Usually rules are defined by "rule(...) = value", omitting "= value" marks them as being implemented in code
@@ -20,7 +20,9 @@ remote_file(url, sha1)
 
 # Rules marked with "anon" can also be called within other rule calls, ie. "rule(glob(..))" is allowed while "ruleA(ruleB(..))" will fail unless ruleB is anonymous.
 # Rule to depend on files given a glob pattern (ie. "src/main/**.java")
-anon glob(srcs:[])
+anon glob(pattern:[])
+
+anon rglob(pattern:[], root)
 
 # Rule to generate lexers and parsers from ANTLR grammars
 antlr_gen(srcs: [], arguments: [])

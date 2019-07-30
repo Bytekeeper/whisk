@@ -1,10 +1,10 @@
 package org.whisk.rule
 
 import org.whisk.execution.RuleResult
-import org.whisk.execution.StringResource
 import org.whisk.execution.Success
 import org.whisk.java.JavaCompiler
 import org.whisk.kotlin.KotlinCompiler
+import org.whisk.model.FileResource
 import org.whisk.model.KotlinCompile
 import java.io.File
 import java.nio.file.Files
@@ -67,6 +67,6 @@ class KotlinCompileHandler @Inject constructor(private val kotlinCompiler: Kotli
                     Files.walk(kaptClasses).use(addToJar)
                 }
 
-        return FutureTask { Success(rule.exported_deps + StringResource(jarName.toAbsolutePath().toString())) }
+        return FutureTask { Success(rule.exported_deps + FileResource(jarName.toAbsolutePath())) }
     }
 }

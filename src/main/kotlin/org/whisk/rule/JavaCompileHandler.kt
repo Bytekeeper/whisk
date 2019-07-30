@@ -1,9 +1,9 @@
 package org.whisk.rule
 
 import org.whisk.execution.RuleResult
-import org.whisk.execution.StringResource
 import org.whisk.execution.Success
 import org.whisk.java.JavaCompiler
+import org.whisk.model.FileResource
 import org.whisk.model.JavaCompile
 import java.io.File
 import java.nio.file.Files
@@ -51,6 +51,6 @@ class JavaCompileHandler @Inject constructor(private val javaCompiler: JavaCompi
                     }
                 }
 
-        return FutureTask { Success(rule.exported_deps + StringResource(jarName.toAbsolutePath().toString())) }
+        return FutureTask { Success(rule.exported_deps + FileResource(jarName.toAbsolutePath())) }
     }
 }
