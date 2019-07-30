@@ -4,4 +4,4 @@ script:
   - ls -al build/libs
   - java -cp build/libs/whisk.jar:$(find $JAVA_HOME -name 'tools.jar') org.whisk.MainKt whisk
   - cp whisk-out/jar/whisk.jar .
-  - java -cp main.jar:$(find $JAVA_HOME -name 'tools.jar') org.whisk.MainKt whisk
+  - java -cp whisk.jar:$(find $JAVA_HOME -name 'tools.jar') org.whisk.MainKt whisk
