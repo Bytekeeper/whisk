@@ -1,5 +1,34 @@
 # Whisk (yet another build tool)
 
+## Why
+Besides being an interesting topic:
+* Maven
+    * Powerful and extendable
+    * Verbose 
+    * Not all builds neatly fit into the lifecycle phases
+    * Calling a plugin multiple times in build can be difficult
+    * Parallel builds depend on plugin supporting it
+    * Incremental builds are "kind of" supported
+* Gradle
+    * Powerful and extendable and scriptable
+    * Lean build configs
+    * Breaks compatibility often
+    * Very fast
+    * Strange syntax sometimes
+    * Sometimes cryptic build files due to abusing groovy/kotlin
+    * Task based dependencies, but less knowledge about "who built what exactly?"
+* Bazel
+    * Powerful and extendable and scriptable
+    * Reduced python better than full programming language
+    * Strange folder linking
+    * Windows port "works"
+    * Good dependency graph
+    * Using maven dependencies required extra plugins
+* Buck
+    * See Bazel
+    * Can't use maven dependencies
+    
+
 ## Design Goals
 * Based on dependencies and not tasks 
 * Reproducible builds
@@ -16,8 +45,8 @@ export doit, glob
 # Define blub as external rule/goal/function. It can only be used as 'name = blub(...)'. 
 blub(a,b:[],c?)
 
-# Define glob as callable without name, it can also be used as 'x(glob(y))'
-glob([])  
+# Using the 'anon' keyword, define glob as callable without name, it can also be used as 'x(glob(y))'
+anon glob([])  
 
 # Define bla as helper function
 bla(a,b) = blub(a = a, b = [b]) 
