@@ -12,8 +12,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
-import java.util.concurrent.FutureTask
-import java.util.concurrent.RunnableFuture
 import java.util.jar.JarEntry
 import java.util.jar.JarInputStream
 import java.util.jar.JarOutputStream
@@ -25,7 +23,7 @@ class InvalidChecksumError(message: String) : Exception(message)
 data class DependencyReferences(val refs: Map<Any, List<String>>)
 
 interface RuleExecutor<T : RuleParameters> {
-    fun execute(execution: Execution<T>): RunnableFuture<RuleResult>
+    fun execute(execution: Execution<T>): RuleResult
 }
 
 internal fun download(target: Path, url: URL): Path {
@@ -46,11 +44,11 @@ internal fun download(target: Path, url: URL): Path {
 class PrebuiltJarHandler @Inject constructor() : RuleExecutor<PrebuiltJar> {
     override fun execute(
             execution: Execution<PrebuiltJar>
-    ): RunnableFuture<RuleResult> {
+    ): RuleResult {
         val rule = execution.ruleParameters
-        val file = FileResource(Paths.get(rule.binary_jar.string).toAbsolutePath())
+        val file = FileResource(Paths.get(rule.binary_jar.string).toAbsolutePath(), source = rule)
         if (!file.exists) throw java.lang.IllegalStateException("${execution.goalName} file does not exist!")
-        return FutureTask { Success(listOf(file)) }
+        return Success(listOf(file))
     }
 }
 
@@ -59,12 +57,12 @@ class RemoteFileHandler @Inject constructor() : RuleExecutor<RemoteFile> {
 
     override fun execute(
             execution: Execution<RemoteFile>
-    ): RunnableFuture<RuleResult> {
+    ): RuleResult {
         val rule = execution.ruleParameters
         val whiskDir = execution.cacheDir
         val url = URL(rule.url.string)
         val targetFile = download(whiskDir, url)
-        return FutureTask { Success(listOf(FileResource(targetFile.toAbsolutePath()))) }
+        return Success(listOf(FileResource(targetFile.toAbsolutePath(), source = rule)))
     }
 
 }
@@ -74,7 +72,7 @@ class JavaBinaryHandler @Inject constructor() : RuleExecutor<BuildJar> {
 
     override fun execute(
             execution: Execution<BuildJar>
-    ): FutureTask<RuleResult> {
+    ): RuleResult {
         val rule = execution.ruleParameters
         val whiskOut = execution.targetPath
         val jarDir = whiskOut.resolve("jar")
@@ -122,7 +120,7 @@ class JavaBinaryHandler @Inject constructor() : RuleExecutor<BuildJar> {
                         }
                     }
                 }
-        return FutureTask { Success(listOf(FileResource(jarName.toAbsolutePath()))) }
+        return Success(listOf(FileResource(jarName.toAbsolutePath(), source = rule)))
     }
 }
 

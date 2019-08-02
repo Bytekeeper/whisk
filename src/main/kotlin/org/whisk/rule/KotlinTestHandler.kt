@@ -12,15 +12,13 @@ import java.io.File
 import java.net.URLClassLoader
 import java.nio.file.FileSystems
 import java.nio.file.Files
-import java.util.concurrent.FutureTask
-import java.util.concurrent.RunnableFuture
 import javax.inject.Inject
 import kotlin.streams.toList
 
 class KotlinTestHandler @Inject constructor(private val kotlinCompiler: KotlinCompiler) : RuleExecutor<KotlinTest> {
     override fun execute(
             execution: Execution<KotlinTest>
-    ): RunnableFuture<RuleResult> {
+    ): RuleResult {
         val rule = execution.ruleParameters
         val whiskOut = execution.targetPath
         val classesDir = whiskOut.resolve("test-classes")
@@ -74,6 +72,6 @@ class KotlinTestHandler @Inject constructor(private val kotlinCompiler: KotlinCo
         jUnitCore.addListener(TextListener(System.out))
         val result = jUnitCore.run(*classes)
 
-        return FutureTask { Success(emptyList()) }
+        return Success(emptyList())
     }
 }

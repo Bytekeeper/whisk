@@ -6,15 +6,13 @@ import org.whisk.execution.Success
 import org.whisk.model.AntlrGen
 import org.whisk.model.FileResource
 import java.nio.file.Files
-import java.util.concurrent.FutureTask
-import java.util.concurrent.RunnableFuture
 import javax.inject.Inject
 import kotlin.streams.toList
 
 class AntlrGenHandler @Inject constructor() :
         RuleExecutor<AntlrGen> {
 
-    override fun execute(execution: Execution<AntlrGen>): RunnableFuture<RuleResult> {
+    override fun execute(execution: Execution<AntlrGen>): RuleResult {
         val srcGenPath = execution.targetPath.resolve("antlr-gen")
         val rule = execution.ruleParameters
         val args = rule.srcs.map { it.string } +
@@ -28,7 +26,7 @@ class AntlrGenHandler @Inject constructor() :
                     .toList()
         }
 
-        return FutureTask { Success(javaSources.map { FileResource(it.toAbsolutePath()) }) }
+        return Success(javaSources.map { FileResource(it.toAbsolutePath(), source = rule) })
     }
 
 }

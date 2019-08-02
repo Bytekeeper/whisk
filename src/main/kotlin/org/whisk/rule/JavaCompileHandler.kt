@@ -7,8 +7,6 @@ import org.whisk.model.FileResource
 import org.whisk.model.JavaCompile
 import java.io.File
 import java.nio.file.Files
-import java.util.concurrent.FutureTask
-import java.util.concurrent.RunnableFuture
 import java.util.jar.JarEntry
 import java.util.jar.JarOutputStream
 import javax.inject.Inject
@@ -16,7 +14,7 @@ import javax.inject.Inject
 class JavaCompileHandler @Inject constructor(private val javaCompiler: JavaCompiler) :
         RuleExecutor<JavaCompile> {
 
-    override fun execute(execution: Execution<JavaCompile>): RunnableFuture<RuleResult> {
+    override fun execute(execution: Execution<JavaCompile>): RuleResult {
         val rule = execution.ruleParameters
 
         val whiskOut = execution.targetPath
@@ -28,9 +26,6 @@ class JavaCompileHandler @Inject constructor(private val javaCompiler: JavaCompi
         val deps = rule.srcs.map { File(it.string) }
         val exportedDeps = rule.exported_deps.map { File(it.string) }
         val dependencies = deps + exportedDeps
-//        val kapt = rule.apt_deps.map { it.file }
-//        val kaptClasspath = dependencies//.filter { !it.contains("kotlin-compiler") }
-//        val params = srcs.map { it.toString() }
         javaCompiler.compile(rule.srcs.map { File(it.string) }, dependencies, classesDir.toFile())
 
         Files.createDirectories(jarDir)
@@ -42,7 +37,7 @@ class JavaCompileHandler @Inject constructor(private val javaCompiler: JavaCompi
                                 .forEach { path ->
                                     val relativePath = classesDir.relativize(path)
                                     if (Files.isRegularFile(path)) {
-                                        out.putNextEntry(JarEntry(relativePath.toString()));
+                                        out.putNextEntry(JarEntry(relativePath.toString()))
                                         Files.copy(path, out)
                                     } else if (Files.isDirectory(path)) {
                                         out.putNextEntry(JarEntry("$relativePath/"))
@@ -51,6 +46,6 @@ class JavaCompileHandler @Inject constructor(private val javaCompiler: JavaCompi
                     }
                 }
 
-        return FutureTask { Success(rule.exported_deps + FileResource(jarName.toAbsolutePath())) }
+        return Success(rule.exported_deps + FileResource(jarName.toAbsolutePath(), source = rule))
     }
 }

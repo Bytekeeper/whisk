@@ -8,13 +8,11 @@ import org.whisk.model.Glob
 import org.whisk.model.RGlob
 import java.nio.file.Files
 import java.nio.file.Paths
-import java.util.concurrent.FutureTask
-import java.util.concurrent.RunnableFuture
 import javax.inject.Inject
 import kotlin.streams.toList
 
 class GlobHandler @Inject constructor() : RuleExecutor<Glob> {
-    override fun execute(execution: Execution<Glob>): RunnableFuture<RuleResult> {
+    override fun execute(execution: Execution<Glob>): RuleResult {
         val rule = execution.ruleParameters
         val matcher = rule.pattern.joinToString("|") { PathMatcher.toRegex(it.string) }.toRegex()
         val base = Paths.get(".")
@@ -23,15 +21,15 @@ class GlobHandler @Inject constructor() : RuleExecutor<Glob> {
                     it.map { base.relativize(it) }
                             .filter {
                                 matcher.matches(it.toString())
-                            }.toList().map { FileResource(it.toAbsolutePath()) }
+                            }.toList().map { FileResource(it.toAbsolutePath(), source = rule) }
                 }
-        return FutureTask { Success(srcs) }
+        return Success(srcs)
     }
 
 }
 
 class RGlobHandler @Inject constructor() : RuleExecutor<RGlob> {
-    override fun execute(execution: Execution<RGlob>): RunnableFuture<RuleResult> {
+    override fun execute(execution: Execution<RGlob>): RuleResult {
         val rule = execution.ruleParameters
         val matcher = rule.pattern.joinToString("|") { PathMatcher.toRegex(it.string) }.toRegex()
         val base = execution.ruleParameters.root.path
@@ -40,9 +38,9 @@ class RGlobHandler @Inject constructor() : RuleExecutor<RGlob> {
                     it.map { base.relativize(it) }
                             .filter {
                                 matcher.matches(it.toString())
-                            }.toList().map { FileResource(base.resolve(it), execution.ruleParameters.root.path) }
+                            }.toList().map { FileResource(base.resolve(it), execution.ruleParameters.root.path, rule) }
                 }
-        return FutureTask { Success(srcs) }
+        return Success(srcs)
     }
 
 }

@@ -9,8 +9,6 @@ import org.whisk.model.KotlinCompile
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.FutureTask
-import java.util.concurrent.RunnableFuture
 import java.util.jar.JarEntry
 import java.util.jar.JarOutputStream
 import java.util.stream.Stream
@@ -22,7 +20,7 @@ class KotlinCompileHandler @Inject constructor(private val kotlinCompiler: Kotli
         RuleExecutor<KotlinCompile> {
     override fun execute(
             execution: Execution<KotlinCompile>
-    ): RunnableFuture<RuleResult> {
+    ): RuleResult {
         val rule = execution.ruleParameters
 
         val whiskOut = execution.targetPath
@@ -55,7 +53,7 @@ class KotlinCompileHandler @Inject constructor(private val kotlinCompiler: Kotli
                                 .forEach { path ->
                                     val relativePath = classesDir.relativize(path)
                                     if (Files.isRegularFile(path)) {
-                                        out.putNextEntry(JarEntry(relativePath.toString()));
+                                        out.putNextEntry(JarEntry(relativePath.toString()))
                                         Files.copy(path, out)
                                     } else if (Files.isDirectory(path)) {
                                         out.putNextEntry(JarEntry("$relativePath/"))
@@ -67,6 +65,6 @@ class KotlinCompileHandler @Inject constructor(private val kotlinCompiler: Kotli
                     Files.walk(kaptClasses).use(addToJar)
                 }
 
-        return FutureTask { Success(rule.exported_deps + FileResource(jarName.toAbsolutePath())) }
+        return Success(rule.exported_deps + FileResource(jarName.toAbsolutePath(), source = rule))
     }
 }

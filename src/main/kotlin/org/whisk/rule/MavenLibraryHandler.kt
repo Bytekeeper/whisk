@@ -24,8 +24,6 @@ import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Paths
-import java.util.concurrent.FutureTask
-import java.util.concurrent.RunnableFuture
 import javax.inject.Inject
 
 class MavenLibraryHandler @Inject constructor() :
@@ -49,7 +47,7 @@ class MavenLibraryHandler @Inject constructor() :
 
     override fun execute(
             execution: Execution<MavenLibrary>
-    ): RunnableFuture<RuleResult> {
+    ): RuleResult {
         val rule = execution.ruleParameters
         val depFile = Paths.get("${execution.goalName}.mvn")
         var verifyFiles = false
@@ -93,9 +91,9 @@ class MavenLibraryHandler @Inject constructor() :
                                 execution.cacheDir,
                                 URL(url)
                         )
-                    }.map { FileResource(it.toAbsolutePath()) }.toList()
+                    }.map { FileResource(it.toAbsolutePath(), source = rule) }.toList()
                 }
-        return FutureTask { Success(forwardDeps) }
+        return Success(forwardDeps)
     }
 
 }

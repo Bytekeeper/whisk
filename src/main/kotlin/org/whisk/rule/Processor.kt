@@ -3,7 +3,6 @@ package org.whisk.rule
 import org.whisk.execution.RuleResult
 import org.whisk.model.RuleParameters
 import java.nio.file.Path
-import java.util.concurrent.RunnableFuture
 import javax.inject.Inject
 import kotlin.reflect.KClass
 
@@ -64,6 +63,6 @@ class UnsupportedRuleModel(model: RuleParameters) :
         RuntimeException("No processor for '${model::class.simpleName}' was registered! Is the handler registered and implementing the correct interface?")
 
 class Processor @Inject constructor(private val ruleProcessorRegistry: RuleProcessorRegistry) {
-    fun process(execution: Execution<RuleParameters>): RunnableFuture<RuleResult> =
+    fun process(execution: Execution<RuleParameters>): RuleResult =
             ruleProcessorRegistry.getRuleProcessor(execution.ruleParameters).execute(execution)
 }

@@ -9,15 +9,13 @@ import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.PosixFilePermission
-import java.util.concurrent.FutureTask
-import java.util.concurrent.RunnableFuture
 import javax.inject.Inject
 import kotlin.streams.toList
 
 class ProtobufCompilerHandler @Inject constructor() :
         RuleExecutor<ProtobufCompile> {
 
-    override fun execute(execution: Execution<ProtobufCompile>): RunnableFuture<RuleResult> {
+    override fun execute(execution: Execution<ProtobufCompile>): RuleResult {
         val protocDir = execution.cacheDir.resolve("protoc")
         if (!protocDir.toFile().exists()) {
             val download = download(
@@ -55,8 +53,8 @@ class ProtobufCompilerHandler @Inject constructor() :
         protocProcess.waitFor()
 
         val result = Files.walk(outputDir).use { pathStream ->
-            pathStream.filter { Files.isRegularFile(it) }.map { FileResource(it.toAbsolutePath()) }.toList()
+            pathStream.filter { Files.isRegularFile(it) }.map { FileResource(it.toAbsolutePath(), source = rule) }.toList()
         }
-        return FutureTask { Success(result) }
+        return Success(result)
     }
 }
