@@ -68,9 +68,12 @@ class MavenLibraryHandler @Inject constructor() :
                             .map { Dependency(it, "") },
                     null, listOf(remoteRepository)
             )
-            val result = system.collectDependencies(session, collectRequest)
-            val listGenerator = PreorderNodeListGenerator()
-            result.root.accept(listGenerator)
+            val listGenerator = synchronized(system) {
+                val result = system.collectDependencies(session, collectRequest)
+                val listGenerator = PreorderNodeListGenerator()
+                result.root.accept(listGenerator)
+                listGenerator
+            }
             val repositoryUrl = remoteRepository.url
             val artifacts = listGenerator.nodes.map { it.artifact }.sortedBy { it.toString() }
             PrintWriter(Files.newBufferedWriter(depFile, StandardCharsets.UTF_8))
