@@ -43,6 +43,7 @@ class MavenLibraryHandler @Inject constructor() :
         session.localRepositoryManager = system.newLocalRepositoryManager(session,
                 LocalRepository("whisk-out/m2repo")
         )
+        session.setReadOnly()
     }
 
     override fun execute(
@@ -58,6 +59,10 @@ class MavenLibraryHandler @Inject constructor() :
                     "central", "default",
                     rule.repository_url?.string ?: "https://repo.maven.apache.org/maven2/"
             ).build()
+            val remote1Repository = RemoteRepository.Builder(
+                    "mirror", "default",
+                    "https://repo1.maven.apache.org/maven2/"
+            ).build()
             val repositoryLayout = repositoryLayoutProvider.newRepositoryLayout(session, remoteRepository)
 
             log.info("Resolving maven dependencies for ${execution.goalName}")
@@ -66,14 +71,11 @@ class MavenLibraryHandler @Inject constructor() :
                     rule.artifacts
                             .map { DefaultArtifact(it.string) }
                             .map { Dependency(it, "") },
-                    null, listOf(remoteRepository)
+                    null, listOf(remoteRepository, remote1Repository)
             )
-            val listGenerator = synchronized(system) {
-                val result = system.collectDependencies(session, collectRequest)
-                val listGenerator = PreorderNodeListGenerator()
-                result.root.accept(listGenerator)
-                listGenerator
-            }
+            val result = system.collectDependencies(session, collectRequest)
+            val listGenerator = PreorderNodeListGenerator()
+            result.root.accept(listGenerator)
             val repositoryUrl = remoteRepository.url
             val artifacts = listGenerator.nodes.map { it.artifact }.sortedBy { it.toString() }
             PrintWriter(Files.newBufferedWriter(depFile, StandardCharsets.UTF_8))
