@@ -46,7 +46,7 @@ data class BuildJar(
 
 data class MavenLibrary(
         val artifacts: List<StringResource>,
-        val repository_url: StringResource?
+        val repository_urls: List<StringResource>
 ) : RuleParameters
 
 data class ProtobufCompile(

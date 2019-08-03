@@ -17,6 +17,7 @@ import org.eclipse.aether.transport.http.HttpTransporterFactory
 import org.eclipse.aether.util.graph.visitor.PreorderNodeListGenerator
 import org.whisk.execution.RuleResult
 import org.whisk.execution.Success
+import org.whisk.forkJoinTask
 import org.whisk.model.FileResource
 import org.whisk.model.MavenLibrary
 import java.io.PrintWriter
@@ -55,15 +56,15 @@ class MavenLibraryHandler @Inject constructor() :
 
         if (!depFile.toFile().exists()) {
             verifyFiles = true
-            val remoteRepository = RemoteRepository.Builder(
-                    "central", "default",
-                    rule.repository_url?.string ?: "https://repo.maven.apache.org/maven2/"
-            ).build()
-            val remote1Repository = RemoteRepository.Builder(
-                    "mirror", "default",
-                    "https://repo1.maven.apache.org/maven2/"
-            ).build()
-            val repositoryLayout = repositoryLayoutProvider.newRepositoryLayout(session, remoteRepository)
+            val configuredRepos = rule.repository_urls.mapIndexed { i, item ->
+                RemoteRepository.Builder("repo$i", "default", item.string).build()
+            }
+            val additionalRepos = if (configuredRepos.isEmpty())
+                listOf(RemoteRepository.Builder("central", "default", "https://repo.maven.apache.org/maven2/").build())
+            else
+                emptyList<RemoteRepository>()
+            val repos = configuredRepos + additionalRepos
+            val repositoryLayout = repositoryLayoutProvider.newRepositoryLayout(session, repos[0])
 
             log.info("Resolving maven dependencies for ${execution.goalName}")
 
@@ -71,19 +72,22 @@ class MavenLibraryHandler @Inject constructor() :
                     rule.artifacts
                             .map { DefaultArtifact(it.string) }
                             .map { Dependency(it, "") },
-                    null, listOf(remoteRepository, remote1Repository)
+                    null, repos
             )
             val result = system.collectDependencies(session, collectRequest)
             val listGenerator = PreorderNodeListGenerator()
             result.root.accept(listGenerator)
-            val repositoryUrl = remoteRepository.url
-            val artifacts = listGenerator.nodes.map { it.artifact }.sortedBy { it.toString() }
+            val repositoryUrls = repos.map {
+                it.url + (if (it.url.endsWith('/')) "" else "/")
+            }
+            val artifacts = listGenerator.nodes
+                    .map { it.artifact }
+                    .sortedBy { it.toString() }
             PrintWriter(Files.newBufferedWriter(depFile, StandardCharsets.UTF_8))
                     .use { out ->
                         artifacts.forEach { a ->
                             val downloadPath = repositoryLayout.getLocation(a, false)
-                            val downloadURL = repositoryUrl + downloadPath
-                            out.println(downloadURL)
+                            out.println(repositoryUrls.joinToString(",") { it + downloadPath })
                         }
                     }
         } else {
@@ -92,12 +96,14 @@ class MavenLibraryHandler @Inject constructor() :
         val forwardDeps = Files.newBufferedReader(depFile)
                 .useLines {
                     it.map { url ->
-                        download(
-                                execution.cacheDir,
-                                URL(url)
-                        )
-                    }.map { FileResource(it.toAbsolutePath(), source = rule) }.toList()
-                }
+                        forkJoinTask {
+                            download(
+                                    execution.cacheDir,
+                                    url.split(',').map { URL(it) }
+                            )
+                        }.fork()
+                    }.toList()
+                }.map { FileResource(it.join().toAbsolutePath(), source = rule) }.toList()
         return Success(forwardDeps)
     }
 

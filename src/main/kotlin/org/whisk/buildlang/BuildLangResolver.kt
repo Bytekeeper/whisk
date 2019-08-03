@@ -54,7 +54,8 @@ class GlobalTable : SymbolTable {
     private val modules = mutableMapOf<String, ModuleTable>()
 
     override fun resolveGoal(modules: List<String>, name: String): ResolvedGoal =
-            modules.mapNotNull { this.modules[it]?.resolveGoal(name) }.single()
+            modules.mapNotNull { this.modules[it]?.resolveGoal(name) }.singleOrNull()
+                    ?: throw GoalNotFoundException("Unknown goal $name")
 
     override fun resolveRule(modules: List<String>, name: String): ResolvedRule =
             modules.mapNotNull { this.modules[it]?.resolveRule(name) }.singleOrNull()
@@ -192,4 +193,5 @@ class InternalBuildLangError(message: String) : IllegalStateException(message)
 class InvalidParameterException(message: String) : RuntimeException(message)
 class IllegalRuleCall(message: String) : java.lang.RuntimeException(message)
 class RuleNotFoundException(message: String) : java.lang.RuntimeException(message)
+class GoalNotFoundException(message: String) : java.lang.RuntimeException(message)
 class InvalidExposed(message: String) : java.lang.RuntimeException(message)

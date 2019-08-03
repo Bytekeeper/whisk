@@ -19,8 +19,6 @@ fun main(vararg args: String) {
 
     val resolvedGoals = application.resolver().resolve(PathModuleLoader(SystemModuleLoader(), Paths.get("")), "")
     val graph = graphBuilder.buildFrom(resolvedGoals, args[0])
-    println(graph)
-    println(graph.nodes.filter { it.dependencies.isEmpty() })
 
     val pending = graph.nodes.map {
         it to BuildNode(it.goal)

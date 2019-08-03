@@ -30,7 +30,7 @@ internal fun download(target: Path, url: URL): Path {
     val log = LogManager.getLogger()
     val targetFile = target.resolve(url.path.substring(1))
     if (targetFile.toFile().exists()) {
-        log.debug("{} exists, not downloading...", targetFile)
+        log.info("{} exists, not downloading...", targetFile)
     } else {
         log.info("Downloading {}...", targetFile)
         Files.createDirectories(targetFile.parent)
@@ -39,6 +39,29 @@ internal fun download(target: Path, url: URL): Path {
         }
     }
     return targetFile
+}
+
+internal fun download(target: Path, urls: List<URL>): Path {
+    val log = LogManager.getLogger()
+    return urls.mapNotNull { url ->
+        val targetFile = target.resolve(url.path.substring(1))
+        if (targetFile.toFile().exists()) {
+            log.info("{} exists, not downloading...", targetFile)
+            targetFile
+        } else null
+    }.firstOrNull() ?: urls.mapNotNull { url ->
+        val targetFile = target.resolve(url.path.substring(1))
+        log.info("Downloading {}...", targetFile)
+        Files.createDirectories(targetFile.parent)
+        try {
+            url.openStream().use { content ->
+                Files.copy(content, targetFile, StandardCopyOption.REPLACE_EXISTING)
+            }
+            targetFile
+        } catch (e: Exception) {
+            null
+        }
+    }.first()
 }
 
 class PrebuiltJarHandler @Inject constructor() : RuleExecutor<PrebuiltJar> {
@@ -86,7 +109,7 @@ class JavaBinaryHandler @Inject constructor() : RuleExecutor<BuildJar> {
                         out.putNextEntry(JarEntry("META-INF/MANIFEST.MF"))
                         val writer = PrintWriter(OutputStreamWriter(out, StandardCharsets.UTF_8))
                         writer.print("Main-Class: ")
-                        writer.println(mainClass)
+                        writer.println(mainClass.string)
                         writer.flush()
                         usedNames += "META-INF/"
                         usedNames += "META-INF/MANIFEST.MF"
