@@ -90,7 +90,7 @@ class RemoteFileHandler @Inject constructor() : RuleExecutor<RemoteFile> {
 
 }
 
-class JavaBinaryHandler @Inject constructor() : RuleExecutor<BuildJar> {
+class BuildJarHandler @Inject constructor() : RuleExecutor<BuildJar> {
     private val log = LogManager.getLogger()
 
     override fun execute(
@@ -127,7 +127,7 @@ class JavaBinaryHandler @Inject constructor() : RuleExecutor<BuildJar> {
                                                     out.putNextEntry(JarEntry(entry.name))
                                                     jar.copyTo(out)
                                                     usedNames += entry.name
-                                                } else {
+                                                } else if (!entry.isDirectory) {
                                                     log.warn("Duplicate file $file:${entry.name}")
                                                 }
                                                 entry = jar.nextJarEntry

@@ -81,6 +81,7 @@ class MavenLibraryHandler @Inject constructor() :
                 it.url + (if (it.url.endsWith('/')) "" else "/")
             }
             val artifacts = listGenerator.nodes
+                    .filter { !it.dependency.optional && it.dependency.scope in arrayOf("", "compile") }
                     .map { it.artifact }
                     .sortedBy { it.toString() }
             PrintWriter(Files.newBufferedWriter(depFile, StandardCharsets.UTF_8))
