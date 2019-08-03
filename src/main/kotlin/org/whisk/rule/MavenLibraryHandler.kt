@@ -66,12 +66,12 @@ class MavenLibraryHandler @Inject constructor() :
             val repositoryLayout = repositoryLayoutProvider.newRepositoryLayout(session, remoteRepository)
 
             log.info("Resolving maven dependencies for ${execution.goalName}")
-            log.warn("TODO: DO NOT DOWNLOAD WHILE BUILDING! A separate command should be done")
+
             val collectRequest = CollectRequest(
                     rule.artifacts
                             .map { DefaultArtifact(it.string) }
                             .map { Dependency(it, "") },
-                    null, listOf(remoteRepository, remote1Repository)
+                    null, listOf(remote1Repository, remoteRepository)
             )
             val result = system.collectDependencies(session, collectRequest)
             val listGenerator = PreorderNodeListGenerator()
