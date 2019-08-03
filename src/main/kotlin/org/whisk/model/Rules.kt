@@ -40,6 +40,7 @@ data class RemoteFile(
 ) : RuleParameters
 
 data class BuildJar(
+        val name: StringResource?,
         val files: List<FileResource>,
         val main_class: StringResource?
 ) : RuleParameters

@@ -13,7 +13,7 @@ kotlin_test(srcs:[], cp:[])
 maven_library(artifacts, repository_urls, sha1)
 
 # Rule to build a jar from a list of files
-build_jar(files:[],main_class)
+build_jar(name?,files:[],main_class)
 
 # Rule to depend on a locally existing jar file
 prebuilt_jar(binary_jar)

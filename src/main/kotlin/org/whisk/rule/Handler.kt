@@ -100,9 +100,10 @@ class BuildJarHandler @Inject constructor() : RuleExecutor<BuildJar> {
         val whiskOut = execution.targetPath
         val jarDir = whiskOut.resolve("jar")
 
-        val jarName = jarDir.resolve("${execution.goalName}.jar")
+        val jarName = rule.name?.string ?: "${execution.goalName}.jar"
+        val jarFullName = jarDir.resolve(jarName)
 
-        JarOutputStream(Files.newOutputStream(jarName))
+        JarOutputStream(Files.newOutputStream(jarFullName))
                 .use { out ->
                     val usedNames = mutableSetOf<String>()
                     rule.main_class?.let { mainClass ->
@@ -143,7 +144,7 @@ class BuildJarHandler @Inject constructor() : RuleExecutor<BuildJar> {
                         }
                     }
                 }
-        return Success(listOf(FileResource(jarName.toAbsolutePath(), source = rule)))
+        return Success(listOf(FileResource(jarFullName.toAbsolutePath(), source = rule)))
     }
 }
 
