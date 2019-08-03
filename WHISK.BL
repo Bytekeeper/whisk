@@ -1,7 +1,7 @@
 import whisk
 
 # Declare goals and rules that can be used from other BL files in this project
-export main,whisk
+export main,whisk,test
 
 # Define goals that can be called
 whisk = build_jar(files= [main, rglob(pattern='**', root='src/main/resources')], main_class='org.whisk.MainKt')
@@ -11,6 +11,7 @@ main = kotlin_compile(srcs = [glob('src/main/kotlin/**.kt'), grammar],
     kotlin_stdlib_common, kotlin_stdlib_jdk7, kotlin_stdlib_jdk8, trove4j, maven_deps, junit4],
     kapt_processors=[dagger_compiler],
     plugins=[kap, tools])
+test = kotlin_test(srcs=[glob('src/test/kotlin/**.kt')], cp=main)
 
 # Non-exposed goals that help building up the dependency graph
 grammar = antlr_gen(srcs=glob('src/main/antlr/**.g4'), arguments = '-visitor')
@@ -36,5 +37,5 @@ maven_deps = maven_library(
 artifacts=['org.apache.maven:maven-resolver-provider:3.6.1',
            'org.apache.maven.resolver:maven-resolver-transport-http:1.3.3',
            'org.apache.maven.resolver:maven-resolver-connector-basic:1.3.3',
-           'com.google.dagger:dagger:2.22.1', 'org.antlr:antlr4:4.7.2'], sha1=''
-           )
+           'com.google.dagger:dagger:2.22.1', 'org.antlr:antlr4:4.7.2',
+           'org.assertj:assertj-core:3.11.1'], sha1='')

@@ -1,10 +1,13 @@
-export kotlin_compile, maven_library, build_jar, prebuilt_jar, remote_file, glob, antlr_gen, rglob
+export kotlin_compile, kotlin_test, maven_library, build_jar, prebuilt_jar, remote_file, glob, antlr_gen, rglob
 
 # Define rules with "native" implementation
 # Usually rules are defined by "rule(...) = value", omitting "= value" marks them as being implemented in code
 
 # Rule to compile kotlin (and potentially java)
 kotlin_compile(srcs:[], cp:[], exported_deps:[], kapt_processors: [], plugins: [])
+
+# Rule to compile and run test on kotlin code
+kotlin_test(srcs:[], cp:[])
 
 # Rule to depend on maven artifacts (transitively)
 maven_library(artifacts, repository_url, sha1)

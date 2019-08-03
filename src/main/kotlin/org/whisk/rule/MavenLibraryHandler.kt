@@ -71,7 +71,7 @@ class MavenLibraryHandler @Inject constructor() :
                     rule.artifacts
                             .map { DefaultArtifact(it.string) }
                             .map { Dependency(it, "") },
-                    null, listOf(remote1Repository, remoteRepository)
+                    null, listOf(remoteRepository, remote1Repository)
             )
             val result = system.collectDependencies(session, collectRequest)
             val listGenerator = PreorderNodeListGenerator()
