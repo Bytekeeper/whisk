@@ -17,6 +17,7 @@ Besides being an interesting topic:
     * Strange syntax sometimes
     * Sometimes cryptic build files due to abusing groovy/kotlin
     * Task based dependencies, but less knowledge about "who built what exactly?"
+    * Dependencies are not inferred, the dev has to actively "know" which task depend on one another
 * Bazel
     * Powerful and extendable and scriptable
     * Reduced python better than full programming language
@@ -33,6 +34,15 @@ Besides being an interesting topic:
 * Based on dependencies and not tasks 
 * Reproducible builds
 * A DSL build language as simple as possible
+* Control over build process
+    * No magic build steps
+    * Magic build steps if necessary
+    * Powerful like ant/make
+    * But with flexible order of execution
+    * Execution order like maven
+    * But not with "fixed" phases or static modules
+    * Execution order like gradle
+    * But not by declaring task dependencies "indirectly"
 
 ## Build Lang
 ```text
