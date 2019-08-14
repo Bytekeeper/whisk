@@ -1,4 +1,0 @@
-[[kotlin_test]]
-name="whisk-test"
-srcs=["**.kt"]
-cp=["/:whisk-core"]

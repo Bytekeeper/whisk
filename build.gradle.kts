@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 
 plugins {
-    val kotlinVersion = "1.3.31"
+    val kotlinVersion = "1.3.41"
 
     kotlin("jvm") version kotlinVersion
     id("com.github.ben-manes.versions") version "0.21.0"

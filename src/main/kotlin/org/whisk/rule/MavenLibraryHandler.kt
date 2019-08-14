@@ -21,6 +21,7 @@ import org.whisk.forkJoinTask
 import org.whisk.model.FileResource
 import org.whisk.model.MavenLibrary
 import java.io.PrintWriter
+import java.net.URI
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -64,7 +65,7 @@ class MavenLibraryHandler @Inject constructor() :
             else
                 emptyList<RemoteRepository>()
             val repos = configuredRepos + additionalRepos
-            val repositoryLayout = repositoryLayoutProvider.newRepositoryLayout(session, repos[0])
+            val repositoryLayouts = repos.map { it to repositoryLayoutProvider.newRepositoryLayout(session, it) }
 
             log.info("Resolving maven dependencies for ${execution.goalName}")
 
@@ -77,18 +78,17 @@ class MavenLibraryHandler @Inject constructor() :
             val result = system.collectDependencies(session, collectRequest)
             val listGenerator = PreorderNodeListGenerator()
             result.root.accept(listGenerator)
-            val repositoryUrls = repos.map {
-                it.url + (if (it.url.endsWith('/')) "" else "/")
-            }
             val artifacts = listGenerator.nodes
                     .filter { !it.dependency.optional && it.dependency.scope in arrayOf("", "compile") }
                     .map { it.artifact }
                     .sortedBy { it.toString() }
+
             PrintWriter(Files.newBufferedWriter(depFile, StandardCharsets.UTF_8))
                     .use { out ->
                         artifacts.forEach { a ->
-                            val downloadPath = repositoryLayout.getLocation(a, false)
-                            out.println(repositoryUrls.joinToString(",") { it + downloadPath })
+                            val urls = repositoryLayouts.map { (repo, layout) -> URI(repo.url).resolve(layout.getLocation(a, false)) }
+                                    .joinToString(",")
+                            out.println(urls)
                         }
                     }
         } else {

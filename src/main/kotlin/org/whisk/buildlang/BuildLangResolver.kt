@@ -93,7 +93,7 @@ interface ModuleLoader {
 
 class SystemModuleLoader : ModuleLoader {
     override fun load(module: String): CharStream? =
-            javaClass.getResourceAsStream("/" + module.replace('.', '/') + "/WHISK.BL")
+            javaClass.getResourceAsStream("/whisk/" + module.replace('.', '/') + ".BL")
                     ?.let {
                         CharStreams.fromStream(it)
                     }

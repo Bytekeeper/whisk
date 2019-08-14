@@ -51,7 +51,7 @@ internal fun download(target: Path, urls: List<URL>): Path {
         } else null
     }.firstOrNull() ?: urls.mapNotNull { url ->
         val targetFile = target.resolve(url.path.substring(1))
-        log.info("Downloading {}...", targetFile)
+        log.info("Downloading {}...", url)
         Files.createDirectories(targetFile.parent)
         try {
             url.openStream().use { content ->

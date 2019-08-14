@@ -6,36 +6,31 @@ export main,whisk,test
 # Define goals that can be called
 whisk = build_jar(files= [main, rglob(pattern='**', root='src/main/resources')], main_class='org.whisk.MainKt')
 main = kotlin_compile(srcs = [glob('src/main/kotlin/**.kt'), grammar],
-    cp=[],
-    exported_deps=[log4j2_api, log4j2_core, kotlin_compiler, kotlin_stdlib, kotlin_reflect, annotations, antlr4,
-    kotlin_stdlib_common, kotlin_stdlib_jdk7, kotlin_stdlib_jdk8, trove4j, maven_deps, junit4],
+    exported_deps=[log4j2_api, log4j2_core, maven_kotlin, maven_deps, junit4],
+    cp=[antlr4],
     kapt_processors=[dagger_compiler],
-    plugins=[kap, tools])
+    plugins=[maven_kap, tools])
 test = kotlin_test(srcs=[glob('src/test/kotlin/**.kt')], cp=main)
 
 # Non-exposed goals that help building up the dependency graph
 grammar = antlr_gen(srcs=glob('src/main/antlr/**.g4'), arguments = '-visitor')
 
-kotlin_stdlib = prebuilt_jar('lib/kotlin-stdlib-1.3.31.jar')
-kotlin_stdlib_common = prebuilt_jar('lib/kotlin-stdlib-common-1.3.31.jar')
-kotlin_stdlib_jdk7 = prebuilt_jar('lib/kotlin-stdlib-jdk7-1.3.31.jar')
-kotlin_stdlib_jdk8 = prebuilt_jar('lib/kotlin-stdlib-jdk8-1.3.31.jar')
 antlr4 = prebuilt_jar('lib/antlr4-runtime-4.7.2.jar')
 tools = prebuilt_jar('/usr/lib/jvm/java-8-openjdk-amd64/lib/tools.jar')
-annotations = prebuilt_jar('lib/annotations-13.0.jar')
 
 junit4 = remote_file(url='http://central.maven.org/maven2/junit/junit/4.12/junit-4.12.jar', sha1='')
-trove4j = remote_file(url='http://central.maven.org/maven2/org/jetbrains/intellij/deps/trove4j/1.0.20181211/trove4j-1.0.20181211.jar', sha1='')
 log4j2_api = remote_file(url='http://central.maven.org/maven2/org/apache/logging/log4j/log4j-api/2.11.2/log4j-api-2.11.2.jar',sha1='')
 log4j2_core = remote_file(url='http://central.maven.org/maven2/org/apache/logging/log4j/log4j-core/2.11.2/log4j-core-2.11.2.jar',sha1='')
-kotlin_reflect = remote_file(url='http://central.maven.org/maven2/org/jetbrains/kotlin/kotlin-reflect/1.3.31/kotlin-reflect-1.3.31.jar',sha1='')
-kap = remote_file(url='http://central.maven.org/maven2/org/jetbrains/kotlin/kotlin-annotation-processing-embeddable/1.3.31/kotlin-annotation-processing-embeddable-1.3.31.jar',sha1='')
-kotlin_compiler = remote_file(url='http://central.maven.org/maven2/org/jetbrains/kotlin/kotlin-compiler-embeddable/1.3.31/kotlin-compiler-embeddable-1.3.31.jar',sha1='')
+maven_kap = maven_library(artifacts='org.jetbrains.kotlin:kotlin-annotation-processing-embeddable:1.3.41')
 
 dagger_compiler = maven_library(artifacts=['com.google.dagger:dagger-compiler:2.22.1'], sha1='')
+maven_kotlin = maven_library(
+    artifacts=['org.jetbrains.kotlin:kotlin-reflect:1.3.41', 'org.jetbrains.kotlin:kotlin-compiler-embeddable:1.3.41',
+    'org.jetbrains.kotlin:kotlin-stdlib:1.3.41', 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.3.41']
+)
 maven_deps = maven_library(
-artifacts=['org.apache.maven:maven-resolver-provider:3.6.1',
-           'org.apache.maven.resolver:maven-resolver-transport-http:1.3.3',
-           'org.apache.maven.resolver:maven-resolver-connector-basic:1.3.3',
-           'com.google.dagger:dagger:2.22.1', 'org.antlr:antlr4:4.7.2',
-           'org.assertj:assertj-core:3.11.1'], sha1='')
+    artifacts=['org.apache.maven:maven-resolver-provider:3.6.1',
+               'org.apache.maven.resolver:maven-resolver-transport-http:1.3.3',
+               'org.apache.maven.resolver:maven-resolver-connector-basic:1.3.3',
+                'com.google.dagger:dagger:2.22.1', 'org.antlr:antlr4:4.7.2',
+                'org.assertj:assertj-core:3.11.1'], sha1='')

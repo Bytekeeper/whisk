@@ -13,9 +13,10 @@ import java.net.URLClassLoader
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import javax.inject.Inject
+import javax.inject.Provider
 import kotlin.streams.toList
 
-class KotlinTestHandler @Inject constructor(private val kotlinCompiler: KotlinCompiler) : RuleExecutor<KotlinTest> {
+class KotlinTestHandler @Inject constructor(private val kotlinCompiler: Provider<KotlinCompiler>) : RuleExecutor<KotlinTest> {
     override fun execute(
             execution: Execution<KotlinTest>
     ): RuleResult {
@@ -27,7 +28,7 @@ class KotlinTestHandler @Inject constructor(private val kotlinCompiler: KotlinCo
 
         val dependencies = rule.cp.map { it.string }
 
-        kotlinCompiler.compile(rule.srcs.map { it.string }, dependencies, emptyList(), emptyList(), classesDir, kaptDir.resolve("sources"),
+        kotlinCompiler.get().compile(rule.srcs.map { it.string }, dependencies, emptyList(), emptyList(), classesDir, kaptDir.resolve("sources"),
                 kaptClasses, kaptDir.resolve("kotlinSources"))
 
         val cl = URLClassLoader(((dependencies.map {

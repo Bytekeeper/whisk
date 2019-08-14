@@ -13,9 +13,10 @@ import java.util.jar.JarEntry
 import java.util.jar.JarOutputStream
 import java.util.stream.Stream
 import javax.inject.Inject
+import javax.inject.Provider
 import kotlin.streams.toList
 
-class KotlinCompileHandler @Inject constructor(private val kotlinCompiler: KotlinCompiler,
+class KotlinCompileHandler @Inject constructor(private val kotlinCompiler: Provider<KotlinCompiler>,
                                                private val javaCompiler: JavaCompiler) :
         RuleExecutor<KotlinCompile> {
     override fun execute(
@@ -35,7 +36,7 @@ class KotlinCompileHandler @Inject constructor(private val kotlinCompiler: Kotli
         val dependencies = rule.cp.map { it.string } + exportedDeps
         val kaptAPClasspath = rule.kapt_processors.map { it.string }
         val kaptPlugins = rule.plugins.map { it.string }
-        kotlinCompiler.compile(ruleSrcs, dependencies, kaptAPClasspath, kaptPlugins, classesDir, kaptDir.resolve("sources"),
+        kotlinCompiler.get().compile(ruleSrcs, dependencies, kaptAPClasspath, kaptPlugins, classesDir, kaptDir.resolve("sources"),
                 kaptClasses, kaptDir.resolve("kotlinSources"))
 
         val javaSources = Files.walk(kaptDir.resolve("sources")).use { it.filter { Files.isRegularFile(it) }.map { it.toFile() }.toList() } +
