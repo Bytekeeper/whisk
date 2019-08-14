@@ -10,7 +10,7 @@ kotlin_compile(srcs:[], cp:[], exported_deps:[], kapt_processors: [], plugins: [
 kotlin_test(srcs:[], cp:[])
 
 # Rule to depend on maven artifacts (transitively)
-maven_library(artifacts, repository_urls, sha1)
+maven_library(artifacts:[], repository_urls:[], scopes:[])
 
 # Rule to build a jar from a list of files
 build_jar(name?,files:[],main_class)

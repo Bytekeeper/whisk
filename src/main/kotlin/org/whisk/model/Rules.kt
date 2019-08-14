@@ -35,8 +35,7 @@ data class PrebuiltJar(
 ) : RuleParameters
 
 data class RemoteFile(
-        val url: StringResource,
-        val sha1: StringResource
+        val url: StringResource
 ) : RuleParameters
 
 data class BuildJar(
@@ -47,7 +46,8 @@ data class BuildJar(
 
 data class MavenLibrary(
         val artifacts: List<StringResource>,
-        val repository_urls: List<StringResource>
+        val repository_urls: List<StringResource>,
+        val scopes: List<StringResource> = emptyList()
 ) : RuleParameters
 
 data class ProtobufCompile(

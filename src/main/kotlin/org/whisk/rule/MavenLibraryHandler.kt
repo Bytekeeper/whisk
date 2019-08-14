@@ -78,8 +78,9 @@ class MavenLibraryHandler @Inject constructor() :
             val result = system.collectDependencies(session, collectRequest)
             val listGenerator = PreorderNodeListGenerator()
             result.root.accept(listGenerator)
+            val scopes = if (rule.scopes.isEmpty()) listOf("", "compile", "runtime") else rule.scopes.map { it.string }
             val artifacts = listGenerator.nodes
-                    .filter { !it.dependency.optional && it.dependency.scope in arrayOf("", "compile", "runtime") }
+                    .filter { !it.dependency.optional && it.dependency.scope in scopes }
                     .map { it.artifact }
                     .sortedBy { it.toString() }
 

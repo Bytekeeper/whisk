@@ -5,7 +5,7 @@ plugins {
     val kotlinVersion = "1.3.41"
 
     kotlin("jvm") version kotlinVersion
-    id("com.github.ben-manes.versions") version "0.21.0"
+    id("com.github.ben-manes.versions") version "0.22.0"
     kotlin("kapt") version kotlinVersion
     antlr
 }
@@ -14,16 +14,16 @@ dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation(kotlin("reflect"))
     implementation(kotlin("compiler-embeddable"))
-    implementation("org.apache.logging.log4j:log4j-core:2.11.2")
+    implementation("org.apache.logging.log4j:log4j-core:2.12.1")
     implementation("org.apache.maven:maven-resolver-provider:3.6.1")
-    implementation("org.apache.maven.resolver:maven-resolver-transport-http:1.3.3")
-    implementation("org.apache.maven.resolver:maven-resolver-connector-basic:1.3.3")
+    implementation("org.apache.maven.resolver:maven-resolver-transport-http:1.4.0")
+    implementation("org.apache.maven.resolver:maven-resolver-connector-basic:1.4.0")
     implementation("junit:junit:4.12")
 
-    implementation("com.google.dagger:dagger:2.22.1")
-    kapt("com.google.dagger:dagger-compiler:2.22.1")
+    implementation("com.google.dagger:dagger:2.24")
+    kapt("com.google.dagger:dagger-compiler:2.24")
     antlr("org.antlr:antlr4:4.7.2")
-    testImplementation("org.assertj:assertj-core:3.11.1")
+    testImplementation("org.assertj:assertj-core:3.13.2")
 }
 
 allprojects {

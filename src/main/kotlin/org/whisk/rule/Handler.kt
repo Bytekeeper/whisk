@@ -19,7 +19,7 @@ import javax.inject.Inject
 
 
 class InvalidChecksumError(message: String) : Exception(message)
-
+class FailedToDownload(message: String) : Exception(message)
 data class DependencyReferences(val refs: Map<Any, List<String>>)
 
 interface RuleExecutor<T : RuleParameters> {
@@ -61,7 +61,8 @@ internal fun download(target: Path, urls: List<URL>): Path {
         } catch (e: Exception) {
             null
         }
-    }.first()
+    }.firstOrNull()
+    ?: throw FailedToDownload("Could not download ${target.fileName} from any location: ${urls.joinToString()}")
 }
 
 class PrebuiltJarHandler @Inject constructor() : RuleExecutor<PrebuiltJar> {
