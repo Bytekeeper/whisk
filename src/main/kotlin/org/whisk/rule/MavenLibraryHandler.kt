@@ -79,7 +79,7 @@ class MavenLibraryHandler @Inject constructor() :
             val listGenerator = PreorderNodeListGenerator()
             result.root.accept(listGenerator)
             val artifacts = listGenerator.nodes
-                    .filter { !it.dependency.optional && it.dependency.scope in arrayOf("", "compile") }
+                    .filter { !it.dependency.optional && it.dependency.scope in arrayOf("", "compile", "runtime") }
                     .map { it.artifact }
                     .sortedBy { it.toString() }
 
