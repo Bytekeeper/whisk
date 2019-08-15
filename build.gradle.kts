@@ -15,6 +15,7 @@ dependencies {
     implementation(kotlin("reflect"))
     implementation(kotlin("compiler-embeddable"))
     implementation("org.apache.logging.log4j:log4j-core:2.12.1")
+    implementation("org.apache.logging.log4j:log4j-iostreams:2.12.1")
     implementation("org.apache.maven:maven-resolver-provider:3.6.1")
     implementation("org.apache.maven.resolver:maven-resolver-transport-http:1.4.0")
     implementation("org.apache.maven.resolver:maven-resolver-connector-basic:1.4.0")

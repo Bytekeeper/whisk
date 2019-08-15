@@ -21,8 +21,11 @@ class RuleExecutionContext constructor(private val processor: Processor) {
     inner class GoalCall(private val goalTask: Map<ResolvedGoal, ForkJoinTask<RuleResult>>,
                          private val goal: ResolvedGoal) {
         fun eval() = forkJoinTask {
-            log.info(goal.name)
-            eval(goal.value!!).join()
+            val stopWatch = StopWatch()
+            log.info("Processing goal {}", goal.name)
+            val result = eval(goal.value!!).join()
+            log.info("Goal {} ran in {}ms", goal.name, stopWatch.stop())
+            result
         }
 
         private fun eval(value: ResolvedValue<Value>): ForkJoinTask<RuleResult> {

@@ -12,6 +12,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
+import java.util.concurrent.ConcurrentHashMap
 import java.util.jar.JarEntry
 import java.util.jar.JarInputStream
 import java.util.jar.JarOutputStream
@@ -26,43 +27,63 @@ interface RuleExecutor<T : RuleParameters> {
     fun execute(execution: Execution<T>): RuleResult
 }
 
-internal fun download(target: Path, url: URL): Path {
-    val log = LogManager.getLogger()
-    val targetFile = target.resolve(url.path.substring(1))
-    if (targetFile.toFile().exists()) {
-        log.info("{} exists, not downloading...", targetFile)
-    } else {
-        log.info("Downloading {}...", targetFile)
-        Files.createDirectories(targetFile.parent)
-        url.openStream().use { content ->
-            Files.copy(content, targetFile, StandardCopyOption.REPLACE_EXISTING)
+class DownloadManager @Inject constructor() {
+    private val lockedPaths = ConcurrentHashMap<Path, Any>()
+
+    private fun locked(path: Path, dl: (Path) -> Path): Path {
+        try {
+            synchronized(lockedPaths.computeIfAbsent(path) { Any() }) {
+                return dl(path)
+            }
+        } finally {
+            lockedPaths.remove(path)
         }
     }
-    return targetFile
-}
 
-internal fun download(target: Path, urls: List<URL>): Path {
-    val log = LogManager.getLogger()
-    return urls.mapNotNull { url ->
-        val targetFile = target.resolve(url.path.substring(1))
-        if (targetFile.toFile().exists()) {
-            log.info("{} exists, not downloading...", targetFile)
-            targetFile
-        } else null
-    }.firstOrNull() ?: urls.mapNotNull { url ->
-        val targetFile = target.resolve(url.path.substring(1))
-        log.info("Downloading {}...", url)
-        Files.createDirectories(targetFile.parent)
-        try {
-            url.openStream().use { content ->
-                Files.copy(content, targetFile, StandardCopyOption.REPLACE_EXISTING)
+
+    internal fun download(target: Path, url: URL): Path {
+        return locked(target) {
+            val log = LogManager.getLogger()
+            val targetFile = target.resolve(url.path.substring(1))
+            if (targetFile.toFile().exists()) {
+                log.info("{} exists, not downloading...", targetFile)
+            } else {
+                log.info("Downloading {}...", targetFile)
+                Files.createDirectories(targetFile.parent)
+                url.openStream().use { content ->
+                    Files.copy(content, targetFile, StandardCopyOption.REPLACE_EXISTING)
+                }
             }
+            lockedPaths.remove(target)
             targetFile
-        } catch (e: Exception) {
-            null
         }
-    }.firstOrNull()
-    ?: throw FailedToDownload("Could not download ${target.fileName} from any location: ${urls.joinToString()}")
+    }
+
+    internal fun download(target: Path, urls: List<URL>): Path {
+        return locked(target) {
+            val log = LogManager.getLogger()
+            urls.mapNotNull { url ->
+                val targetFile = target.resolve(url.path.substring(1))
+                if (targetFile.toFile().exists()) {
+                    log.info("{} exists, not downloading...", targetFile)
+                    targetFile
+                } else null
+            }.firstOrNull() ?: urls.mapNotNull { url ->
+                val targetFile = target.resolve(url.path.substring(1))
+                log.info("Downloading {}...", url)
+                Files.createDirectories(targetFile.parent)
+                try {
+                    url.openStream().use { content ->
+                        Files.copy(content, targetFile, StandardCopyOption.REPLACE_EXISTING)
+                    }
+                    targetFile
+                } catch (e: Exception) {
+                    null
+                }
+            }.firstOrNull()
+            ?: throw FailedToDownload("Could not download ${target.fileName} from any location: ${urls.joinToString()}")
+        }
+    }
 }
 
 class PrebuiltJarHandler @Inject constructor() : RuleExecutor<PrebuiltJar> {
@@ -76,7 +97,7 @@ class PrebuiltJarHandler @Inject constructor() : RuleExecutor<PrebuiltJar> {
     }
 }
 
-class RemoteFileHandler @Inject constructor() : RuleExecutor<RemoteFile> {
+class RemoteFileHandler @Inject constructor(private val downloadManager: DownloadManager) : RuleExecutor<RemoteFile> {
     private val log = LogManager.getLogger()
 
     override fun execute(
@@ -85,7 +106,7 @@ class RemoteFileHandler @Inject constructor() : RuleExecutor<RemoteFile> {
         val rule = execution.ruleParameters
         val whiskDir = execution.cacheDir
         val url = URL(rule.url.string)
-        val targetFile = download(whiskDir, url)
+        val targetFile = downloadManager.download(whiskDir, url)
         return Success(listOf(FileResource(targetFile.toAbsolutePath(), source = rule)))
     }
 

@@ -12,13 +12,15 @@ import java.nio.file.attribute.PosixFilePermission
 import javax.inject.Inject
 import kotlin.streams.toList
 
-class ProtobufCompilerHandler @Inject constructor() :
+class ProtobufCompilerHandler @Inject constructor(
+        private val downloadManager: DownloadManager
+) :
         RuleExecutor<ProtobufCompile> {
 
     override fun execute(execution: Execution<ProtobufCompile>): RuleResult {
         val protocDir = execution.cacheDir.resolve("protoc")
         if (!protocDir.toFile().exists()) {
-            val download = download(
+            val download = downloadManager.download(
                     protocDir,
                     URL("https://github.com/protocolbuffers/protobuf/releases/download/v3.8.0/protoc-3.8.0-linux-x86_64.zip")
             )

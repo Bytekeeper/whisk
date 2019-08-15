@@ -28,7 +28,9 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import javax.inject.Inject
 
-class MavenLibraryHandler @Inject constructor() :
+class MavenLibraryHandler @Inject constructor(
+        private val downloadManager: DownloadManager
+) :
         RuleExecutor<MavenLibrary> {
     private val repositoryLayoutProvider: RepositoryLayoutProvider
     private val log = LogManager.getLogger()
@@ -99,7 +101,7 @@ class MavenLibraryHandler @Inject constructor() :
                 .useLines {
                     it.map { url ->
                         forkJoinTask {
-                            download(
+                            downloadManager.download(
                                     execution.cacheDir,
                                     url.split(',').map { URL(it) }
                             )

@@ -6,11 +6,11 @@ export main,whisk,test
 # Define goals that can be called
 whisk = build_jar(files= [main, rglob(pattern='**', root='src/main/resources')], main_class='org.whisk.MainKt')
 main = kotlin_compile(srcs = [glob('src/main/kotlin/**.kt'), grammar],
-    exported_deps=[log4j2_api, log4j2_core, maven_kotlin, maven_deps, junit4],
+    exported_deps=[log4j2_api, log4j2_core, implementation_deps, junit4],
     cp=[antlr4],
     kapt_processors=[dagger_compiler],
     plugins=[maven_kap, tools])
-test = kotlin_test(srcs=[glob('src/test/kotlin/**.kt')], cp=[main, maven_test_deps])
+test = kotlin_test(srcs=[glob('src/test/kotlin/**.kt')], cp=[main, test_deps])
 
 # Non-exposed goals that help building up the dependency graph
 grammar = antlr_gen(srcs=glob('src/main/antlr/**.g4'), arguments = '-visitor')
@@ -24,16 +24,16 @@ log4j2_core = remote_file(url='http://central.maven.org/maven2/org/apache/loggin
 maven_kap = maven_library(artifacts='org.jetbrains.kotlin:kotlin-annotation-processing-embeddable:1.3.41')
 
 dagger_compiler = maven_library(artifacts=['com.google.dagger:dagger-compiler:2.22.1'])
-maven_kotlin = maven_library(
-    artifacts=['org.jetbrains.kotlin:kotlin-reflect:1.3.41', 'org.jetbrains.kotlin:kotlin-compiler-embeddable:1.3.41',
-    'org.jetbrains.kotlin:kotlin-stdlib:1.3.41', 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.3.41']
-)
-maven_deps = maven_library(
+
+implementation_deps = maven_library(
     artifacts=['org.apache.maven:maven-resolver-provider:3.6.1',
                'org.apache.maven.resolver:maven-resolver-transport-http:1.4.0',
                'org.apache.maven.resolver:maven-resolver-connector-basic:1.4.0',
-                'com.google.dagger:dagger:2.24', 'org.antlr:antlr4:4.7.2'])
+               'com.google.dagger:dagger:2.24', 'org.antlr:antlr4:4.7.2',
+               'org.jetbrains.kotlin:kotlin-reflect:1.3.41', 'org.jetbrains.kotlin:kotlin-compiler-embeddable:1.3.41',
+               'org.jetbrains.kotlin:kotlin-stdlib:1.3.41', 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.3.41',
+               'org.apache.logging.log4j:log4j-iostreams:2.12.1'])
 
-maven_test_deps = maven_library(
+test_deps = maven_library(
     artifacts=['org.assertj:assertj-core:3.13.2']
 )
