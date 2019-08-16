@@ -3,6 +3,7 @@ package org.whisk.kotlin
 import dagger.Reusable
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.io.IoBuilder
+import org.jetbrains.kotlin.cli.common.ExitCode
 import org.jetbrains.kotlin.cli.jvm.K2JVMCompiler
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -43,7 +44,7 @@ class KotlinCompiler @Inject constructor() {
     }
 
     fun compile(srcs: List<String>, compileClasspath: List<String>, kaptAPClasspath: List<String>, kaptPlugins: List<String>,
-                classes: Path, kaptSources: Path, kaptClasses: Path, kaptKotlinSources: Path) {
+                classes: Path, kaptSources: Path, kaptClasses: Path, kaptKotlinSources: Path): Boolean {
         require(srcs.isNotEmpty())
         Files.createDirectories(classes)
         Files.createDirectories(kaptSources)
@@ -70,7 +71,7 @@ class KotlinCompiler @Inject constructor() {
 //                ,"-Xreport-output-files"
         ) + kaptParameters + kaptPlugins.map { "-Xplugin=$it" } + srcs
 
-        compiler.exec(ioBuilder.buildPrintStream(), *params.toTypedArray())
+        return compiler.exec(ioBuilder.buildPrintStream(), *params.toTypedArray()) == ExitCode.OK
 //        exec.invoke(compiler, System.out, emptyService, params.toTypedArray())
     }
 

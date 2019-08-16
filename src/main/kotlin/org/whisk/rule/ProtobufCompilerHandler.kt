@@ -1,5 +1,6 @@
 package org.whisk.rule
 
+import org.whisk.DownloadManager
 import org.whisk.execution.RuleResult
 import org.whisk.execution.Success
 import org.whisk.model.FileResource

@@ -1,6 +1,7 @@
 package org.whisk.rule
 
 import org.antlr.v4.Tool
+import org.whisk.execution.Failed
 import org.whisk.execution.RuleResult
 import org.whisk.execution.Success
 import org.whisk.model.AntlrGen
@@ -26,7 +27,8 @@ class AntlrGenHandler @Inject constructor() :
                     .toList()
         }
 
-        return Success(javaSources.map { FileResource(it.toAbsolutePath(), source = rule) })
+        return if (antlr.numErrors > 0)
+            Failed() else
+            Success(javaSources.map { FileResource(it.toAbsolutePath(), source = rule) })
     }
-
 }

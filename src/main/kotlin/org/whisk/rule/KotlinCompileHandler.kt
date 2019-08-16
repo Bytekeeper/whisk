@@ -1,5 +1,6 @@
 package org.whisk.rule
 
+import org.whisk.execution.Failed
 import org.whisk.execution.RuleResult
 import org.whisk.execution.Success
 import org.whisk.java.JavaCompiler
@@ -36,8 +37,9 @@ class KotlinCompileHandler @Inject constructor(private val kotlinCompiler: Provi
         val dependencies = rule.cp.map { it.string } + exportedDeps
         val kaptAPClasspath = rule.kapt_processors.map { it.string }
         val kaptPlugins = rule.plugins.map { it.string }
-        kotlinCompiler.get().compile(ruleSrcs, dependencies, kaptAPClasspath, kaptPlugins, classesDir, kaptDir.resolve("sources"),
+        val succeeded = kotlinCompiler.get().compile(ruleSrcs, dependencies, kaptAPClasspath, kaptPlugins, classesDir, kaptDir.resolve("sources"),
                 kaptClasses, kaptDir.resolve("kotlinSources"))
+        if (!succeeded) return Failed()
 
         val javaSources = Files.walk(kaptDir.resolve("sources")).use { it.filter { Files.isRegularFile(it) }.map { it.toFile() }.toList() } +
                 ruleSrcs.filter { it.endsWith(".java") }.map { File(it) }

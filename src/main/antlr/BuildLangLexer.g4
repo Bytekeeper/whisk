@@ -11,7 +11,7 @@ ANON: 'anon';
 
 COMMENT: '#' ~[\r\n]* '\r'?  '\n'? -> channel(HIDDEN);
 ID : [_a-zA-Z] [_a-zA-Z0-9]* ;             // match lower-case identifiers
-WS : [ \t\r\n]+ -> skip ; // skip spaces, tabs, newlines
+WS : [ \t\r\n]+ -> channel(HIDDEN) ; // skip spaces, tabs, newlines
 STRING_START: '\'' -> pushMode(STRING);
 
 ASSIGN : '=';

@@ -3,10 +3,13 @@ package org.whisk
 import org.whisk.buildlang.PathModuleLoader
 import org.whisk.buildlang.ResolvedGoal
 import org.whisk.buildlang.SystemModuleLoader
+import org.whisk.execution.Failed
+import org.whisk.execution.RuleExecutionContext
 import org.whisk.execution.RuleResult
 import java.nio.file.Paths
 import java.util.concurrent.Callable
 import java.util.concurrent.ForkJoinTask
+import kotlin.system.exitProcess
 
 fun <T> forkJoinTask(producer: () -> T) = ForkJoinTask.adapt(Callable { producer() })
 
@@ -55,4 +58,5 @@ fun main(vararg args: String) {
     }
     tasks.forEach { it.fork() }
     tasks.forEach { it.join() }
+    if (goalToTask.values.any { it.get() is Failed }) exitProcess(1)
 }

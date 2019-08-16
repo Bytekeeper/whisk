@@ -1,10 +1,9 @@
-package org.whisk
+package org.whisk.execution
 
 import org.apache.logging.log4j.LogManager
+import org.whisk.StopWatch
 import org.whisk.buildlang.*
-import org.whisk.execution.Failed
-import org.whisk.execution.RuleResult
-import org.whisk.execution.Success
+import org.whisk.forkJoinTask
 import org.whisk.model.FileResource
 import org.whisk.model.StringResource
 import org.whisk.rule.Execution
@@ -24,7 +23,10 @@ class RuleExecutionContext constructor(private val processor: Processor) {
             val stopWatch = StopWatch()
             log.info("Processing goal {}", goal.name)
             val result = eval(goal.value!!).join()
-            log.info("Goal {} ran in {}ms", goal.name, stopWatch.stop())
+            if (result is Failed)
+                log.info("Goal {} failed after {}ms", goal.name, stopWatch.stop())
+            else
+                log.info("Goal {} ran {}ms", goal.name, stopWatch.stop())
             result
         }
 
@@ -32,7 +34,10 @@ class RuleExecutionContext constructor(private val processor: Processor) {
             val task: ForkJoinTask<RuleResult> = when (value) {
                 is ResolvedRuleCall -> ruleCall(value).fork()
                 is ResolvedStringValue -> forkJoinTask<RuleResult> { Success(listOf(StringResource(value.value, null))) }.fork()
-                is ResolvedListValue -> forkJoinTask<RuleResult> { Success(value.items.flatMap { eval(it).join().resources }) }.fork()
+                is ResolvedListValue -> forkJoinTask<RuleResult> {
+                    val resultsToJoin = value.items.map { eval(it).join() }
+                    resultsToJoin.firstOrNull { it is Failed } ?: Success(resultsToJoin.flatMap { it.resources })
+                }.fork()
                 is ResolvedGoalCall -> goalTask[value.goal]!!
                 else -> throw IllegalStateException("Can't handle $value")
             }
@@ -48,6 +53,7 @@ class RuleExecutionContext constructor(private val processor: Processor) {
                 val parameters = childTasks.map {
                     it.first to it.second.join()
                 }.toMap()
+                if (parameters.values.any { it is Failed }) return forkJoinTask { Failed() }
                 val ctor = nativeRule.primaryConstructor!!
                 val kParameters = ctor.parameters.map {
                     val resources = parameters[it.name]?.resources
@@ -68,7 +74,7 @@ class RuleExecutionContext constructor(private val processor: Processor) {
                 val ruleParams = ctor.callBy(kParameters)
                 return forkJoinTask { processor.process(Execution(goal.name, Paths.get(".whisk"), Paths.get("."), ruleParams, Paths.get("whisk-out"))) }
             } else {
-                return forkJoinTask { Failed(emptyList()) }
+                return forkJoinTask { Failed() }
             }
         }
     }

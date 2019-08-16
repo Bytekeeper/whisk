@@ -7,5 +7,7 @@ interface RuleResult {
 }
 
 data class Success(override val resources: List<Resource>) : RuleResult
-data class Failed(override val resources: List<Resource>) : RuleResult
+class Failed : RuleResult {
+    override val resources: List<Resource> get() = throw UnsupportedOperationException()
+}
 

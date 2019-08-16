@@ -32,7 +32,8 @@ implementation_deps = maven_library(
                'com.google.dagger:dagger:2.24', 'org.antlr:antlr4:4.7.2',
                'org.jetbrains.kotlin:kotlin-reflect:1.3.41', 'org.jetbrains.kotlin:kotlin-compiler-embeddable:1.3.41',
                'org.jetbrains.kotlin:kotlin-stdlib:1.3.41', 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.3.41',
-               'org.apache.logging.log4j:log4j-iostreams:2.12.1'])
+               'org.apache.logging.log4j:log4j-iostreams:2.12.1',
+               'org.apache.ant:ant-junit:1.10.6'])
 
 test_deps = maven_library(
     artifacts=['org.assertj:assertj-core:3.13.2']

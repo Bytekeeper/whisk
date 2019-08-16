@@ -4,6 +4,7 @@ import junit.framework.TestCase
 import org.junit.internal.TextListener
 import org.junit.runner.JUnitCore
 import org.junit.runner.RunWith
+import org.whisk.execution.Failed
 import org.whisk.execution.RuleResult
 import org.whisk.execution.Success
 import org.whisk.kotlin.KotlinCompiler
@@ -28,13 +29,13 @@ class KotlinTestHandler @Inject constructor(private val kotlinCompiler: Provider
 
         val dependencies = rule.cp.map { it.string }
 
-        kotlinCompiler.get().compile(rule.srcs.map { it.string }, dependencies, emptyList(), emptyList(), classesDir, kaptDir.resolve("sources"),
+        val succeeded = kotlinCompiler.get().compile(rule.srcs.map { it.string }, dependencies, emptyList(), emptyList(), classesDir, kaptDir.resolve("sources"),
                 kaptClasses, kaptDir.resolve("kotlinSources"))
+        if (!succeeded) return Failed()
 
         val cl = URLClassLoader(((dependencies.map {
             File(it).toURI().toURL()
         } + classesDir.toUri().toURL()).toTypedArray()))
-
 
         val testAnnotation = try {
             cl.loadClass(org.junit.Test::javaClass.name) as Class<Annotation>

@@ -15,6 +15,7 @@ import org.eclipse.aether.spi.connector.layout.RepositoryLayoutProvider
 import org.eclipse.aether.spi.connector.transport.TransporterFactory
 import org.eclipse.aether.transport.http.HttpTransporterFactory
 import org.eclipse.aether.util.graph.visitor.PreorderNodeListGenerator
+import org.whisk.DownloadManager
 import org.whisk.execution.RuleResult
 import org.whisk.execution.Success
 import org.whisk.forkJoinTask
