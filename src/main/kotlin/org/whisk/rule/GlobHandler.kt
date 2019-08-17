@@ -1,6 +1,5 @@
 package org.whisk.rule
 
-import org.whisk.PathMatcher
 import org.whisk.execution.RuleResult
 import org.whisk.execution.Success
 import org.whisk.model.FileResource
@@ -9,13 +8,18 @@ import org.whisk.model.RGlob
 import org.whisk.model.StringResource
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import javax.inject.Inject
 import kotlin.streams.toList
 
 private object GlobUtil {
+    private fun toRegex(path: String) =
+            path.replace(".", "\\.")
+                    .replace("?", "\\w")
+                    .replace("**", ".*")
+                    .replace("(?<!\\.)\\*".toRegex(), "[^/]+")
+
     fun determineSources(base: Path, pattern: List<StringResource>): List<Path> {
-        val matcher = pattern.joinToString("|") { PathMatcher.toRegex(it.string) }.toRegex()
+        val matcher = pattern.joinToString("|") { toRegex(it.string) }.toRegex()
         return Files.walk(base)
                 .use {
                     it.map { base.relativize(it) }
@@ -29,7 +33,7 @@ private object GlobUtil {
 class GlobHandler @Inject constructor() : RuleExecutor<Glob> {
     override fun execute(execution: Execution<Glob>): RuleResult {
         val rule = execution.ruleParameters
-        val base = Paths.get(".")
+        val base = execution.modulePath
         val srcs = GlobUtil.determineSources(base, rule.pattern)
                 .map { FileResource(it.toAbsolutePath(), source = rule) }
         return Success(srcs)

@@ -1,5 +1,10 @@
 # Whisk (yet another build tool)
 
+## Status
+Current CI uses gradle to build `whisk`. The resulting application is then used to build itself: 
+
+![Build Status](https://api.travis-ci.org/Bytekeeper/whisk.svg?branch=master)
+
 ## Why
 Besides being an interesting topic:
 * Maven

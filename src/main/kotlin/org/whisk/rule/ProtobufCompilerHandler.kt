@@ -23,7 +23,7 @@ class ProtobufCompilerHandler @Inject constructor(
         if (!protocDir.toFile().exists()) {
             val download = downloadManager.download(
                     protocDir,
-                    URL("https://github.com/protocolbuffers/protobuf/releases/download/v3.8.0/protoc-3.8.0-linux-x86_64.zip")
+                    URL("https://github.com/protocolbuffers/protobuf/releases/download/v3.9.1/protoc-3.9.1-linux-x86_64.zip")
             )
             FileSystems.newFileSystem(download, null)
                     .use { zfs ->
