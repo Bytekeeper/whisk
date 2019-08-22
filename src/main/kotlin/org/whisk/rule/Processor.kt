@@ -26,7 +26,8 @@ class RuleProcessorRegistry @Inject constructor(
         protobufCompilerHandler: ProtobufCompilerHandler,
         globHandler: GlobHandler,
         rGlobHandler: RGlobHandler,
-        antlrGenHandler: AntlrGenHandler
+        antlrGenHandler: AntlrGenHandler,
+        execHandler: ExecHandler
 ) {
     private val processors = mutableMapOf<KClass<out RuleParameters>, RuleExecutor<out RuleParameters>>()
 
@@ -42,6 +43,7 @@ class RuleProcessorRegistry @Inject constructor(
         register(globHandler)
         register(rGlobHandler)
         register(antlrGenHandler)
+        register(execHandler)
     }
 
     inline fun <reified T : RuleParameters> register(ruleHandler: RuleExecutor<T>) {

@@ -55,6 +55,11 @@ data class ProtobufCompile(
         val imports: List<FileResource>
 ) : RuleParameters
 
+data class Exec(
+        val src: FileResource,
+        val arguments: List<StringResource>
+) : RuleParameters
+
 data class Glob(val pattern: List<StringResource>) : RuleParameters {
     init {
         check(pattern.isNotEmpty()) { "glob() call requires at least one argument" }
@@ -77,6 +82,7 @@ class RuleRegistry @Inject constructor() {
         register<ProtobufCompile>()
         register<Glob>()
         register<AntlrGen>()
+        register<Exec>()
         register<RGlob>()
     }
 
