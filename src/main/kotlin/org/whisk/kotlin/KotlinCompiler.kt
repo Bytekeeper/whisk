@@ -3,49 +3,31 @@ package org.whisk.kotlin
 import dagger.Reusable
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.io.IoBuilder
-import org.jetbrains.kotlin.cli.common.ExitCode
-import org.jetbrains.kotlin.cli.jvm.K2JVMCompiler
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.ObjectOutputStream
+import java.io.PrintStream
+import java.net.URLClassLoader
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import javax.inject.Inject
+import javax.tools.ToolProvider
 
 @Reusable
 class KotlinCompiler @Inject constructor() {
     private val log = LogManager.getLogger()
     private val ioBuilder = IoBuilder.forLogger(log)
-    private var compiler: K2JVMCompiler
 
-    init {
-//        val sl = javaClass.classLoader as URLClassLoader
-//        val dependencies = sl.urLs.map { it.toString() }
-//        val cl = URLClassLoader(
-//                listOf(
-//                        dependencies.first { it.contains("kotlin-compiler") }
-//                )
-//                        .map { URL(it) }.toTypedArray()
-//                , null
-//        )
-//        val compilerClass = Class.forName("org.jetbrains.kotlin.cli.jvm.K2JVMCompiler", true, cl)
-//        val servicesClass = Class.forName("org.jetbrains.kotlin.config.Services", true, cl)
-//        val compilerClass = K2JVMCompiler::class.java
-//        val servicesClass = Services::class.java
-//        emptyService = servicesClass.getField("EMPTY").get(servicesClass)
-//        exec = compilerClass.getMethod(
-//                "execAndOutputXml",
-//                PrintStream::class.java,
-//                servicesClass,
-//                Array<String>::class.java
-//        )
-        compiler = K2JVMCompiler()
-    }
-
-    fun compile(srcs: List<String>, compileClasspath: List<String>, kaptAPClasspath: List<String>, kaptPlugins: List<String>,
-                classes: Path, kaptSources: Path, kaptClasses: Path, kaptKotlinSources: Path): Boolean {
+    fun compile(compilerClasspath: List<Path>, srcs: List<String>, compileClasspath: List<String>, kaptAPClasspath: List<String>, kaptPlugins: List<String>,
+                classes: Path, kaptSources: Path, kaptClasses: Path, kaptKotlinSources: Path, additionalParameters: List<String>): Boolean {
         require(srcs.isNotEmpty())
+        val ccl = URLClassLoader(compilerClasspath.map { it.toUri().toURL() }.toTypedArray(), ToolProvider.getSystemToolClassLoader())
+        val okResult = ccl.loadClass("org.jetbrains.kotlin.cli.common.ExitCode").enumConstants.first { (it as Enum<*>).name == "OK" }
+        val compilerClass = ccl.loadClass("org.jetbrains.kotlin.cli.jvm.K2JVMCompiler")
+        val compiler = compilerClass.newInstance()
+        val execMethod = compilerClass.getMethod("exec", PrintStream::class.java, kotlin.Array<String>::class.java)
+
         Files.createDirectories(classes)
         Files.createDirectories(kaptSources)
         Files.createDirectories(kaptClasses)
@@ -69,10 +51,11 @@ class KotlinCompiler @Inject constructor() {
                 classes.toString(),
                 "-no-stdlib"
 //                ,"-Xreport-output-files"
-        ) + kaptParameters + kaptPlugins.map { "-Xplugin=$it" } + srcs
+        ) + additionalParameters + kaptParameters + kaptPlugins.map { "-Xplugin=$it" } + srcs
 
-        return compiler.exec(ioBuilder.buildPrintStream(), *params.toTypedArray()) == ExitCode.OK
-//        exec.invoke(compiler, System.out, emptyService, params.toTypedArray())
+
+
+        return execMethod.invoke(compiler, ioBuilder.buildPrintStream(), params.toTypedArray()) == okResult
     }
 
     fun encodeList(options: Map<String, String>): String {

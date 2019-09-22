@@ -13,7 +13,7 @@ plugins {
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation(kotlin("reflect"))
-    implementation(kotlin("compiler-embeddable"))
+    testImplementation(kotlin("compiler-embeddable"))
     implementation("org.apache.logging.log4j:log4j-core:2.12.1")
     implementation("org.apache.logging.log4j:log4j-iostreams:2.12.1")
     implementation("org.apache.maven:maven-resolver-provider:3.6.1")

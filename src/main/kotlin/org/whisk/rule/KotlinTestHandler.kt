@@ -29,8 +29,10 @@ class KotlinTestHandler @Inject constructor(private val kotlinCompiler: Provider
 
         val dependencies = rule.cp.map { it.string }
 
-        val succeeded = kotlinCompiler.get().compile(rule.srcs.map { it.string }, dependencies, emptyList(), emptyList(), classesDir, kaptDir.resolve("sources"),
-                kaptClasses, kaptDir.resolve("kotlinSources"))
+        val succeeded = kotlinCompiler.get().compile(
+                rule.compiler.map { it.path },
+                rule.srcs.map { it.string }, dependencies, emptyList(), emptyList(), classesDir, kaptDir.resolve("sources"),
+                kaptClasses, kaptDir.resolve("kotlinSources"), rule.additional_parameters.map { it.string })
         if (!succeeded) return Failed()
 
         val cl = URLClassLoader(((dependencies.map {
