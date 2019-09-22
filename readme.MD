@@ -1,4 +1,20 @@
 # Whisk (yet another build tool)
+Using `phases` or `task` dependency graphs is good, but limited. The build system doesn't really understand what
+you are trying to build. And without proper documentation, developers don't understand why a certain task depends
+on another.
+
+Whisk tries to solve this by making dependencies explicit. Build steps depend on the output of other build steps instead 
+of a generic execution of another task. This immediately makes clear if build steps could be removed, or why they are
+there.
+
+The build language to describe a build is a simple functional language based on goals and rules.
+
+Goals are parameter-less targets a build can produce. They define the rules to execute. They can be called by
+the CLI or by rules.
+
+Rules are parametrized descriptions on what step to perform. They can not be called from the CLI. They can be called
+by other rules or goals. Think of rules as a mean to the end of executing a goal. 
+
 
 ## Status
 Current CI uses gradle to build `whisk`. The resulting application is then used to build itself: 
