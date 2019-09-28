@@ -66,7 +66,7 @@ class RuleExecutionContext constructor(private val processor: Processor) {
             val parameters = childTasks.map {
                 it.first to ((it.second as? ForkJoinTask<RuleResult>)?.join() ?: it.second as RuleResult)
             }.toMap()
-            if (parameters.values.any { it is Failed }) return forkJoinTask { Failed() }
+            if (parameters.values.any { it is Failed }) return forkJoinTask<RuleResult> { Failed() }.fork()
 
             return value.rule.nativeRule?.let { nativeRuleCall(it, parameters, value.source.modulePath) }
                     ?: eval(value.rule.value!!, parameters)

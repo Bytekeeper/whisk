@@ -21,7 +21,7 @@ grammar = antlr_gen(tool=antlr4_compiler, srcs=glob('src/main/antlr/**.g4'), arg
 
 antlr4_runtime = prebuilt_jar('lib/antlr4-runtime-4.7.2.jar')
 
-junit4 = remote_file(url='http://central.maven.org/maven2/junit/junit/4.12/junit-4.12.jar')
+
 log4j2_api = remote_file(url='http://central.maven.org/maven2/org/apache/logging/log4j/log4j-api/2.12.1/log4j-api-2.12.1.jar')
 log4j2_core = remote_file(url='http://central.maven.org/maven2/org/apache/logging/log4j/log4j-core/2.12.1/log4j-core-2.12.1.jar')
 
