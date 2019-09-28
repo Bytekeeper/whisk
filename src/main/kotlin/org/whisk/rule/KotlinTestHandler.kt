@@ -1,16 +1,13 @@
 package org.whisk.rule
 
-import junit.framework.TestCase
-import org.junit.internal.TextListener
-import org.junit.runner.JUnitCore
-import org.junit.runner.RunWith
+import org.whisk.ParentLastClassLoader
 import org.whisk.execution.Failed
 import org.whisk.execution.RuleResult
 import org.whisk.execution.Success
+import org.whisk.ext.UnitTester
 import org.whisk.kotlin.KotlinCompiler
 import org.whisk.model.KotlinTest
 import java.io.File
-import java.net.URLClassLoader
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import javax.inject.Inject
@@ -35,22 +32,22 @@ class KotlinTestHandler @Inject constructor(private val kotlinCompiler: Provider
                 kaptClasses, kaptDir.resolve("kotlinSources"), rule.additional_parameters.map { it.string })
         if (!succeeded) return Failed()
 
-        val cl = URLClassLoader(((dependencies.map {
+        val cl = ParentLastClassLoader(((dependencies.map {
             File(it).toURI().toURL()
         } + classesDir.toUri().toURL()).toTypedArray()))
 
         val testAnnotation = try {
-            cl.loadClass(org.junit.Test::javaClass.name) as? Class<Annotation>
+            cl.loadClass("org.junit.Test") as? Class<Annotation>
         } catch (e: ClassNotFoundException) {
             null
         }
         val runWith = try {
-            cl.loadClass(RunWith::javaClass.name) as? Class<Annotation>
+            cl.loadClass("org.junit.runner.RunWith") as? Class<Annotation>
         } catch (e: ClassNotFoundException) {
             null
         }
         val testCase = try {
-            cl.loadClass(TestCase::javaClass.name)
+            cl.loadClass("junit.framework.TestCase")
         } catch (e: ClassNotFoundException) {
             null
         }
@@ -71,11 +68,9 @@ class KotlinTestHandler @Inject constructor(private val kotlinCompiler: Provider
                                 && (testAnnotation == null || c.methods.any { it.isAnnotationPresent(testAnnotation) })
                     }.toList().toTypedArray()
         }
+        val tester = cl.loadClass("org.whisk.ext.junit4.JUnit4Runner").newInstance() as UnitTester
+        val failures = tester.test(classes)
 
-        val jUnitCore = JUnitCore()
-        jUnitCore.addListener(TextListener(System.out))
-        val result = jUnitCore.run(*classes)
-
-        return if (result.failureCount == 0) Success(emptyList()) else Failed()
+        return if (failures == 0) Success(emptyList()) else Failed()
     }
 }

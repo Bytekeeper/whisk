@@ -10,7 +10,10 @@ import javax.inject.Inject
 import kotlin.reflect.KClass
 
 
-data class SourceRef<out S>(val module: String, val source: S)
+class SourceRef<out S>(moduleInfo: ModuleInfo, val source: S) {
+    val module: String = moduleInfo.name
+    val modulePath: Path? = moduleInfo.path
+}
 interface WithSourceRef<out S> {
     val source: SourceRef<S>
 }
@@ -88,21 +91,26 @@ class LocalTable(private val parent: GlobalTable) : SymbolTable {
             module.registerRule(rule)
 }
 
+data class ModuleInfo(val name: String, val path: Path?, val data: CharStream)
+
 interface ModuleLoader {
-    fun load(module: String): CharStream?
+    fun load(module: String): ModuleInfo?
 }
 
 class SystemModuleLoader : ModuleLoader {
-    override fun load(module: String): CharStream? =
+    override fun load(module: String): ModuleInfo? =
             javaClass.getResourceAsStream("/whisk/" + module.replace('.', '/') + ".BL")
                     ?.let {
-                        CharStreams.fromStream(it)
+                        ModuleInfo(module, null, CharStreams.fromStream(it))
                     }
 }
 
 class PathModuleLoader(private val parent: ModuleLoader, private val basePath: Path) : ModuleLoader {
-    override fun load(module: String): CharStream =
-            parent.load(module) ?: CharStreams.fromPath(basePath.resolve(module.replace('.', '/')).resolve("WHISK.BL"))
+    override fun load(module: String): ModuleInfo =
+            parent.load(module) ?: kotlin.run {
+                val modulePath = basePath.resolve(module.replace('.', '/'))
+                ModuleInfo(module, modulePath, CharStreams.fromPath(modulePath.resolve("WHISK.BL")))
+            }
 }
 
 class BuildLangResolver @Inject constructor(
@@ -118,7 +126,8 @@ class BuildLangResolver @Inject constructor(
             parsedModules += module
             val localTable = LocalTable(globalTable)
 
-            val lexer = BuildLangLexer(moduleLoader.load(module))
+            val moduleInfo = moduleLoader.load(module) ?: error("Error loading module")
+            val lexer = BuildLangLexer(moduleInfo.data)
             val parser = BuildLangParser(CommonTokenStream(lexer))
             parser.removeErrorListeners()
             parser.addErrorListener(BLErrorListener())
@@ -129,7 +138,7 @@ class BuildLangResolver @Inject constructor(
 
             buildFile.declarations.forEach { decl ->
                 val goalName = decl.name.text
-                val resolvedGoal = ResolvedGoal(SourceRef(module, decl), goalName, null)
+                val resolvedGoal = ResolvedGoal(SourceRef(moduleInfo, decl), goalName, null)
                 if (exposed.isEmpty() || exposed.contains(goalName))
                     globalTable.registerGoal(resolvedGoal)
                 else
@@ -138,8 +147,8 @@ class BuildLangResolver @Inject constructor(
             buildFile.definitions.forEach { def ->
                 val ruleName = def.name.text
                 val params = def.ruleParamDefs
-                        .map { ResolvedRuleParamDef(SourceRef(module, it), it.name.text, it.type, it.optional) }
-                val ruleDef = ResolvedRule(SourceRef(module, def), ruleName, params, null, null, def.anon)
+                        .map { ResolvedRuleParamDef(SourceRef(moduleInfo, it), it.name.text, it.type, it.optional) }
+                val ruleDef = ResolvedRule(SourceRef(moduleInfo, def), ruleName, params, null, null, def.anon)
                 if (exposed.isEmpty() || exposed.contains(ruleName))
                     globalTable.registerRule(ruleDef)
                 else
@@ -155,25 +164,25 @@ class BuildLangResolver @Inject constructor(
                         is RuleCall -> {
                             val rule = localTable.resolveRule(importedModules, value.rule.text)
                             if (!rule.anon && !allowNonAnon) throw IllegalRuleCall("'${rule.name}' is not anonymously callable, but is called from ${value.rule.ID.toPos(module)}")
-                            ResolvedRuleCall(SourceRef(module, value), rule,
+                            ResolvedRuleCall(SourceRef(moduleInfo, value), rule,
                                     value.params.map { param ->
                                         val name = param.name?.text
                                         val paramDef = if (name == null) rule.params.singleOrNull()
                                                 ?: throw InvalidParameterException("'Invalid number of parameters for ${rule.name}' @ ${value.rule.ID.toPos(module)}.")
                                         else rule.params.firstOrNull { it.name == name }
                                                 ?: throw InvalidParameterException("'${rule.name}' has no parameter named '${name}' @ ${param.name.toPos(module)}.")
-                                        ResolvedRuleParam(SourceRef(module, param), paramDef, resolveValue(param.value, parameters))
+                                        ResolvedRuleParam(SourceRef(moduleInfo, param), paramDef, resolveValue(param.value, parameters))
                                     })
                         }
-                        is StringValue -> ResolvedStringValue(SourceRef(module, value), value.value)
+                        is StringValue -> ResolvedStringValue(SourceRef(moduleInfo, value), value.value)
                         is RefValue -> {
                             parameters.find { it.name == value.ref.text }
                                     ?.let { paramDef ->
-                                        ResolvedRuleParamValue(SourceRef(module, value), paramDef)
+                                        ResolvedRuleParamValue(SourceRef(moduleInfo, value), paramDef)
                                     }
-                                    ?: ResolvedGoalCall(SourceRef(module, value), localTable.resolveGoal(importedModules, value.ref.text))
+                                    ?: ResolvedGoalCall(SourceRef(moduleInfo, value), localTable.resolveGoal(importedModules, value.ref.text))
                         }
-                        is ListValue -> ResolvedListValue(SourceRef(module, value), value.items.map { resolveValue(it, parameters, true) })
+                        is ListValue -> ResolvedListValue(SourceRef(moduleInfo, value), value.items.map { resolveValue(it, parameters, true) })
                         else -> throw InternalBuildLangError("Unknown value $value")
                     }
 

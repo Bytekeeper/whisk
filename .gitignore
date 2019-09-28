@@ -3,5 +3,5 @@
 whisk-out
 **.iml
 /.gradle
-/build
-/out
+out
+build

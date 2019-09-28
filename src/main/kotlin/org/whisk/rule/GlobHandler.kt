@@ -35,7 +35,7 @@ class GlobHandler @Inject constructor() : RuleExecutor<Glob> {
         val rule = execution.ruleParameters
         val base = execution.modulePath
         val srcs = GlobUtil.determineSources(base, rule.pattern)
-                .map { FileResource(it.toAbsolutePath(), source = rule) }
+                .map { FileResource(base.resolve(it), base, rule) }
         return Success(srcs)
     }
 }

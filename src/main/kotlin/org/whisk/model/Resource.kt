@@ -10,7 +10,7 @@ interface Resource {
 data class FileResource(val path: Path, val root: Path = path.root, override val source: RuleParameters?) : Resource {
     init {
         check(path.isAbsolute)
-        check(path.startsWith(root))
+        check(path.startsWith(root)) { "$path does not start with $root" }
     }
 
     val exists get() = path.toFile().exists()

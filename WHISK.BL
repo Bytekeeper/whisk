@@ -1,18 +1,18 @@
-import whisk,examples
+import whisk,ext,junit4,examples
 
 # Declare goals and rules that can be used from other BL files in this project
 export main,whisk,unit_tests,integration_tests,test
 
 # Define goals that can be called
-whisk = build_jar(files= [main, rglob(pattern='**', root='src/main/resources')], main_class='org.whisk.MainKt')
+whisk = build_jar(files= [ext, main, rglob(pattern='**', root='src/main/resources')], main_class='org.whisk.MainKt')
 main = kotlin_compile(
     compiler= compiler_deps,
     srcs = [glob('src/main/kotlin/**.kt'), grammar],
-    exported_deps=[log4j2_api, log4j2_core, implementation_deps, junit4, antlr4_runtime],
-    cp=[],
+    exported_deps=[log4j2_api, log4j2_core, implementation_deps, antlr4_runtime, junit4_runner],
+    cp=[ext],
     kapt_processors=[dagger_compiler])
 
-unit_tests = kotlin_test(compiler= [compiler_deps], srcs=[glob('src/test/kotlin/**.kt')], cp=[main, test_deps])
+unit_tests = kotlin_test(compiler= [compiler_deps], srcs=[glob('src/test/kotlin/**.kt')], cp=[main, test_deps, junit4])
 integration_tests = build_examples(whisk)
 test = [unit_tests, integration_tests]
 
@@ -38,6 +38,7 @@ implementation_deps = maven_library(
                'org.jetbrains.kotlin:kotlin-stdlib:1.3.50',
                'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.3.50',
                'org.apache.logging.log4j:log4j-iostreams:2.12.1',
+               'org.apache.logging.log4j:log4j-slf4j-impl:2.12.1',
                'org.apache.ant:ant-junit:1.10.6'])
 
 test_deps = maven_library(artifacts=['org.assertj:assertj-core:3.13.2'])
