@@ -13,7 +13,7 @@ class PrebuiltJarHandler @Inject constructor() : RuleExecutor<PrebuiltJar> {
     ): RuleResult {
         val rule = execution.ruleParameters
         val file = FileResource(Paths.get(rule.binary_jar.string).toAbsolutePath(), source = rule)
-        if (!file.exists) throw java.lang.IllegalStateException("${execution.goalName} file does not exist!")
+        check(file.exists) { "${execution.goalName} file does not exist!" }
         return Success(listOf(file))
     }
 }

@@ -42,3 +42,12 @@ fun Path.unzip(targetDir: Path) = FileSystems.newFileSystem(this, null)
                 }
             }
         }
+
+fun <T> withTempFile(block: (Path) -> T): T {
+    val tempFile = Files.createTempFile("whisk", "data")
+    try {
+        return block(tempFile)
+    } finally {
+        Files.delete(tempFile)
+    }
+}

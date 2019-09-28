@@ -53,7 +53,7 @@ class RuleProcessorRegistry @Inject constructor(
     }
 
     fun <T : RuleParameters> register(kClass: KClass<T>, ruleHandler: RuleExecutor<T>) {
-        processors.put(kClass, ruleHandler)
+        processors[kClass] = ruleHandler
     }
 
     fun getRuleProcessor(model: RuleParameters) =

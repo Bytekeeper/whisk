@@ -37,8 +37,7 @@ class BuildLangTest {
 
     private fun parserFromString(source: String): BuildLangParser {
         val lexer = BuildLangLexer(CharStreams.fromString(source))
-        val parser = BuildLangParser(CommonTokenStream(lexer))
-        return parser
+        return BuildLangParser(CommonTokenStream(lexer))
     }
 
     @Test

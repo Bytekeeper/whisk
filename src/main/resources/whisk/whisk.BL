@@ -29,6 +29,7 @@ remote_file(url, sha1)
 # Rule to depend on files given a glob pattern (ie. "src/main/**.java")
 anon glob(pattern:[])
 
+# Rule to depend on files given a glob pattern (ie. "src/main/**.java"), but are passed on relative to the given root (ie. "src/main")
 anon rglob(pattern:[], root)
 
 # Rule to generate lexers and parsers from ANTLR grammars

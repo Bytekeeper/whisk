@@ -43,15 +43,15 @@ class BuildLangTransformer @Inject constructor() {
                     ctx.declarations.map(::declarationFrom),
                     ctx.definitions.map(::definitionFrom))
 
-    fun declarationFrom(ctx: BuildLangParser.DeclarationContext): GoalDeclaration =
+    private fun declarationFrom(ctx: BuildLangParser.DeclarationContext): GoalDeclaration =
             GoalDeclaration(ctx.name, ValueVisitor.visitChildren(ctx))
 
-    fun definitionFrom(ctx: BuildLangParser.DefinitionContext): RuleDefinition {
+    private fun definitionFrom(ctx: BuildLangParser.DefinitionContext): RuleDefinition {
         val ruleParamDefs = ctx.params.map(::ruleParamDefFrom)
         return RuleDefinition(ctx.name, ruleParamDefs, ValueVisitor.visitChildren(ctx), ctx.ANON() != null)
     }
 
-    fun ruleParamDefFrom(ctx: BuildLangParser.RuleParamDefContext) =
+    private fun ruleParamDefFrom(ctx: BuildLangParser.RuleParamDefContext) =
             RuleParamDef(ctx.name, if (ctx.type != null) ParamType.LIST else ParamType.STRING, ctx.optional != null || ctx.type != null)
 }
 

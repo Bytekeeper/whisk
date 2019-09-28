@@ -104,4 +104,4 @@ class RuleRegistry @Inject constructor() {
     fun getRuleClass(name: String) = models[name] ?: throw UnsupportedRule(name)
 }
 
-class UnsupportedRule(val ruleName: String) : RuntimeException("No rule '$ruleName' was registered!")
+class UnsupportedRule(ruleName: String) : RuntimeException("No rule '$ruleName' was registered!")

@@ -3,6 +3,7 @@ package org.whisk.kotlin
 import dagger.Reusable
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.io.IoBuilder
+import org.whisk.withTempFile
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.ObjectOutputStream
@@ -26,7 +27,7 @@ class KotlinCompiler @Inject constructor() {
         val okResult = ccl.loadClass("org.jetbrains.kotlin.cli.common.ExitCode").enumConstants.first { (it as Enum<*>).name == "OK" }
         val compilerClass = ccl.loadClass("org.jetbrains.kotlin.cli.jvm.K2JVMCompiler")
         val compiler = compilerClass.newInstance()
-        val execMethod = compilerClass.getMethod("exec", PrintStream::class.java, kotlin.Array<String>::class.java)
+        val execMethod = compilerClass.getMethod("exec", PrintStream::class.java, Array<String>::class.java)
 
         Files.createDirectories(classes)
         Files.createDirectories(kaptSources)
@@ -52,13 +53,15 @@ class KotlinCompiler @Inject constructor() {
                 "-no-stdlib"
 //                ,"-Xreport-output-files"
         ) + additionalParameters + kaptParameters + plugins.map { "-Xplugin=$it" } + srcs
-
-
-
-        return execMethod.invoke(compiler, ioBuilder.buildPrintStream(), params.toTypedArray()) == okResult
+        return withTempFile { tempFile ->
+            tempFile.toFile().printWriter().use { writer ->
+                params.forEach(writer::println)
+            }
+            execMethod.invoke(compiler, ioBuilder.buildPrintStream(), arrayOf("@${tempFile.toAbsolutePath()}")) == okResult
+        }
     }
 
-    fun encodeList(options: Map<String, String>): String {
+    private fun encodeList(options: Map<String, String>): String {
         val os = ByteArrayOutputStream()
         val oos = ObjectOutputStream(os)
 

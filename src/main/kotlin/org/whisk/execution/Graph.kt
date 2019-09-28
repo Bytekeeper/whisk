@@ -10,7 +10,7 @@ class Graph(val nodes: List<Node>)
 class GraphBuilder @Inject constructor() {
     fun buildFrom(availableGoals: List<ResolvedGoal>, goal: String): Graph {
         val entryGoal = availableGoals.singleOrNull { it.name == goal }
-                ?: throw IllegalArgumentException("No such goal $goal, valid goals are ${availableGoals.map { it.name }.joinToString()}. Did you 'expose' the goal?")
+                ?: throw IllegalArgumentException("No such goal $goal, valid goals are ${availableGoals.joinToString { it.name }}. Did you 'expose' the goal?")
         val graphVisitor = GraphVisitor()
 
         graphVisitor.visitGoal(entryGoal)
@@ -20,7 +20,7 @@ class GraphBuilder @Inject constructor() {
 
     class GraphVisitor {
         val symbolToNode = mutableMapOf<Any, Node>()
-        val visited = mutableSetOf<Any>()
+        private val visited = mutableSetOf<Any>()
 
         fun visitGoal(goal: ResolvedGoal): Node {
             var node = symbolToNode[goal]
@@ -31,7 +31,7 @@ class GraphBuilder @Inject constructor() {
             val dependencies = goal.value?.let { visitValue(it) } ?: emptyList()
             node = Node(goal, dependencies)
             symbolToNode[goal] = node
-            return node;
+            return node
         }
 
         private fun visitValue(value: ResolvedValue<Value>): List<Node> =
