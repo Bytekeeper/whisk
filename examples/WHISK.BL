@@ -1,6 +1,7 @@
 import whisk
 
-build_examples(binary) = [minimal(binary), protobuf(binary)]
+build_examples(binary) = [minimal(binary), protobuf(binary), antlr(binary)]
 
 minimal(binary) = exec(work_dir='examples/minimal', src='/usr/bin/java', arguments=['-jar', binary, 'build'])
 protobuf(binary) = exec(work_dir='examples/protobuf', src='/usr/bin/java', arguments=['-jar', binary, 'build'])
+antlr(binary) = exec(work_dir='examples/antlr', src='/usr/bin/java', arguments=['-jar', binary, 'build'])

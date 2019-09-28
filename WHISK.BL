@@ -8,8 +8,8 @@ whisk = build_jar(files= [main, rglob(pattern='**', root='src/main/resources')],
 main = kotlin_compile(
     compiler= compiler_deps,
     srcs = [glob('src/main/kotlin/**.kt'), grammar],
-    exported_deps=[log4j2_api, log4j2_core, implementation_deps, junit4],
-    cp=[antlr4_runtime],
+    exported_deps=[log4j2_api, log4j2_core, implementation_deps, junit4, antlr4_runtime],
+    cp=[],
     kapt_processors=[dagger_compiler])
 
 unit_tests = kotlin_test(compiler= [compiler_deps], srcs=[glob('src/test/kotlin/**.kt')], cp=[main, test_deps])
@@ -17,7 +17,7 @@ integration_tests = build_examples(whisk)
 test = [unit_tests, integration_tests]
 
 # Non-exposed goals that help building up the dependency graph
-grammar = antlr_gen(srcs=glob('src/main/antlr/**.g4'), arguments = '-visitor')
+grammar = antlr_gen(tool=antlr4_compiler, srcs=glob('src/main/antlr/**.g4'), arguments = '-visitor')
 
 antlr4_runtime = prebuilt_jar('lib/antlr4-runtime-4.7.2.jar')
 
@@ -27,11 +27,13 @@ log4j2_core = remote_file(url='http://central.maven.org/maven2/org/apache/loggin
 
 dagger_compiler = maven_library(artifacts=['com.google.dagger:dagger-compiler:2.22.1'])
 
+antlr4_compiler = maven_library(artifacts='org.antlr:antlr4:4.7.2')
+
 implementation_deps = maven_library(
     artifacts=['org.apache.maven:maven-resolver-provider:3.6.1',
                'org.apache.maven.resolver:maven-resolver-transport-http:1.4.0',
                'org.apache.maven.resolver:maven-resolver-connector-basic:1.4.0',
-               'com.google.dagger:dagger:2.24', 'org.antlr:antlr4:4.7.2',
+               'com.google.dagger:dagger:2.24',
                'org.jetbrains.kotlin:kotlin-reflect:1.3.50',
                'org.jetbrains.kotlin:kotlin-stdlib:1.3.50',
                'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.3.50',

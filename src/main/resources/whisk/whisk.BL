@@ -33,7 +33,7 @@ anon glob(pattern:[])
 anon rglob(pattern:[], root)
 
 # Rule to generate lexers and parsers from ANTLR grammars
-antlr_gen(srcs: [], arguments: [])
+antlr_gen(tool:[], srcs: [], arguments: [])
 
 
 # Run external program

@@ -6,6 +6,7 @@ import kotlin.reflect.KClass
 interface RuleParameters
 
 data class AntlrGen(
+        val tool: List<FileResource>,
         val srcs: List<FileResource>,
         val arguments: List<StringResource>
 ) : RuleParameters

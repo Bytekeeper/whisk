@@ -1,0 +1,7 @@
+import whisk
+
+export build
+
+build = antlr_gen(tool=antlr4_compiler, srcs=glob('src/**.g4'), arguments = '-visitor')
+antlr4_compiler = maven_library(artifacts='org.antlr:antlr4:4.7.2')
+
