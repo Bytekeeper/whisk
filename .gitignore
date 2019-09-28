@@ -5,3 +5,4 @@ whisk-out
 /.gradle
 out
 build
+*.mvn
