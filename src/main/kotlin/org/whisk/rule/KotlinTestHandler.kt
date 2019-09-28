@@ -19,7 +19,7 @@ import kotlin.streams.toList
 
 class KotlinTestHandler @Inject constructor(private val kotlinCompiler: Provider<KotlinCompiler>) : RuleExecutor<KotlinTest> {
     override fun execute(
-            execution: Execution<KotlinTest>
+            execution: ExecutionContext<KotlinTest>
     ): RuleResult {
         val rule = execution.ruleParameters
         val whiskOut = execution.targetPath

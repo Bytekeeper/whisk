@@ -18,7 +18,7 @@ class BuildJarHandler @Inject constructor() : RuleExecutor<BuildJar> {
     private val log = LogManager.getLogger()
 
     override fun execute(
-            execution: Execution<BuildJar>
+            execution: ExecutionContext<BuildJar>
     ): RuleResult {
         val rule = execution.ruleParameters
         val whiskOut = execution.targetPath

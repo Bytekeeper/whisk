@@ -19,7 +19,7 @@ class KotlinCompiler @Inject constructor() {
     private val log = LogManager.getLogger()
     private val ioBuilder = IoBuilder.forLogger(log)
 
-    fun compile(compilerClasspath: List<Path>, srcs: List<String>, compileClasspath: List<String>, kaptAPClasspath: List<String>, kaptPlugins: List<String>,
+    fun compile(compilerClasspath: List<Path>, srcs: List<String>, compileClasspath: List<String>, kaptAPClasspath: List<String>, plugins: List<String>,
                 classes: Path, kaptSources: Path, kaptClasses: Path, kaptKotlinSources: Path, additionalParameters: List<String>): Boolean {
         require(srcs.isNotEmpty())
         val ccl = URLClassLoader(compilerClasspath.map { it.toUri().toURL() }.toTypedArray(), ToolProvider.getSystemToolClassLoader())
@@ -51,7 +51,7 @@ class KotlinCompiler @Inject constructor() {
                 classes.toString(),
                 "-no-stdlib"
 //                ,"-Xreport-output-files"
-        ) + additionalParameters + kaptParameters + kaptPlugins.map { "-Xplugin=$it" } + srcs
+        ) + additionalParameters + kaptParameters + plugins.map { "-Xplugin=$it" } + srcs
 
 
 

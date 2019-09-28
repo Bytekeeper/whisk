@@ -41,6 +41,7 @@ class GraphBuilder @Inject constructor() {
                     is ResolvedStringValue -> emptyList()
                     is ResolvedGoalCall -> listOf(visitGoal(value.goal))
                     is ResolvedListValue -> value.items.flatMap { visitValue(it) }
+                    is ResolvedRuleParamValue -> emptyList()
                     else -> throw IllegalStateException("Unknown value $value")
                 }
     }

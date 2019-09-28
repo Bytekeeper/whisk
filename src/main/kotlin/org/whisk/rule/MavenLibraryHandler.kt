@@ -52,7 +52,7 @@ class MavenLibraryHandler @Inject constructor(
     }
 
     override fun execute(
-            execution: Execution<MavenLibrary>
+            execution: ExecutionContext<MavenLibrary>
     ): RuleResult {
         val rule = execution.ruleParameters
         val depFile = Paths.get("${execution.goalName}.mvn")

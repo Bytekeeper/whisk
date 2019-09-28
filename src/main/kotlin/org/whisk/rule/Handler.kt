@@ -7,6 +7,6 @@ import org.whisk.model.RuleParameters
 class FailedToDownload(message: String) : Exception(message)
 
 interface RuleExecutor<T : RuleParameters> {
-    fun execute(execution: Execution<T>): RuleResult
+    fun execute(execution: ExecutionContext<T>): RuleResult
 }
 

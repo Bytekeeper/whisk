@@ -14,7 +14,7 @@ import javax.inject.Inject
 class JavaCompileHandler @Inject constructor(private val javaCompiler: JavaCompiler) :
         RuleExecutor<JavaCompile> {
 
-    override fun execute(execution: Execution<JavaCompile>): RuleResult {
+    override fun execute(execution: ExecutionContext<JavaCompile>): RuleResult {
         val rule = execution.ruleParameters
 
         val whiskOut = execution.targetPath

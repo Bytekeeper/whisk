@@ -21,7 +21,7 @@ class KotlinCompileHandler @Inject constructor(private val kotlinCompiler: Provi
                                                private val javaCompiler: JavaCompiler) :
         RuleExecutor<KotlinCompile> {
     override fun execute(
-            execution: Execution<KotlinCompile>
+            execution: ExecutionContext<KotlinCompile>
     ): RuleResult {
         val rule = execution.ruleParameters
 
@@ -36,10 +36,10 @@ class KotlinCompileHandler @Inject constructor(private val kotlinCompiler: Provi
         val exportedDeps = rule.exported_deps.map { it.string }
         val dependencies = rule.cp.map { it.string } + exportedDeps
         val kaptAPClasspath = rule.kapt_processors.map { it.string }
-        val kaptPlugins = rule.plugins.map { it.string }
+        val plugins = (rule.plugins + rule.compiler).map { it.string }
         val succeeded = kotlinCompiler.get()
                 .compile(rule.compiler.map { it.path },
-                        ruleSrcs, dependencies, kaptAPClasspath, kaptPlugins, classesDir, kaptDir.resolve("sources"),
+                        ruleSrcs, dependencies, kaptAPClasspath, plugins, classesDir, kaptDir.resolve("sources"),
                         kaptClasses, kaptDir.resolve("kotlinSources"), rule.additional_parameters.map { it.string })
         if (!succeeded) return Failed()
 

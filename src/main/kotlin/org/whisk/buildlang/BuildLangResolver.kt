@@ -23,6 +23,7 @@ data class ResolvedStringValue(override val source: SourceRef<StringValue>, val 
 data class ResolvedListValue(override val source: SourceRef<ListValue>, val items: List<ResolvedValue<Value>> = emptyList()) : ResolvedValue<ListValue>
 data class ResolvedRuleCall(override val source: SourceRef<RuleCall>, val rule: ResolvedRule, val params: List<ResolvedRuleParam>) : ResolvedValue<RuleCall>
 data class ResolvedGoalCall(override val source: SourceRef<RefValue>, val goal: ResolvedGoal) : ResolvedValue<RefValue>
+data class ResolvedRuleParamValue(override val source: SourceRef<RefValue>, val parameter: ResolvedRuleParamDef) : ResolvedValue<RefValue>
 data class ResolvedRuleParam(override val source: SourceRef<RuleParam>, val param: ResolvedRuleParamDef, val value: ResolvedValue<Value>) : WithSourceRef<RuleParam>
 data class ResolvedRuleParamDef(override val source: SourceRef<RuleParamDef>, val name: String, val type: ParamType, val optional: Boolean) : WithSourceRef<RuleParamDef>
 
@@ -149,7 +150,7 @@ class BuildLangResolver @Inject constructor(
             imports.forEach(::resolveInternal)
             val importedModules = listOf(module) + imports
 
-            fun resolveValue(value: Value, allowNonAnon: Boolean = false): ResolvedValue<Value> =
+            fun resolveValue(value: Value, parameters: List<ResolvedRuleParamDef>, allowNonAnon: Boolean = false): ResolvedValue<Value> =
                     when (value) {
                         is RuleCall -> {
                             val rule = localTable.resolveRule(importedModules, value.rule.text)
@@ -161,26 +162,32 @@ class BuildLangResolver @Inject constructor(
                                                 ?: throw InvalidParameterException("'Invalid number of parameters for ${rule.name}' @ ${value.rule.ID.toPos(module)}.")
                                         else rule.params.firstOrNull { it.name == name }
                                                 ?: throw InvalidParameterException("'${rule.name}' has no parameter named '${name}' @ ${param.name.toPos(module)}.")
-                                        ResolvedRuleParam(SourceRef(module, param), paramDef, resolveValue(param.value))
+                                        ResolvedRuleParam(SourceRef(module, param), paramDef, resolveValue(param.value, parameters))
                                     })
                         }
                         is StringValue -> ResolvedStringValue(SourceRef(module, value), value.value)
-                        is RefValue -> ResolvedGoalCall(SourceRef(module, value), localTable.resolveGoal(importedModules, value.ref.text))
-                        is ListValue -> ResolvedListValue(SourceRef(module, value), value.items.map { resolveValue(it) })
+                        is RefValue -> {
+                            parameters.find { it.name == value.ref.text }
+                                    ?.let { paramDef ->
+                                        ResolvedRuleParamValue(SourceRef(module, value), paramDef)
+                                    }
+                                    ?: ResolvedGoalCall(SourceRef(module, value), localTable.resolveGoal(importedModules, value.ref.text))
+                        }
+                        is ListValue -> ResolvedListValue(SourceRef(module, value), value.items.map { resolveValue(it, parameters, true) })
                         else -> throw InternalBuildLangError("Unknown value $value")
                     }
 
 
             buildFile.declarations.forEach { decl ->
-                val resolvedDeclaration = localTable.resolveGoal(importedModules, decl.name.text)
-                resolvedDeclaration.value = resolveValue(decl.value, true)
+                val resolvedGoal = localTable.resolveGoal(importedModules, decl.name.text)
+                resolvedGoal.value = resolveValue(decl.value, emptyList(), true)
             }
             buildFile.definitions.forEach { def ->
-                val resolvedDefinition = localTable.resolveRule(importedModules, def.name.text)
+                val resolvedRule = localTable.resolveRule(importedModules, def.name.text)
                 if (def.value != null) {
-                    resolvedDefinition.value = resolveValue(def.value, !def.anon)
+                    resolvedRule.value = resolveValue(def.value, resolvedRule.params, !def.anon)
                 } else {
-                    resolvedDefinition.nativeRule = ruleRegistry.getRuleClass(resolvedDefinition.name)
+                    resolvedRule.nativeRule = ruleRegistry.getRuleClass(resolvedRule.name)
                 }
             }
         }

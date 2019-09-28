@@ -13,7 +13,7 @@ class RemoteFileHandler @Inject constructor(private val downloadManager: Downloa
     private val log = LogManager.getLogger()
 
     override fun execute(
-            execution: Execution<RemoteFile>
+            execution: ExecutionContext<RemoteFile>
     ): RuleResult {
         val rule = execution.ruleParameters
         val whiskDir = execution.cacheDir

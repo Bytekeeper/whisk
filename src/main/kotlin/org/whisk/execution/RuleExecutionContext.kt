@@ -6,7 +6,7 @@ import org.whisk.buildlang.*
 import org.whisk.forkJoinTask
 import org.whisk.model.FileResource
 import org.whisk.model.StringResource
-import org.whisk.rule.Execution
+import org.whisk.rule.ExecutionContext
 import org.whisk.rule.Processor
 import java.nio.file.Paths
 import java.util.concurrent.ForkJoinTask
@@ -22,7 +22,7 @@ class RuleExecutionContext constructor(private val processor: Processor) {
         fun eval() = forkJoinTask {
             val stopWatch = StopWatch()
             log.info("Processing goal {}", goal.name)
-            val result = eval(goal.value!!).join()
+            val result = eval(goal.value!!, emptyMap()).join()
             if (result is Failed)
                 log.info("Goal {} failed after {}ms", goal.name, stopWatch.stop())
             else
@@ -30,30 +30,34 @@ class RuleExecutionContext constructor(private val processor: Processor) {
             result
         }
 
-        private fun eval(value: ResolvedValue<Value>): ForkJoinTask<RuleResult> {
+        private fun eval(value: ResolvedValue<Value>, predetermined: Map<String, RuleResult>): ForkJoinTask<RuleResult> {
             val task: ForkJoinTask<RuleResult> = when (value) {
-                is ResolvedRuleCall -> ruleCall(value).fork()
+                is ResolvedRuleCall -> ruleCall(value, predetermined)
                 is ResolvedStringValue -> forkJoinTask<RuleResult> { Success(listOf(StringResource(value.value, null))) }.fork()
                 is ResolvedListValue -> forkJoinTask<RuleResult> {
-                    val resultsToJoin = value.items.map { eval(it).join() }
+                    val resultsToJoin = value.items.map { eval(it, predetermined) }.map { it.join() }
                     resultsToJoin.firstOrNull { it is Failed } ?: Success(resultsToJoin.flatMap { it.resources })
                 }.fork()
                 is ResolvedGoalCall -> goalTask[value.goal]!!
+                is ResolvedRuleParamValue -> forkJoinTask {
+                    predetermined[value.parameter.name]!!
+                }.fork()
                 else -> throw IllegalStateException("Can't handle $value")
             }
             return task
         }
 
-        private fun ruleCall(value: ResolvedRuleCall): ForkJoinTask<RuleResult> {
+        private fun ruleCall(value: ResolvedRuleCall, predetermined: Map<String, RuleResult>): ForkJoinTask<RuleResult> {
+            val childTasks = value.params.map {
+                it.param.name to (predetermined[it.param.name] ?: eval(it.value, predetermined))
+            }
+            val parameters = childTasks.map {
+                it.first to ((it.second as? ForkJoinTask<RuleResult>)?.join() ?: it.second as RuleResult)
+            }.toMap()
+            if (parameters.values.any { it is Failed }) return forkJoinTask { Failed() }
+
             val nativeRule = value.rule.nativeRule
             if (nativeRule != null) {
-                val childTasks = value.params.map {
-                    it.param.name to eval(it.value)
-                }
-                val parameters = childTasks.map {
-                    it.first to it.second.join()
-                }.toMap()
-                if (parameters.values.any { it is Failed }) return forkJoinTask { Failed() }
                 val ctor = nativeRule.primaryConstructor!!
                 val kParameters = ctor.parameters.map {
                     val resources = parameters[it.name]?.resources
@@ -72,9 +76,10 @@ class RuleExecutionContext constructor(private val processor: Processor) {
                     }
                 }.toMap()
                 val ruleParams = ctor.callBy(kParameters)
-                return forkJoinTask { processor.process(Execution(goal.name, Paths.get(".whisk"), Paths.get("."), ruleParams, Paths.get("whisk-out"))) }
+                return forkJoinTask { processor.process(ExecutionContext(goal.name, Paths.get(".whisk"), Paths.get("."), ruleParams, Paths.get("whisk-out"))) }
+                        .fork()
             } else {
-                return forkJoinTask { Failed() }
+                return eval(value.rule.value!!, parameters)
             }
         }
     }

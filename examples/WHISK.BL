@@ -1,0 +1,5 @@
+import whisk
+
+run_it(binary) = [minimal(binary)]
+
+minimal(binary) = exec(work_dir='examples/minimal', src='/usr/bin/java', arguments=['-jar', binary, 'build'])

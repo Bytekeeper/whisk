@@ -18,7 +18,7 @@ class ProtobufCompilerHandler @Inject constructor(
 ) :
         RuleExecutor<ProtobufCompile> {
 
-    override fun execute(execution: Execution<ProtobufCompile>): RuleResult {
+    override fun execute(execution: ExecutionContext<ProtobufCompile>): RuleResult {
         val protocDir = execution.cacheDir.resolve("protoc")
         if (!protocDir.toFile().exists()) {
             val download = downloadManager.download(

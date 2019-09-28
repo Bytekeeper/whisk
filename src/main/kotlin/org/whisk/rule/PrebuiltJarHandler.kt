@@ -9,7 +9,7 @@ import javax.inject.Inject
 
 class PrebuiltJarHandler @Inject constructor() : RuleExecutor<PrebuiltJar> {
     override fun execute(
-            execution: Execution<PrebuiltJar>
+            execution: ExecutionContext<PrebuiltJar>
     ): RuleResult {
         val rule = execution.ruleParameters
         val file = FileResource(Paths.get(rule.binary_jar.string).toAbsolutePath(), source = rule)

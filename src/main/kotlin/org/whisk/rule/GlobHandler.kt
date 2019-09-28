@@ -31,7 +31,7 @@ private object GlobUtil {
 }
 
 class GlobHandler @Inject constructor() : RuleExecutor<Glob> {
-    override fun execute(execution: Execution<Glob>): RuleResult {
+    override fun execute(execution: ExecutionContext<Glob>): RuleResult {
         val rule = execution.ruleParameters
         val base = execution.modulePath
         val srcs = GlobUtil.determineSources(base, rule.pattern)
@@ -41,7 +41,7 @@ class GlobHandler @Inject constructor() : RuleExecutor<Glob> {
 }
 
 class RGlobHandler @Inject constructor() : RuleExecutor<RGlob> {
-    override fun execute(execution: Execution<RGlob>): RuleResult {
+    override fun execute(execution: ExecutionContext<RGlob>): RuleResult {
         val rule = execution.ruleParameters
         val base = execution.ruleParameters.root.path
         val srcs = GlobUtil.determineSources(base, rule.pattern)

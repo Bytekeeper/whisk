@@ -6,7 +6,7 @@ import java.nio.file.Path
 import javax.inject.Inject
 import kotlin.reflect.KClass
 
-class Execution<T : RuleParameters>(
+class ExecutionContext<T : RuleParameters>(
         val goalName: String,
         val cacheDir: Path,
         val modulePath: Path,
@@ -65,6 +65,6 @@ class UnsupportedRuleModel(model: RuleParameters) :
         RuntimeException("No processor for '${model::class.simpleName}' was registered! Is the handler registered and implementing the correct interface?")
 
 class Processor @Inject constructor(private val ruleProcessorRegistry: RuleProcessorRegistry) {
-    fun process(execution: Execution<RuleParameters>): RuleResult =
+    fun process(execution: ExecutionContext<RuleParameters>): RuleResult =
             ruleProcessorRegistry.getRuleProcessor(execution.ruleParameters).execute(execution)
 }

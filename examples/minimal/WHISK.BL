@@ -1,0 +1,5 @@
+import whisk
+
+export build
+
+build=java_compile(srcs=glob('src/**.java'))

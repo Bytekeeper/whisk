@@ -60,8 +60,9 @@ data class ProtobufCompile(
 ) : RuleParameters
 
 data class Exec(
+        val work_dir: FileResource?,
         val src: FileResource,
-        val arguments: List<StringResource>
+        val arguments: List<Resource>
 ) : RuleParameters
 
 data class Glob(val pattern: List<StringResource>) : RuleParameters {
