@@ -1,5 +1,6 @@
 import whisk
 
-run_it(binary) = [minimal(binary)]
+build_examples(binary) = [minimal(binary), protobuf(binary)]
 
 minimal(binary) = exec(work_dir='examples/minimal', src='/usr/bin/java', arguments=['-jar', binary, 'build'])
+protobuf(binary) = exec(work_dir='examples/protobuf', src='/usr/bin/java', arguments=['-jar', binary, 'build'])

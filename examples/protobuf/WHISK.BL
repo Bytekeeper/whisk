@@ -1,0 +1,6 @@
+import whisk
+
+export build
+
+build=protocol_compile(srcs=glob('src/**.proto'), imports= 'src')
+

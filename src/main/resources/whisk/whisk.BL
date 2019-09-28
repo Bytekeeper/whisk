@@ -1,5 +1,5 @@
 export kotlin_compile, kotlin_test, maven_library, build_jar, prebuilt_jar, remote_file, glob, antlr_gen, rglob,
-    exec, java_compile
+    exec, java_compile, protocol_compile
 
 # Define rules with "native" implementation
 # Usually rules are defined by "rule(...) = value", omitting "= value" marks them as being implemented in code
@@ -37,3 +37,6 @@ antlr_gen(srcs: [], arguments: [])
 
 # Run external program
 exec(work_dir?, src, arguments:[])
+
+# Run protoc
+protocol_compile(srcs: [], imports: [])

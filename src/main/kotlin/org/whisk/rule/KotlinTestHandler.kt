@@ -40,12 +40,12 @@ class KotlinTestHandler @Inject constructor(private val kotlinCompiler: Provider
         } + classesDir.toUri().toURL()).toTypedArray()))
 
         val testAnnotation = try {
-            cl.loadClass(org.junit.Test::javaClass.name) as Class<Annotation>
+            cl.loadClass(org.junit.Test::javaClass.name) as? Class<Annotation>
         } catch (e: ClassNotFoundException) {
             null
         }
         val runWith = try {
-            cl.loadClass(RunWith::javaClass.name) as Class<Annotation>
+            cl.loadClass(RunWith::javaClass.name) as? Class<Annotation>
         } catch (e: ClassNotFoundException) {
             null
         }
@@ -76,6 +76,6 @@ class KotlinTestHandler @Inject constructor(private val kotlinCompiler: Provider
         jUnitCore.addListener(TextListener(System.out))
         val result = jUnitCore.run(*classes)
 
-        return Success(emptyList())
+        return if (result.failureCount == 0) Success(emptyList()) else Failed()
     }
 }

@@ -1,7 +1,7 @@
 import whisk,examples
 
 # Declare goals and rules that can be used from other BL files in this project
-export main,whisk,test,it
+export main,whisk,unit_tests,integration_tests,test
 
 # Define goals that can be called
 whisk = build_jar(files= [main, rglob(pattern='**', root='src/main/resources')], main_class='org.whisk.MainKt')
@@ -11,9 +11,10 @@ main = kotlin_compile(
     exported_deps=[log4j2_api, log4j2_core, implementation_deps, junit4],
     cp=[antlr4_runtime],
     kapt_processors=[dagger_compiler])
-test = kotlin_test(compiler= [compiler_deps], srcs=[glob('src/test/kotlin/**.kt')], cp=[main, test_deps])
 
-it = run_it(whisk)
+unit_tests = kotlin_test(compiler= [compiler_deps], srcs=[glob('src/test/kotlin/**.kt')], cp=[main, test_deps])
+integration_tests = build_examples(whisk)
+test = [unit_tests, integration_tests]
 
 # Non-exposed goals that help building up the dependency graph
 grammar = antlr_gen(srcs=glob('src/main/antlr/**.g4'), arguments = '-visitor')

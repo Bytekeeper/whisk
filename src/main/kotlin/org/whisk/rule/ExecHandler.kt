@@ -9,10 +9,11 @@ import javax.inject.Inject
 class ExecHandler @Inject constructor() : RuleExecutor<Exec> {
     override fun execute(execution: ExecutionContext<Exec>): RuleResult {
         val rule = execution.ruleParameters
-        val process = ProcessBuilder().command(listOf(rule.src.path.toString()) + rule.arguments.map { it.string })
+        val process = ProcessBuilder().command(
+                (listOf(rule.src) + rule.arguments).map { it.string })
                 .inheritIO()
 
-        rule.work_dir?.let { process.directory(it.file) }
+        process.directory(rule.work_dir?.file ?: execution.modulePath.toFile())
 
         val exitCode = process.start().waitFor()
 

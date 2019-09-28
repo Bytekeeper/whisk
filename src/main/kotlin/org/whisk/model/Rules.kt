@@ -54,7 +54,7 @@ data class MavenLibrary(
         val scopes: List<StringResource> = emptyList()
 ) : RuleParameters
 
-data class ProtobufCompile(
+data class ProtocolCompile(
         val srcs: List<FileResource>,
         val imports: List<FileResource>
 ) : RuleParameters
@@ -84,7 +84,7 @@ class RuleRegistry @Inject constructor() {
         register<BuildJar>()
         register<MavenLibrary>()
         register<JavaCompile>()
-        register<ProtobufCompile>()
+        register<ProtocolCompile>()
         register<Glob>()
         register<AntlrGen>()
         register<Exec>()

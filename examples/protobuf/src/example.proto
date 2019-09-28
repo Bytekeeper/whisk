@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package org.whisk.examples.proto;
+
+message Test {
+    string id = 1;
+    Other other = 2;
+}
+
+message Other {
+}

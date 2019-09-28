@@ -16,7 +16,6 @@ interface Application {
 @Module
 interface Module {
     @Module
-    companion object {
-    }
+    companion object
 }
 

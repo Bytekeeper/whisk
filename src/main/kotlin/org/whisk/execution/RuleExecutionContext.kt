@@ -5,11 +5,16 @@ import org.whisk.StopWatch
 import org.whisk.buildlang.*
 import org.whisk.forkJoinTask
 import org.whisk.model.FileResource
+import org.whisk.model.Resource
+import org.whisk.model.RuleParameters
 import org.whisk.model.StringResource
 import org.whisk.rule.ExecutionContext
 import org.whisk.rule.Processor
 import java.nio.file.Paths
 import java.util.concurrent.ForkJoinTask
+import kotlin.reflect.KClass
+import kotlin.reflect.KClassifier
+import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.full.primaryConstructor
 
 class RuleExecutionContext constructor(private val processor: Processor) {
@@ -33,18 +38,19 @@ class RuleExecutionContext constructor(private val processor: Processor) {
         /**
          * Recursively calculate dependencies and return an already forked ForkJoinTask.
          */
-        private fun eval(value: ResolvedValue<Value>, predetermined: Map<String, RuleResult>): ForkJoinTask<RuleResult> =
+        private fun eval(value: ResolvedValue<Value>, passedParameters: Map<String, RuleResult>): ForkJoinTask<RuleResult> =
                 when (value) {
-                    is ResolvedRuleCall -> ruleCall(value, predetermined)
+                    is ResolvedRuleCall -> ruleCall(value, passedParameters)
                     is ResolvedStringValue -> forkJoinTask<RuleResult> { Success(listOf(StringResource(value.value, null))) }.fork()
-                    is ResolvedListValue -> forkJoinTask<RuleResult> {
-                        val resultsToJoin = value.items.map { eval(it, predetermined) }.map { it.join() }
+                    is ResolvedListValue -> forkJoinTask {
+                        val resultsToJoin = value.items.map { eval(it, passedParameters) }.map { it.join() }
                         resultsToJoin.firstOrNull { it is Failed } ?: Success(resultsToJoin.flatMap { it.resources })
                     }.fork()
                     is ResolvedGoalCall -> goalTask[value.goal]
-                            ?: error("Goal ${value.goal.name} should have been processed, but was not (yet).")
+                            ?: error("Goal ${value.goal.name} should have been processed, but was not (yet)")
                     is ResolvedRuleParamValue -> forkJoinTask {
-                        predetermined[value.parameter.name]!!
+                        passedParameters[value.parameter.name]
+                                ?: error("Could not retrieve value for parameter ${value.parameter.name}")
                     }.fork()
                     else -> throw IllegalStateException("Can't handle $value")
                 }
@@ -52,40 +58,45 @@ class RuleExecutionContext constructor(private val processor: Processor) {
         /**
          * Call a rule, either native or defined by BL. Return as already forked ForkJoinTask.
          */
-        private fun ruleCall(value: ResolvedRuleCall, predetermined: Map<String, RuleResult>): ForkJoinTask<RuleResult> {
+        private fun ruleCall(value: ResolvedRuleCall, passedParameters: Map<String, RuleResult>): ForkJoinTask<RuleResult> {
             val childTasks = value.params.map {
-                it.param.name to (predetermined[it.param.name] ?: eval(it.value, predetermined))
+                it.param.name to (passedParameters[it.param.name] ?: eval(it.value, passedParameters))
             }
             val parameters = childTasks.map {
                 it.first to ((it.second as? ForkJoinTask<RuleResult>)?.join() ?: it.second as RuleResult)
             }.toMap()
             if (parameters.values.any { it is Failed }) return forkJoinTask { Failed() }
 
-            val nativeRule = value.rule.nativeRule
-            if (nativeRule != null) {
-                val ctor = nativeRule.primaryConstructor!!
-                val kParameters = ctor.parameters.map {
-                    val resources = parameters[it.name]?.resources
-                    it to when {
-                        resources != null ->
-                            if (it.type.classifier == List::class) resources
-                            else {
-                                val resource = resources.single()
-                                if (it.type.classifier == FileResource::class && resource is StringResource)
-                                    FileResource(Paths.get(resource.string).toAbsolutePath(), source = resource.source)
-                                else
-                                    resource
-                            }
-                        it.type.classifier == List::class -> emptyList<FileResource>()
-                        else -> null
-                    }
-                }.toMap()
-                val ruleParams = ctor.callBy(kParameters)
-                return forkJoinTask { processor.process(ExecutionContext(goal.name, Paths.get(".whisk"), Paths.get("."), ruleParams, Paths.get("whisk-out"))) }
-                        .fork()
-            } else {
-                return eval(value.rule.value!!, parameters)
-            }
+            return value.rule.nativeRule?.let { nativeRuleCall(it, parameters) } ?: eval(value.rule.value!!, parameters)
         }
+
+        private fun nativeRuleCall(nativeRule: KClass<out RuleParameters>, parameters: Map<String, RuleResult>): ForkJoinTask<RuleResult>? {
+            val ctor = nativeRule.primaryConstructor!!
+            val kParameters = ctor.parameters.map { param ->
+                val resources = parameters[param.name]?.resources
+                param to when {
+                    resources != null && param.type.classifier == List::class -> {
+                        val targetType = param.type.arguments.single().type!!.classifier
+                        resources.map { convertResource(it, targetType) }
+                    }
+                    resources != null -> convertResource(resources.single(), param.type.classifier)
+                    param.type.classifier == List::class -> emptyList<FileResource>()
+                    else -> null
+                }
+            }.toMap()
+            val ruleParams = ctor.callBy(kParameters)
+            return forkJoinTask {
+                processor.process(ExecutionContext(
+                        goal.name, Paths.get(".whisk"), Paths.get("."), ruleParams, Paths.get("whisk-out")))
+            }.fork()
+        }
+
+        private fun convertResource(resource: Resource, expectedResource: KClassifier?) =
+                when {
+                    resource.javaClass.kotlin.isSubclassOf(expectedResource as KClass<*>) -> resource
+                    expectedResource == FileResource::class && resource is StringResource ->
+                        FileResource(Paths.get(resource.string).toAbsolutePath(), source = resource.source)
+                    else -> error("Cannot convert $resource to $expectedResource")
+                }
     }
 }
