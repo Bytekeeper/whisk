@@ -30,23 +30,28 @@ class RuleExecutionContext constructor(private val processor: Processor) {
             result
         }
 
-        private fun eval(value: ResolvedValue<Value>, predetermined: Map<String, RuleResult>): ForkJoinTask<RuleResult> {
-            val task: ForkJoinTask<RuleResult> = when (value) {
-                is ResolvedRuleCall -> ruleCall(value, predetermined)
-                is ResolvedStringValue -> forkJoinTask<RuleResult> { Success(listOf(StringResource(value.value, null))) }.fork()
-                is ResolvedListValue -> forkJoinTask<RuleResult> {
-                    val resultsToJoin = value.items.map { eval(it, predetermined) }.map { it.join() }
-                    resultsToJoin.firstOrNull { it is Failed } ?: Success(resultsToJoin.flatMap { it.resources })
-                }.fork()
-                is ResolvedGoalCall -> goalTask[value.goal]!!
-                is ResolvedRuleParamValue -> forkJoinTask {
-                    predetermined[value.parameter.name]!!
-                }.fork()
-                else -> throw IllegalStateException("Can't handle $value")
-            }
-            return task
-        }
+        /**
+         * Recursively calculate dependencies and return an already forked ForkJoinTask.
+         */
+        private fun eval(value: ResolvedValue<Value>, predetermined: Map<String, RuleResult>): ForkJoinTask<RuleResult> =
+                when (value) {
+                    is ResolvedRuleCall -> ruleCall(value, predetermined)
+                    is ResolvedStringValue -> forkJoinTask<RuleResult> { Success(listOf(StringResource(value.value, null))) }.fork()
+                    is ResolvedListValue -> forkJoinTask<RuleResult> {
+                        val resultsToJoin = value.items.map { eval(it, predetermined) }.map { it.join() }
+                        resultsToJoin.firstOrNull { it is Failed } ?: Success(resultsToJoin.flatMap { it.resources })
+                    }.fork()
+                    is ResolvedGoalCall -> goalTask[value.goal]
+                            ?: error("Goal ${value.goal.name} should have been processed, but was not (yet).")
+                    is ResolvedRuleParamValue -> forkJoinTask {
+                        predetermined[value.parameter.name]!!
+                    }.fork()
+                    else -> throw IllegalStateException("Can't handle $value")
+                }
 
+        /**
+         * Call a rule, either native or defined by BL. Return as already forked ForkJoinTask.
+         */
         private fun ruleCall(value: ResolvedRuleCall, predetermined: Map<String, RuleResult>): ForkJoinTask<RuleResult> {
             val childTasks = value.params.map {
                 it.param.name to (predetermined[it.param.name] ?: eval(it.value, predetermined))
