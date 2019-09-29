@@ -3,9 +3,7 @@ package org.whisk.rule
 import org.whisk.execution.Failed
 import org.whisk.execution.RuleResult
 import org.whisk.execution.Success
-import org.whisk.ext.ExtClassLoader
-import org.whisk.ext.bridge.KotlinCompiler
-import org.whisk.ext.impl.KotlinCompilerImpl
+import org.whisk.ext.ExtAdapter
 import org.whisk.java.JavaCompiler
 import org.whisk.model.FileResource
 import org.whisk.model.KotlinCompile
@@ -16,10 +14,10 @@ import java.util.jar.JarEntry
 import java.util.jar.JarOutputStream
 import java.util.stream.Stream
 import javax.inject.Inject
-import javax.tools.ToolProvider
 import kotlin.streams.toList
 
-class KotlinCompileHandler @Inject constructor(private val javaCompiler: JavaCompiler) :
+class KotlinCompileHandler @Inject constructor(private val javaCompiler: JavaCompiler,
+                                               private val extAdapter: ExtAdapter) :
         RuleExecutor<KotlinCompile> {
 
     override val name: String = "Kotlin Code Compilation"
@@ -41,8 +39,8 @@ class KotlinCompileHandler @Inject constructor(private val javaCompiler: JavaCom
         val dependencies = rule.cp.map { it.string } + exportedDeps
         val kaptAPClasspath = rule.kapt_processors.map { it.string }
         val plugins = (rule.plugins + rule.compiler).map { it.string }
-        val extCL = ExtClassLoader(rule.compiler.map { it.file.toURI().toURL() }.toTypedArray(), ToolProvider.getSystemToolClassLoader())
-        val kotlinCompiler = extCL.loadClass(KotlinCompilerImpl::class.java.name).newInstance() as KotlinCompiler
+
+        val kotlinCompiler = extAdapter.kotlinCompiler(rule.compiler.map { it.file.toURI().toURL() })
 
         val succeeded = kotlinCompiler.compile(rule.compiler.map { it.path },
                         ruleSrcs, dependencies, kaptAPClasspath, plugins, classesDir, kaptDir.resolve("sources"),

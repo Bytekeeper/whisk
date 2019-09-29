@@ -12,9 +12,8 @@ import java.io.ObjectOutputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
-import javax.inject.Inject
 
-class KotlinCompilerImpl @Inject constructor() : KotlinCompiler {
+class KotlinCompilerImpl : KotlinCompiler {
     private val log = LogManager.getLogger()
     private val ioBuilder = IoBuilder.forLogger(log)
 
