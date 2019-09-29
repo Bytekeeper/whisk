@@ -1,15 +1,15 @@
-import whisk,ext,junit4,examples
+import whisk,examples
 
 # Declare goals and rules that can be used from other BL files in this project
 export main,whisk,unit_tests,integration_tests,test
 
 # Define goals that can be called
-whisk = build_jar(files= [ext, main, rglob(pattern='**', root='src/main/resources')], main_class='org.whisk.MainKt')
+whisk = build_jar(files= [main, rglob(pattern='**', root='src/main/resources')], main_class='org.whisk.MainKt')
 main = kotlin_compile(
     compiler= compiler_deps,
     srcs = [glob('src/main/kotlin/**.kt'), grammar],
-    exported_deps=[log4j2_api, log4j2_core, implementation_deps, antlr4_runtime, junit4_runner],
-    cp=[ext],
+    exported_deps=[log4j2_api, log4j2_core, implementation_deps, antlr4_runtime],
+    cp=[compiler_deps, antlr4_compiler],
     kapt_processors=[dagger_compiler])
 
 unit_tests = kotlin_test(compiler= [compiler_deps], srcs=[glob('src/test/kotlin/**.kt')], cp=[main, test_deps, junit4])
@@ -21,6 +21,7 @@ grammar = antlr_gen(tool=antlr4_compiler, srcs=glob('src/main/antlr/**.g4'), arg
 
 antlr4_runtime = prebuilt_jar('lib/antlr4-runtime-4.7.2.jar')
 
+junit4 = remote_file(url='http://central.maven.org/maven2/junit/junit/4.12/junit-4.12.jar')
 
 log4j2_api = remote_file(url='http://central.maven.org/maven2/org/apache/logging/log4j/log4j-api/2.12.1/log4j-api-2.12.1.jar')
 log4j2_core = remote_file(url='http://central.maven.org/maven2/org/apache/logging/log4j/log4j-core/2.12.1/log4j-core-2.12.1.jar')

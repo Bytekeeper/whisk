@@ -13,15 +13,14 @@ plugins {
 dependencies {
     implementation(kotlin("reflect"))
     implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.12.1")
-    testImplementation(kotlin("compiler-embeddable"))
+    compileOnly(kotlin("compiler-embeddable"))
     implementation("org.apache.logging.log4j:log4j-core:2.12.1")
     implementation("org.apache.logging.log4j:log4j-iostreams:2.12.1")
     implementation("org.apache.maven:maven-resolver-provider:3.6.1")
     implementation("org.apache.maven.resolver:maven-resolver-transport-http:1.4.0")
     implementation("org.apache.maven.resolver:maven-resolver-connector-basic:1.4.0")
+    compileOnly("junit:junit:4.12")
     testImplementation("junit:junit:4.12")
-    compileOnly(project(":junit4"))
-    implementation(project(":ext"))
 
     implementation("com.google.dagger:dagger:2.24")
     kapt("com.google.dagger:dagger-compiler:2.24")
@@ -39,13 +38,6 @@ allprojects {
 
     dependencies {
         implementation(kotlin("stdlib-jdk8"))
-    }
-}
-
-project(":junit4") {
-    dependencies {
-        compileOnly("junit:junit:4.12")
-        compileOnly(project(":ext"))
     }
 }
 

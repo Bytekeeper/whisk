@@ -3,8 +3,10 @@ package org.whisk.rule
 import org.whisk.execution.Failed
 import org.whisk.execution.RuleResult
 import org.whisk.execution.Success
+import org.whisk.ext.ExtClassLoader
+import org.whisk.ext.bridge.KotlinCompiler
+import org.whisk.ext.impl.KotlinCompilerImpl
 import org.whisk.java.JavaCompiler
-import org.whisk.kotlin.KotlinCompiler
 import org.whisk.model.FileResource
 import org.whisk.model.KotlinCompile
 import java.io.File
@@ -14,11 +16,10 @@ import java.util.jar.JarEntry
 import java.util.jar.JarOutputStream
 import java.util.stream.Stream
 import javax.inject.Inject
-import javax.inject.Provider
+import javax.tools.ToolProvider
 import kotlin.streams.toList
 
-class KotlinCompileHandler @Inject constructor(private val kotlinCompiler: Provider<KotlinCompiler>,
-                                               private val javaCompiler: JavaCompiler) :
+class KotlinCompileHandler @Inject constructor(private val javaCompiler: JavaCompiler) :
         RuleExecutor<KotlinCompile> {
     override fun execute(
             execution: ExecutionContext<KotlinCompile>
@@ -37,8 +38,10 @@ class KotlinCompileHandler @Inject constructor(private val kotlinCompiler: Provi
         val dependencies = rule.cp.map { it.string } + exportedDeps
         val kaptAPClasspath = rule.kapt_processors.map { it.string }
         val plugins = (rule.plugins + rule.compiler).map { it.string }
-        val succeeded = kotlinCompiler.get()
-                .compile(rule.compiler.map { it.path },
+        val extCL = ExtClassLoader(rule.compiler.map { it.file.toURI().toURL() }.toTypedArray(), ToolProvider.getSystemToolClassLoader())
+        val kotlinCompiler = extCL.loadClass(KotlinCompilerImpl::class.java.name).newInstance() as KotlinCompiler
+
+        val succeeded = kotlinCompiler.compile(rule.compiler.map { it.path },
                         ruleSrcs, dependencies, kaptAPClasspath, plugins, classesDir, kaptDir.resolve("sources"),
                         kaptClasses, kaptDir.resolve("kotlinSources"), rule.additional_parameters.map { it.string })
         if (!succeeded) return Failed()

@@ -26,7 +26,6 @@ import java.net.URI
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
-import java.nio.file.Paths
 import javax.inject.Inject
 
 class MavenLibraryHandler @Inject constructor(
@@ -55,7 +54,7 @@ class MavenLibraryHandler @Inject constructor(
             execution: ExecutionContext<MavenLibrary>
     ): RuleResult {
         val rule = execution.ruleParameters
-        val depFile = Paths.get("${execution.goalName}.mvn")
+        val depFile = execution.targetPath.resolve("${execution.goalName}.mvn")
         var verifyFiles = false
 
         if (!depFile.toFile().exists()) {
@@ -87,6 +86,7 @@ class MavenLibraryHandler @Inject constructor(
                     .map { it.artifact }
                     .sortedBy { it.toString() }
 
+            Files.createDirectories(execution.targetPath)
             PrintWriter(Files.newBufferedWriter(depFile, StandardCharsets.UTF_8))
                     .use { out ->
                         artifacts.forEach { a ->

@@ -1,15 +1,17 @@
-import whisk
+import whisk,ext
 
-export ext
+export ext_impl,junit4
 
-ext = kotlin_compile(
+ext_impl = kotlin_compile(
           compiler= compiler_deps,
           srcs = glob('src/main/kotlin/**.kt'),
-          cp=[implementation_deps])
+          cp=[implementation_deps,ext,junit4,compiler_deps])
+junit4 = remote_file(url='http://central.maven.org/maven2/junit/junit/4.12/junit-4.12.jar')
 
 implementation_deps = maven_library(
     artifacts=['org.jetbrains.kotlin:kotlin-stdlib:1.3.50',
-               'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.3.50'])
+               'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.3.50',
+                'com.google.dagger:dagger:2.24'])
 
 
 compiler_deps = maven_library(artifacts=[

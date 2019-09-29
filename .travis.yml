@@ -3,6 +3,7 @@ jdk: openjdk8
 script:
   - ./gradlew build -s
   - ls -al build/libs
-  - java -cp build/libs/whisk.jar:$(find $JAVA_HOME -name 'tools.jar') org.whisk.MainKt whisk
+  - java -jar build/libs/whisk.jar test
   - cp whisk-out/jar/whisk.jar .
+  - rm -rf whisk-out
   - java -jar whisk.jar test

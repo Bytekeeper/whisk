@@ -1,33 +1,26 @@
-package org.whisk.kotlin
+package org.whisk.ext.impl
 
-import dagger.Reusable
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.io.IoBuilder
+import org.jetbrains.kotlin.cli.common.ExitCode
+import org.jetbrains.kotlin.cli.jvm.K2JVMCompiler
+import org.whisk.ext.bridge.KotlinCompiler
 import org.whisk.withTempFile
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.ObjectOutputStream
-import java.io.PrintStream
-import java.net.URLClassLoader
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import javax.inject.Inject
-import javax.tools.ToolProvider
 
-@Reusable
-class KotlinCompiler @Inject constructor() {
+class KotlinCompilerImpl @Inject constructor() : KotlinCompiler {
     private val log = LogManager.getLogger()
     private val ioBuilder = IoBuilder.forLogger(log)
 
-    fun compile(compilerClasspath: List<Path>, srcs: List<String>, compileClasspath: List<String>, kaptAPClasspath: List<String>, plugins: List<String>,
-                classes: Path, kaptSources: Path, kaptClasses: Path, kaptKotlinSources: Path, additionalParameters: List<String>): Boolean {
+    override fun compile(compilerClasspath: List<Path>, srcs: List<String>, compileClasspath: List<String>, kaptAPClasspath: List<String>, plugins: List<String>,
+                         classes: Path, kaptSources: Path, kaptClasses: Path, kaptKotlinSources: Path, additionalParameters: List<String>): Boolean {
         require(srcs.isNotEmpty())
-        val ccl = URLClassLoader(compilerClasspath.map { it.toUri().toURL() }.toTypedArray(), ToolProvider.getSystemToolClassLoader())
-        val okResult = ccl.loadClass("org.jetbrains.kotlin.cli.common.ExitCode").enumConstants.first { (it as Enum<*>).name == "OK" }
-        val compilerClass = ccl.loadClass("org.jetbrains.kotlin.cli.jvm.K2JVMCompiler")
-        val compiler = compilerClass.newInstance()
-        val execMethod = compilerClass.getMethod("exec", PrintStream::class.java, Array<String>::class.java)
 
         Files.createDirectories(classes)
         Files.createDirectories(kaptSources)
@@ -57,7 +50,7 @@ class KotlinCompiler @Inject constructor() {
             tempFile.toFile().printWriter().use { writer ->
                 params.forEach(writer::println)
             }
-            execMethod.invoke(compiler, ioBuilder.buildPrintStream(), arrayOf("@${tempFile.toAbsolutePath()}")) == okResult
+            K2JVMCompiler().exec(ioBuilder.buildPrintStream(), "@${tempFile.toAbsolutePath()}") == ExitCode.OK
         }
     }
 

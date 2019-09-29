@@ -1,1 +1,0 @@
-include(':junit4', ':ext')
