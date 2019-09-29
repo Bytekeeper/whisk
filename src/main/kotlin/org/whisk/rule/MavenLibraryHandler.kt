@@ -50,6 +50,8 @@ class MavenLibraryHandler @Inject constructor(
         session.setReadOnly()
     }
 
+    override val name: String = "Maven Libraries Download"
+
     override fun execute(
             execution: ExecutionContext<MavenLibrary>
     ): RuleResult {

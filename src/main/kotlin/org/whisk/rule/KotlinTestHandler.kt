@@ -17,6 +17,8 @@ import javax.tools.ToolProvider
 import kotlin.streams.toList
 
 class KotlinTestHandler @Inject constructor() : RuleExecutor<KotlinTest> {
+    override val name: String = "Kotlin Code Compilation and Testing"
+
     override fun execute(
             execution: ExecutionContext<KotlinTest>
     ): RuleResult {

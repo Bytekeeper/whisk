@@ -9,6 +9,9 @@ import java.net.URL
 import javax.inject.Inject
 
 class RemoteFileHandler @Inject constructor(private val downloadManager: DownloadManager) : RuleExecutor<RemoteFile> {
+
+    override val name: String = "External Library Download"
+
     override fun execute(
             execution: ExecutionContext<RemoteFile>
     ): RuleResult {

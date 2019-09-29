@@ -28,7 +28,7 @@ class DownloadManager @Inject constructor() {
             val log = LogManager.getLogger()
             val targetFile = target.resolve(url.path.substring(1))
             if (targetFile.toFile().exists()) {
-                log.info("{} exists, not downloading...", targetFile)
+                log.debug("{} exists, not downloading...", targetFile)
             } else {
                 log.info("Downloading {}...", targetFile)
                 Files.createDirectories(targetFile.parent)
@@ -47,7 +47,7 @@ class DownloadManager @Inject constructor() {
             urls.mapNotNull { url ->
                 val targetFile = target.resolve(url.path.substring(1))
                 if (targetFile.toFile().exists()) {
-                    log.info("{} exists, not downloading...", targetFile)
+                    log.debug("{} exists, not downloading...", targetFile)
                     targetFile
                 } else null
             }.firstOrNull() ?: urls.mapNotNull { url ->

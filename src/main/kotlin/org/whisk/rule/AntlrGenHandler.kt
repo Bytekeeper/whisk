@@ -15,6 +15,8 @@ import kotlin.streams.toList
 class AntlrGenHandler @Inject constructor() :
         RuleExecutor<AntlrGen> {
 
+    override val name: String = "Antlr Code Generation"
+
     override fun execute(execution: ExecutionContext<AntlrGen>): RuleResult {
         val srcGenPath = execution.targetPath.resolve("antlr-gen")
         val rule = execution.ruleParameters

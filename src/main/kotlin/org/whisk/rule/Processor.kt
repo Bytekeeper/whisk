@@ -1,5 +1,7 @@
 package org.whisk.rule
 
+import org.apache.logging.log4j.LogManager
+import org.whisk.StopWatch
 import org.whisk.execution.RuleResult
 import org.whisk.model.RuleParameters
 import java.nio.file.Path
@@ -65,6 +67,16 @@ class UnsupportedRuleModel(model: RuleParameters) :
         RuntimeException("No processor for '${model::class.simpleName}' was registered! Is the handler registered and implementing the correct interface?")
 
 class Processor @Inject constructor(private val ruleProcessorRegistry: RuleProcessorRegistry) {
-    fun process(execution: ExecutionContext<RuleParameters>): RuleResult =
-            ruleProcessorRegistry.getRuleProcessor(execution.ruleParameters).execute(execution)
+    private val log = LogManager.getLogger()
+
+    fun process(execution: ExecutionContext<RuleParameters>): RuleResult {
+        val ruleProcessor = ruleProcessorRegistry.getRuleProcessor(execution.ruleParameters)
+        val stopWatch = StopWatch()
+        ruleProcessor.name?.let { log.info("======== Running $it") }
+
+        val result = ruleProcessor.execute(execution)
+        ruleProcessor.name?.let { log.info("======== Completed {} in {}ms", it, stopWatch.stop()) }
+
+        return result
+    }
 }

@@ -7,6 +7,8 @@ import org.whisk.model.Exec
 import javax.inject.Inject
 
 class ExecHandler @Inject constructor() : RuleExecutor<Exec> {
+    override val name: String = "External Command"
+
     override fun execute(execution: ExecutionContext<Exec>): RuleResult {
         val rule = execution.ruleParameters
         val process = ProcessBuilder().command(

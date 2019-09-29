@@ -8,6 +8,7 @@ import java.nio.file.Paths
 import javax.inject.Inject
 
 class PrebuiltJarHandler @Inject constructor() : RuleExecutor<PrebuiltJar> {
+
     override fun execute(
             execution: ExecutionContext<PrebuiltJar>
     ): RuleResult {

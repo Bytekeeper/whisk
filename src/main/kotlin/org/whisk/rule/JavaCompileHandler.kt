@@ -14,6 +14,8 @@ import javax.inject.Inject
 class JavaCompileHandler @Inject constructor(private val javaCompiler: JavaCompiler) :
         RuleExecutor<JavaCompile> {
 
+    override val name: String = "Java Code Compilation"
+
     override fun execute(execution: ExecutionContext<JavaCompile>): RuleResult {
         val rule = execution.ruleParameters
 

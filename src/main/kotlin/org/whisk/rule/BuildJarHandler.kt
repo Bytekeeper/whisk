@@ -17,6 +17,8 @@ import javax.inject.Inject
 class BuildJarHandler @Inject constructor() : RuleExecutor<BuildJar> {
     private val log = LogManager.getLogger()
 
+    override val name: String = "Jar Build"
+
     override fun execute(
             execution: ExecutionContext<BuildJar>
     ): RuleResult {

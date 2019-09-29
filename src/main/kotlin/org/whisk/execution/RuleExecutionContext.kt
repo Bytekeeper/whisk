@@ -27,12 +27,12 @@ class RuleExecutionContext constructor(private val processor: Processor) {
                          private val goal: ResolvedGoal) {
         fun eval() = forkJoinTask {
             val stopWatch = StopWatch()
-            log.info("Processing goal {}", goal.name)
+            log.debug("Processing goal {}", goal.name)
             val result = eval(goal.value!!, emptyMap()).join()
             if (result is Failed)
-                log.info("Goal {} failed after {}ms", goal.name, stopWatch.stop())
+                log.warn("Goal {} failed after {}ms", goal.name, stopWatch.stop())
             else
-                log.info("Goal {} ran {}ms", goal.name, stopWatch.stop())
+                log.debug("Goal {} ran {}ms", goal.name, stopWatch.stop())
             result
         }
 

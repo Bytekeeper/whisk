@@ -21,6 +21,9 @@ import kotlin.streams.toList
 
 class KotlinCompileHandler @Inject constructor(private val javaCompiler: JavaCompiler) :
         RuleExecutor<KotlinCompile> {
+
+    override val name: String = "Kotlin Code Compilation"
+
     override fun execute(
             execution: ExecutionContext<KotlinCompile>
     ): RuleResult {

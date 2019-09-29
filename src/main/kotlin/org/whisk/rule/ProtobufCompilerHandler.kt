@@ -18,6 +18,8 @@ class ProtobufCompilerHandler @Inject constructor(
 ) :
         RuleExecutor<ProtocolCompile> {
 
+    override val name: String = "Protobuf Code Generation"
+
     override fun execute(execution: ExecutionContext<ProtocolCompile>): RuleResult {
         val protocDir = execution.cacheDir.resolve("protoc")
         if (!protocDir.toFile().exists()) {
