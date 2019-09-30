@@ -35,10 +35,9 @@ class ProtobufCompilerHandler @Inject constructor(
         Files.setPosixFilePermissions(protoc, setOf(PosixFilePermission.OWNER_EXECUTE))
         val params = mutableListOf(protoc.toString())
         params += rule.imports.map { "-I${it.string}" }
-        params += "--java_out"
         val outputDir = execution.targetPath.resolve("gen").resolve("protobuf")
         Files.createDirectories(outputDir)
-        params += outputDir.toString()
+        params += "--${rule.output_type.string}=$outputDir"
         params += rule.srcs.map { it.string }
         val protocProcess = ProcessBuilder().command(params)
                 .inheritIO()

@@ -2,6 +2,7 @@ package org.whisk.rule
 
 import org.apache.logging.log4j.LogManager
 import org.whisk.StopWatch
+import org.whisk.execution.Failed
 import org.whisk.execution.RuleResult
 import org.whisk.model.RuleParameters
 import java.nio.file.Path
@@ -75,7 +76,12 @@ class Processor @Inject constructor(private val ruleProcessorRegistry: RuleProce
         ruleProcessor.name?.let { log.info("======== Running $it") }
 
         val result = ruleProcessor.execute(execution)
-        ruleProcessor.name?.let { log.info("======== Completed {} in {}ms", it, stopWatch.stop()) }
+        ruleProcessor.name?.let {
+            if (result is Failed)
+                log.info("======== Failed {} in {}ms", it, stopWatch.stop())
+            else
+                log.info("======== Completed {} in {}ms", it, stopWatch.stop())
+        }
 
         return result
     }

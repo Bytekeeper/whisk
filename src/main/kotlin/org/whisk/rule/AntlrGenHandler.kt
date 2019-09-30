@@ -27,8 +27,8 @@ class AntlrGenHandler @Inject constructor(private val extAdapter: ExtAdapter) :
 
         return if (numErrors > 0) Failed()
         else {
-            val javaSources = Files.walk(srcGenPath).use {
-                it.filter { Files.isRegularFile(it) }
+            val javaSources = Files.walk(srcGenPath).use { files ->
+                files.filter { Files.isRegularFile(it) }
                         .filter { it.toString().endsWith(".java") }
                         .toList()
             }

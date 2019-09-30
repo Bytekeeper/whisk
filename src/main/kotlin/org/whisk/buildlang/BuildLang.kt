@@ -62,7 +62,7 @@ private object ValueVisitor : BuildLangParserBaseVisitor<Value>() {
     }
 
     override fun visitList(ctx: BuildLangParser.ListContext): Value {
-        return ListValue(ctx.items.map { visit(it) ?: throw IllegalStateException("null") })
+        return ListValue(ctx.items.map { visit(it) ?: error("$it could not be handled") })
     }
 
     override fun visitString(ctx: BuildLangParser.StringContext): Value {

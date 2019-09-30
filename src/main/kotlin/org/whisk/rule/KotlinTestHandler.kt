@@ -25,7 +25,7 @@ class KotlinTestHandler @Inject constructor(private val extAdapter: ExtAdapter) 
         val kotlinCompiler = extAdapter.kotlinCompiler(rule.compiler.map { it.file.toURI().toURL() })
 
         val succeeded = kotlinCompiler.compile(
-                rule.compiler.map { it.path },
+                whiskOut.resolve("kotlin-cache"),
                 rule.srcs.map { it.string },
                 dependencies,
                 emptyList(),
@@ -33,6 +33,7 @@ class KotlinTestHandler @Inject constructor(private val extAdapter: ExtAdapter) 
                 classesDir,
                 kaptDir.resolve("sources"),
                 kaptClasses,
+                kaptDir.resolve("stubs"),
                 kaptDir.resolve("kotlinSources"),
                 rule.additional_parameters.map { it.string })
         if (!succeeded) return Failed()

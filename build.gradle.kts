@@ -10,6 +10,8 @@ plugins {
     antlr
 }
 
+val spek_version = "2.0.7"
+
 dependencies {
     implementation(kotlin("reflect"))
     implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.12.1")

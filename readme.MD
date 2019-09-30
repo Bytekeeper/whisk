@@ -15,11 +15,13 @@ the CLI or by rules.
 Rules are parametrized descriptions on what step to perform. They can not be called from the CLI. They can be called
 by other rules or goals. Think of rules as a mean to the end of executing a goal. 
 
-
 ## Status
 Current CI uses gradle to build `whisk`. The resulting application is then used to build itself: 
 
 ![Build Status](https://api.travis-ci.org/Bytekeeper/whisk.svg?branch=master)
+
+## Examples
+The `examples` folder has some simple examples for builds.
 
 ## Why
 Besides being an interesting topic:

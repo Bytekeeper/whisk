@@ -1,5 +1,6 @@
 package org.whisk.rule
 
+import org.apache.logging.log4j.LogManager
 import org.whisk.execution.Failed
 import org.whisk.execution.RuleResult
 import org.whisk.execution.Success
@@ -19,6 +20,7 @@ import kotlin.streams.toList
 class KotlinCompileHandler @Inject constructor(private val javaCompiler: JavaCompiler,
                                                private val extAdapter: ExtAdapter) :
         RuleExecutor<KotlinCompile> {
+    private val log = LogManager.getLogger()
 
     override val name: String = "Kotlin Code Compilation"
 
@@ -27,14 +29,18 @@ class KotlinCompileHandler @Inject constructor(private val javaCompiler: JavaCom
     ): RuleResult {
         val rule = execution.ruleParameters
 
-        val whiskOut = execution.targetPath
-        val classesDir = whiskOut.resolve("classes")
-        val kaptDir = whiskOut.resolve("kapt")
+        val targetPath = execution.targetPath
+        val classesDir = targetPath.resolve("classes")
+        val kaptDir = targetPath.resolve("kapt")
         val kaptClasses = kaptDir.resolve("classes")
-        val jarDir = whiskOut.resolve("jar")
+        val jarDir = targetPath.resolve("jar")
 //
 
         val ruleSrcs = rule.srcs.map { it.string }
+        if (ruleSrcs.isEmpty()) {
+            log.warn("No source files found in ${execution.goalName}")
+            return Success(emptyList())
+        }
         val exportedDeps = rule.exported_deps.map { it.string }
         val dependencies = rule.cp.map { it.string } + exportedDeps
         val kaptAPClasspath = rule.kapt_processors.map { it.string }
@@ -42,9 +48,18 @@ class KotlinCompileHandler @Inject constructor(private val javaCompiler: JavaCom
 
         val kotlinCompiler = extAdapter.kotlinCompiler(rule.compiler.map { it.file.toURI().toURL() })
 
-        val succeeded = kotlinCompiler.compile(rule.compiler.map { it.path },
-                        ruleSrcs, dependencies, kaptAPClasspath, plugins, classesDir, kaptDir.resolve("sources"),
-                        kaptClasses, kaptDir.resolve("kotlinSources"), rule.additional_parameters.map { it.string })
+        val succeeded = kotlinCompiler.compile(
+                targetPath.resolve("kotlin-cache"),
+                ruleSrcs,
+                dependencies,
+                kaptAPClasspath,
+                plugins,
+                classesDir,
+                kaptDir.resolve("sources"),
+                kaptClasses,
+                kaptDir.resolve("stubs"),
+                kaptDir.resolve("kotlinSources"),
+                rule.additional_parameters.map { it.string })
         if (!succeeded) return Failed()
 
         val javaSources = Files.walk(kaptDir.resolve("sources")).use { it.filter { Files.isRegularFile(it) }.map { it.toFile() }.toList() } +

@@ -18,7 +18,7 @@ import kotlin.reflect.KClassifier
 import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.full.primaryConstructor
 
-class RuleExecutionContext constructor(private val processor: Processor) {
+class GoalExecutor constructor(private val processor: Processor) {
     private val log = LogManager.getLogger()
 
     fun eval(goalToTask: Map<ResolvedGoal, ForkJoinTask<RuleResult>>, goal: ResolvedGoal): ForkJoinTask<RuleResult> = GoalCall(goalToTask, goal).eval()
@@ -53,7 +53,7 @@ class RuleExecutionContext constructor(private val processor: Processor) {
                         passedParameters[value.parameter.name]
                                 ?: error("Could not retrieve value for parameter ${value.parameter.name}")
                     }.fork()
-                    else -> throw IllegalStateException("Can't handle $value")
+                    else -> error("Can't handle $value")
                 }
 
         /**
@@ -85,7 +85,8 @@ class RuleExecutionContext constructor(private val processor: Processor) {
                     param.type.classifier == List::class -> emptyList<FileResource>()
                     else -> null
                 }
-            }.toMap()
+            }.filter { it.second != null || !it.first.isOptional }
+                    .toMap()
             val ruleParams = ctor.callBy(kParameters)
             return forkJoinTask {
                 val realModulePath = (modulePath ?: Paths.get("")).toAbsolutePath()

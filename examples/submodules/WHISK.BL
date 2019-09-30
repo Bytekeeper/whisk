@@ -1,0 +1,5 @@
+import whisk,sub.module
+
+export build
+
+build=sub.module.build

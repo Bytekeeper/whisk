@@ -58,8 +58,17 @@ class GlobalTable : SymbolTable {
     private val modules = mutableMapOf<String, ModuleTable>()
 
     override fun resolveGoal(modules: List<String>, name: String): ResolvedGoal =
-            modules.mapNotNull { this.modules[it]?.resolveGoal(name) }.singleOrNull()
-                    ?: throw GoalNotFoundException("Unknown goal $name")
+            if (name.contains('.'))
+                this.modules[name.substringBeforeLast('.')]?.resolveGoal(name.substringAfterLast('.'))
+                        ?: throw GoalNotFoundException("No such goal for FQN goal $name")
+            else {
+                val candidates = modules.mapNotNull { this.modules[it]?.resolveGoal(name) }
+                if (candidates.isEmpty()) throw GoalNotFoundException("Unknown goal $name")
+                if (candidates.size > 1)
+                    throw AmbiguousGoal("Goal $name was defined in multiple imported modules: " +
+                            candidates.map { it.source.module }.joinToString(", "))
+                candidates.single()
+            }
 
     override fun resolveRule(modules: List<String>, name: String): ResolvedRule =
             modules.mapNotNull { this.modules[it]?.resolveRule(name) }.singleOrNull()
@@ -141,8 +150,7 @@ class BuildLangResolver @Inject constructor(
                 val resolvedGoal = ResolvedGoal(SourceRef(moduleInfo, decl), goalName, null)
                 if (exposed.isEmpty() || exposed.contains(goalName))
                     globalTable.registerGoal(resolvedGoal)
-                else
-                    localTable.registerGoal(resolvedGoal)
+                localTable.registerGoal(resolvedGoal)
             }
             buildFile.definitions.forEach { def ->
                 val ruleName = def.name.text
@@ -151,8 +159,7 @@ class BuildLangResolver @Inject constructor(
                 val ruleDef = ResolvedRule(SourceRef(moduleInfo, def), ruleName, params, null, null, def.anon)
                 if (exposed.isEmpty() || exposed.contains(ruleName))
                     globalTable.registerRule(ruleDef)
-                else
-                    localTable.registerRule(ruleDef)
+                localTable.registerRule(ruleDef)
             }
 
             val imports = buildFile.import.imports.map { it.text }
@@ -188,7 +195,11 @@ class BuildLangResolver @Inject constructor(
 
 
             buildFile.declarations.forEach { decl ->
-                val resolvedGoal = localTable.resolveGoal(importedModules, decl.name.text)
+                val resolvedGoal = try {
+                    localTable.resolveGoal(importedModules, decl.name.text)
+                } catch (e: GoalNotFoundException) {
+                    throw GoalNotFoundException("${decl.name.toPos(module)} in goal ${decl.name.text}: ${e.message}", e)
+                }
                 resolvedGoal.value = resolveValue(decl.value, emptyList(), true)
             }
             buildFile.definitions.forEach { def ->
@@ -209,5 +220,6 @@ class InternalBuildLangError(message: String) : IllegalStateException(message)
 class InvalidParameterException(message: String) : RuntimeException(message)
 class IllegalRuleCall(message: String) : java.lang.RuntimeException(message)
 class RuleNotFoundException(message: String) : java.lang.RuntimeException(message)
-class GoalNotFoundException(message: String) : java.lang.RuntimeException(message)
+class GoalNotFoundException(message: String, cause: Exception? = null) : java.lang.RuntimeException(message, cause)
 class InvalidExposed(message: String) : java.lang.RuntimeException(message)
+class AmbiguousGoal(message: String) : java.lang.RuntimeException(message)

@@ -12,7 +12,7 @@ class ExecHandler @Inject constructor() : RuleExecutor<Exec> {
     override fun execute(execution: ExecutionContext<Exec>): RuleResult {
         val rule = execution.ruleParameters
         val process = ProcessBuilder().command(
-                (listOf(rule.src) + rule.arguments).map { it.string })
+                (listOf(rule.command) + rule.arguments).map { it.string })
                 .inheritIO()
 
         process.directory(rule.work_dir?.file ?: execution.modulePath.toFile())

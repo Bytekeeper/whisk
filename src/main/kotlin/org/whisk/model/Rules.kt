@@ -57,12 +57,13 @@ data class MavenLibrary(
 
 data class ProtocolCompile(
         val srcs: List<FileResource>,
-        val imports: List<FileResource>
+        val imports: List<FileResource>,
+        val output_type: StringResource = StringResource("java_out", null)
 ) : RuleParameters
 
 data class Exec(
         val work_dir: FileResource?,
-        val src: FileResource,
+        val command: FileResource,
         val arguments: List<Resource>
 ) : RuleParameters
 

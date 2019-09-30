@@ -37,7 +37,7 @@ antlr_gen(tool:[], srcs: [], arguments: [])
 
 
 # Run external program
-exec(work_dir?, src, arguments:[])
+exec(work_dir?, command, arguments:[])
 
 # Run protoc
-protocol_compile(srcs: [], imports: [])
+protocol_compile(srcs: [], imports: [], output_type?)

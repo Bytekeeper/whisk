@@ -4,7 +4,7 @@ import org.whisk.buildlang.PathModuleLoader
 import org.whisk.buildlang.ResolvedGoal
 import org.whisk.buildlang.SystemModuleLoader
 import org.whisk.execution.Failed
-import org.whisk.execution.RuleExecutionContext
+import org.whisk.execution.GoalExecutor
 import org.whisk.execution.RuleResult
 import java.nio.file.Paths
 import java.util.concurrent.Callable
@@ -35,7 +35,7 @@ fun main(vararg args: String) {
         }
     }
 
-    val ruleEval = RuleExecutionContext(processor)
+    val ruleEval = GoalExecutor(processor)
 
     val goalToTask = mutableMapOf<ResolvedGoal, ForkJoinTask<RuleResult>>()
     val tasks = mutableListOf<ForkJoinTask<RuleResult>>()
