@@ -5,13 +5,13 @@ export kotlin_compile, kotlin_test, maven_library, build_jar, prebuilt_jar, remo
 # Usually rules are defined by "rule(...) = value", omitting "= value" marks them as being implemented in code
 
 # Rule to compile kotlin (and potentially java)
-kotlin_compile(compiler, srcs:[], cp:[], exported_deps:[], kapt_processors: [], plugins: [], additional_parameters: [])
+kotlin_compile(compiler, srcs:[], cp:[], exported_deps:[], kapt_processors: [], plugins: [], friend_paths: [], additional_parameters: [])
+
+# Rule to compile and run test on kotlin code
+kotlin_test(compiler, srcs:[], cp:[], friend_paths: [], additional_parameters: [])
 
 # Rule to compile java
 java_compile(srcs:[], cp:[], exported_deps:[], apt_deps: [])
-
-# Rule to compile and run test on kotlin code
-kotlin_test(compiler, srcs:[], cp:[], additional_parameters: [])
 
 # Rule to depend on maven artifacts (transitively)
 maven_library(artifacts:[], repository_urls:[], scopes:[])

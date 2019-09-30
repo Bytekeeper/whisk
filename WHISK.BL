@@ -12,7 +12,11 @@ main = kotlin_compile(
     cp=[compiler_deps, antlr4_compiler],
     kapt_processors=[dagger_compiler])
 
-unit_tests = kotlin_test(compiler= [compiler_deps], srcs=[glob('src/test/kotlin/**.kt')], cp=[main, test_deps, junit4])
+unit_tests = kotlin_test(
+    compiler= [compiler_deps],
+    srcs=[glob('src/test/kotlin/**.kt')],
+    cp=[main, test_deps, junit4],
+    friend_paths=['whisk-out/jar/main.jar'])
 integration_tests = build_examples(whisk)
 test = [unit_tests, integration_tests]
 

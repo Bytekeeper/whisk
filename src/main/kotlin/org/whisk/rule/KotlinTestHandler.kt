@@ -35,6 +35,7 @@ class KotlinTestHandler @Inject constructor(private val extAdapter: ExtAdapter) 
                 kaptClasses,
                 kaptDir.resolve("stubs"),
                 kaptDir.resolve("kotlinSources"),
+                rule.friend_paths.map { it.path },
                 rule.additional_parameters.map { it.string })
         if (!succeeded) return Failed()
 

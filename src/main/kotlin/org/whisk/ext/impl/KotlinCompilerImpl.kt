@@ -35,6 +35,7 @@ class KotlinCompilerImpl : KotlinCompiler {
                          kaptClasses: Path,
                          kaptStubs: Path,
                          kaptKotlinSources: Path,
+                         friendPaths: List<Path>,
                          additionalParameters: List<String>): Boolean {
         require(srcs.isNotEmpty())
 
@@ -57,6 +58,7 @@ class KotlinCompilerImpl : KotlinCompiler {
         compilerArgs.classpathAsList = compileClasspath.map { File(it) }
         compilerArgs.pluginOptions = pluginOptions.toTypedArray()
         compilerArgs.pluginClasspaths = plugins.toTypedArray()
+        compilerArgs.friendPaths = friendPaths.map { it.toAbsolutePath().toString() }.toTypedArray()
         compilerArgs.freeArgs = additionalParameters + srcs
 
         return fullBuild(compilerArgs)

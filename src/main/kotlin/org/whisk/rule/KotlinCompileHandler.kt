@@ -59,6 +59,7 @@ class KotlinCompileHandler @Inject constructor(private val javaCompiler: JavaCom
                 kaptClasses,
                 kaptDir.resolve("stubs"),
                 kaptDir.resolve("kotlinSources"),
+                rule.friend_paths.map { it.path },
                 rule.additional_parameters.map { it.string })
         if (!succeeded) return Failed()
 

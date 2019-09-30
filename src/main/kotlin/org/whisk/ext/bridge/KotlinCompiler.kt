@@ -14,5 +14,6 @@ interface KotlinCompiler {
             kaptClasses: Path,
             kaptStubs: Path,
             kaptKotlinSources: Path,
+            friendPaths: List<Path>,
             additionalParameters: List<String>): Boolean
 }

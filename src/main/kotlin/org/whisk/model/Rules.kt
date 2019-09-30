@@ -18,6 +18,15 @@ data class KotlinCompile(
         var exported_deps: List<FileResource> = emptyList(),
         val kapt_processors: List<FileResource> = emptyList(),
         val plugins: List<FileResource> = emptyList(),
+        val friend_paths: List<FileResource> = emptyList(),
+        val additional_parameters: List<StringResource>
+) : RuleParameters
+
+data class KotlinTest(
+        val compiler: List<FileResource>,
+        val srcs: List<FileResource>,
+        val cp: List<FileResource> = emptyList(),
+        val friend_paths: List<FileResource>,
         val additional_parameters: List<StringResource>
 ) : RuleParameters
 
@@ -26,13 +35,6 @@ data class JavaCompile(
         val cp: List<FileResource> = emptyList(),
         var exported_deps: List<FileResource> = emptyList(),
         val apt_deps: List<FileResource> = emptyList()
-) : RuleParameters
-
-data class KotlinTest(
-        val compiler: List<FileResource>,
-        val srcs: List<FileResource>,
-        val cp: List<FileResource> = emptyList(),
-        val additional_parameters: List<StringResource>
 ) : RuleParameters
 
 data class PrebuiltJar(
