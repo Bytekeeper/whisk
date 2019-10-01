@@ -2,6 +2,8 @@ package org.whisk.rule
 
 import org.apache.logging.log4j.LogManager
 import org.whisk.StopWatch
+import org.whisk.buildlang.RuleCall
+import org.whisk.buildlang.SourceRef
 import org.whisk.execution.Failed
 import org.whisk.execution.RuleResult
 import org.whisk.model.RuleParameters
@@ -12,7 +14,7 @@ import kotlin.reflect.KClass
 class ExecutionContext<T : RuleParameters>(
         val goalName: String,
         val cacheDir: Path,
-        val modulePath: Path,
+        val callPoint: SourceRef<RuleCall>,
         val ruleParameters: T,
         val targetPath: Path
 )

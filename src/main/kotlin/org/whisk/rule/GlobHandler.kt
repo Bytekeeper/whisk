@@ -37,7 +37,7 @@ class GlobHandler @Inject constructor() : RuleExecutor<Glob> {
 
     override fun execute(execution: ExecutionContext<Glob>): RuleResult {
         val rule = execution.ruleParameters
-        val base = execution.modulePath
+        val base = execution.callPoint.modulePath ?: error("Unexpected glob in system buildlang file")
         val srcs = GlobUtil.determineSources(base, rule.pattern)
                 .map { FileResource(base.resolve(it), base, rule) }
         if (srcs.isEmpty())

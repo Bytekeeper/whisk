@@ -12,7 +12,7 @@ import javax.inject.Inject
 class DownloadManager @Inject constructor() {
     private val lockedPaths = ConcurrentHashMap<Path, Any>()
 
-    private fun locked(path: Path, dl: (Path) -> Path): Path {
+    private fun <T> locked(path: Path, dl: (Path) -> T): T {
         try {
             synchronized(lockedPaths.computeIfAbsent(path) { Any() }) {
                 return dl(path)
@@ -24,9 +24,9 @@ class DownloadManager @Inject constructor() {
 
 
     internal fun download(target: Path, url: URL): Path {
-        return locked(target) {
             val log = LogManager.getLogger()
             val targetFile = target.resolve(url.path.substring(1))
+        return locked(targetFile) {
             if (targetFile.toFile().exists()) {
                 log.debug("{} exists, not downloading...", targetFile)
             } else {
@@ -36,7 +36,6 @@ class DownloadManager @Inject constructor() {
                     Files.copy(content, targetFile, StandardCopyOption.REPLACE_EXISTING)
                 }
             }
-            lockedPaths.remove(target)
             targetFile
         }
     }
@@ -46,21 +45,25 @@ class DownloadManager @Inject constructor() {
             val log = LogManager.getLogger()
             urls.mapNotNull { url ->
                 val targetFile = target.resolve(url.path.substring(1))
-                if (targetFile.toFile().exists()) {
-                    log.debug("{} exists, not downloading...", targetFile)
-                    targetFile
-                } else null
+                locked(target) {
+                    if (targetFile.toFile().exists()) {
+                        log.debug("{} exists, not downloading...", targetFile)
+                        targetFile
+                    } else null
+                }
             }.firstOrNull() ?: urls.mapNotNull { url ->
                 val targetFile = target.resolve(url.path.substring(1))
-                log.info("Downloading {}...", url)
-                Files.createDirectories(targetFile.parent)
-                try {
-                    url.openStream().use { content ->
-                        Files.copy(content, targetFile, StandardCopyOption.REPLACE_EXISTING)
+                locked(targetFile) {
+                    log.info("Downloading {}...", url)
+                    Files.createDirectories(targetFile.parent)
+                    try {
+                        url.openStream().use { content ->
+                            Files.copy(content, targetFile, StandardCopyOption.REPLACE_EXISTING)
+                        }
+                        targetFile
+                    } catch (e: Exception) {
+                        null
                     }
-                    targetFile
-                } catch (e: Exception) {
-                    null
                 }
             }.firstOrNull()
             ?: throw FailedToDownload("Could not download from any location: ${urls.joinToString()}")

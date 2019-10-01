@@ -12,7 +12,7 @@ import kotlin.reflect.KClass
 
 class SourceRef<out S>(moduleInfo: ModuleInfo, val source: S) {
     val module: String = moduleInfo.name
-    val modulePath: Path? = moduleInfo.path
+    val modulePath: Path? = moduleInfo.path?.toAbsolutePath()
 }
 interface WithSourceRef<out S> {
     val source: SourceRef<S>

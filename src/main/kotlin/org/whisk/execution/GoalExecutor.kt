@@ -10,7 +10,6 @@ import org.whisk.model.RuleParameters
 import org.whisk.model.StringResource
 import org.whisk.rule.ExecutionContext
 import org.whisk.rule.Processor
-import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.ForkJoinTask
 import kotlin.reflect.KClass
@@ -68,11 +67,11 @@ class GoalExecutor constructor(private val processor: Processor) {
             }.toMap()
             if (parameters.values.any { it is Failed }) return forkJoinTask<RuleResult> { Failed() }.fork()
 
-            return value.rule.nativeRule?.let { nativeRuleCall(it, parameters, value.source.modulePath) }
+            return value.rule.nativeRule?.let { nativeRuleCall(it, parameters, value.source) }
                     ?: eval(value.rule.value!!, parameters)
         }
 
-        private fun nativeRuleCall(nativeRule: KClass<out RuleParameters>, parameters: Map<String, RuleResult>, modulePath: Path?): ForkJoinTask<RuleResult>? {
+        private fun nativeRuleCall(nativeRule: KClass<out RuleParameters>, parameters: Map<String, RuleResult>, source: SourceRef<RuleCall>): ForkJoinTask<RuleResult>? {
             val ctor = nativeRule.primaryConstructor!!
             val kParameters = ctor.parameters.map { param ->
                 val resources = parameters[param.name]?.resources
@@ -89,12 +88,12 @@ class GoalExecutor constructor(private val processor: Processor) {
                     .toMap()
             val ruleParams = ctor.callBy(kParameters)
             return forkJoinTask {
-                val realModulePath = (modulePath ?: Paths.get("")).toAbsolutePath()
+                val realModulePath = (source.modulePath ?: Paths.get("")).toAbsolutePath()
                 processor.process(
                         ExecutionContext(
                                 goal.name,
                                 Paths.get(".whisk"),
-                                realModulePath,
+                                source,
                                 ruleParams,
                                 Paths.get("whisk-out").resolve(Paths.get("").toAbsolutePath().relativize(realModulePath))))
             }.fork()
