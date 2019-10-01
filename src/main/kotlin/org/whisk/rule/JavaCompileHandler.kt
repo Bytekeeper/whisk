@@ -25,7 +25,7 @@ class JavaCompileHandler @Inject constructor(private val javaCompiler: JavaCompi
         val jarDir = whiskOut.resolve("jar")
 //
 
-        val deps = rule.srcs.map { File(it.string) }
+        val deps = rule.cp.map { File(it.string) }
         val exportedDeps = rule.exported_deps.map { File(it.string) }
         val dependencies = deps + exportedDeps
         javaCompiler.compile(rule.srcs.map { File(it.string) }, dependencies, classesDir.toFile())

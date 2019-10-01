@@ -15,6 +15,8 @@ import org.eclipse.aether.spi.connector.layout.RepositoryLayoutProvider
 import org.eclipse.aether.spi.connector.transport.TransporterFactory
 import org.eclipse.aether.transport.http.HttpTransporterFactory
 import org.eclipse.aether.util.graph.visitor.PreorderNodeListGenerator
+import org.eclipse.aether.util.repository.AuthenticationBuilder
+import org.whisk.BuildProperties
 import org.whisk.DownloadManager
 import org.whisk.execution.RuleResult
 import org.whisk.execution.Success
@@ -29,7 +31,8 @@ import java.nio.file.Files
 import javax.inject.Inject
 
 class MavenLibraryHandler @Inject constructor(
-        private val downloadManager: DownloadManager
+        private val downloadManager: DownloadManager,
+        private val buildProperties: BuildProperties
 ) :
         RuleExecutor<MavenLibrary> {
     private val repositoryLayoutProvider: RepositoryLayoutProvider
@@ -62,7 +65,18 @@ class MavenLibraryHandler @Inject constructor(
         if (!depFile.toFile().exists()) {
             verifyFiles = true
             val configuredRepos = rule.repository_urls.mapIndexed { i, item ->
-                RemoteRepository.Builder("repo$i", "default", item.string).build()
+                val repositoryBuilder = RemoteRepository.Builder("repo$i", "default", if (item.string.endsWith('/')) item.string else item.string + '/')
+                val url = URL(item.string)
+                val username = buildProperties.username(url.host)
+                val password = buildProperties.password(url.host)
+                if (username != null && password != null) {
+                    repositoryBuilder.setAuthentication(
+                            AuthenticationBuilder()
+                                    .addUsername(username)
+                                    .addPassword(password)
+                                    .build())
+                }
+                repositoryBuilder.build()
             }
             val additionalRepos = if (configuredRepos.isEmpty())
                 listOf(RemoteRepository.Builder("central", "default", "https://repo.maven.apache.org/maven2/").build())
@@ -92,7 +106,9 @@ class MavenLibraryHandler @Inject constructor(
             PrintWriter(Files.newBufferedWriter(depFile, StandardCharsets.UTF_8))
                     .use { out ->
                         artifacts.forEach { a ->
-                            val urls = repositoryLayouts.map { (repo, layout) -> URI(repo.url).resolve(layout.getLocation(a, false)) }
+                            val urls = repositoryLayouts.map { (repo, layout) ->
+                                URI(repo.url).resolve(layout.getLocation(a, false))
+                            }
                                     .joinToString(",")
                             out.println(urls)
                         }

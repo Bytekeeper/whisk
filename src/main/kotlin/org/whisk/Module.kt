@@ -11,6 +11,7 @@ interface Application {
     fun processor(): Processor
     fun graphBuilder(): GraphBuilder
     fun resolver(): BuildLangResolver
+    fun buildProperties(): BuildProperties
 }
 
 @Module

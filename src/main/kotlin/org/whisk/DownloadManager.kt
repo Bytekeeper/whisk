@@ -63,7 +63,7 @@ class DownloadManager @Inject constructor() {
                     null
                 }
             }.firstOrNull()
-            ?: throw FailedToDownload("Could not download ${target.fileName} from any location: ${urls.joinToString()}")
+            ?: throw FailedToDownload("Could not download from any location: ${urls.joinToString()}")
         }
     }
 }

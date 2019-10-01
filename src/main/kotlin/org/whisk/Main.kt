@@ -6,6 +6,8 @@ import org.whisk.buildlang.SystemModuleLoader
 import org.whisk.execution.Failed
 import org.whisk.execution.GoalExecutor
 import org.whisk.execution.RuleResult
+import java.net.Authenticator
+import java.net.PasswordAuthentication
 import java.nio.file.Paths
 import java.util.concurrent.Callable
 import java.util.concurrent.ForkJoinTask
@@ -22,6 +24,16 @@ fun main(vararg args: String) {
 
     val resolvedGoals = application.resolver().resolve(PathModuleLoader(SystemModuleLoader(), Paths.get("")), "")
     val graph = graphBuilder.buildFrom(resolvedGoals, args[0])
+
+    Authenticator.setDefault(object : Authenticator() {
+        override fun getPasswordAuthentication(): PasswordAuthentication? {
+            val buildProperties = application.buildProperties()
+            if (buildProperties.username(requestingHost) == null) return null
+            if (buildProperties.password(requestingHost) == null) return null
+            return PasswordAuthentication(buildProperties.username(requestingHost), buildProperties.password(requestingHost)?.toCharArray())
+        }
+    })
+
 
     val pending = graph.nodes.map {
         it to BuildNode(it.goal)
