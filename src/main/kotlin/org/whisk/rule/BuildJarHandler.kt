@@ -5,6 +5,7 @@ import org.whisk.execution.RuleResult
 import org.whisk.execution.Success
 import org.whisk.model.BuildJar
 import org.whisk.model.FileResource
+import org.whisk.model.nonRemoved
 import java.io.OutputStreamWriter
 import java.io.PrintWriter
 import java.nio.charset.StandardCharsets
@@ -42,7 +43,7 @@ class BuildJarHandler @Inject constructor() : RuleExecutor<BuildJar> {
                         usedNames += "META-INF/MANIFEST.MF"
                     }
 
-                    rule.files.forEach { fr ->
+                    rule.files.nonRemoved.forEach { fr ->
                         val file = fr.relativePath.toString()
                         if (!usedNames.contains(file)) {
                             if (file.endsWith(".jar")) {

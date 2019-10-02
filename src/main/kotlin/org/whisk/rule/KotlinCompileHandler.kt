@@ -8,6 +8,8 @@ import org.whisk.ext.ExtAdapter
 import org.whisk.java.JavaCompiler
 import org.whisk.model.FileResource
 import org.whisk.model.KotlinCompile
+import org.whisk.model.StringResource
+import org.whisk.model.nonRemoved
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -36,15 +38,15 @@ class KotlinCompileHandler @Inject constructor(private val javaCompiler: JavaCom
         val jarDir = targetPath.resolve("jar")
 //
 
-        val ruleSrcs = rule.srcs.map { it.string }
+        val ruleSrcs = rule.srcs.nonRemoved.map(FileResource::string)
         if (ruleSrcs.isEmpty()) {
-            log.warn("No source files found in ${execution.goalName}")
+            log.warn("No source files found in ${execution.goalFQN}")
             return Success(emptyList())
         }
-        val exportedDeps = rule.exported_deps.map { it.string }
-        val dependencies = rule.cp.map { it.string } + exportedDeps
-        val kaptAPClasspath = rule.kapt_processors.map { it.string }
-        val plugins = (rule.plugins + rule.compiler).map { it.string }
+        val exportedDeps = rule.exported_deps.nonRemoved.map(FileResource::string)
+        val dependencies = rule.cp.nonRemoved.map(FileResource::string) + exportedDeps
+        val kaptAPClasspath = rule.kapt_processors.nonRemoved.map(FileResource::string)
+        val plugins = (rule.plugins + rule.compiler).nonRemoved.map(FileResource::string)
 
         val kotlinCompiler = extAdapter.kotlinCompiler(rule.compiler.map { it.file.toURI().toURL() })
 
@@ -59,8 +61,8 @@ class KotlinCompileHandler @Inject constructor(private val javaCompiler: JavaCom
                 kaptClasses,
                 kaptDir.resolve("stubs"),
                 kaptDir.resolve("kotlinSources"),
-                rule.friend_paths.map { it.path },
-                rule.additional_parameters.map { it.string })
+                rule.friend_paths.nonRemoved.map(FileResource::path),
+                rule.additional_parameters.map(StringResource::string))
         if (!succeeded) return Failed()
 
         val javaSources = Files.walk(kaptDir.resolve("sources")).use { it.filter { Files.isRegularFile(it) }.map { it.toFile() }.toList() } +

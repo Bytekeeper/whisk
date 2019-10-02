@@ -15,7 +15,7 @@ class ExecHandler @Inject constructor() : RuleExecutor<Exec> {
                 (listOf(rule.command) + rule.arguments).map { it.string })
                 .inheritIO()
 
-        process.directory(rule.work_dir?.file ?: execution.callPoint.modulePath?.toFile())
+        process.directory(rule.work_dir?.file ?: execution.ruleRef.modulePath?.toFile())
 
         val exitCode = process.start().waitFor()
 

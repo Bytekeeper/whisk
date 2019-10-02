@@ -91,7 +91,7 @@ class GoalExecutor constructor(private val processor: Processor) {
                 val realModulePath = (source.modulePath ?: Paths.get("")).toAbsolutePath()
                 processor.process(
                         ExecutionContext(
-                                goal.name,
+                                goal.source,
                                 Paths.get(".whisk"),
                                 source,
                                 ruleParams,

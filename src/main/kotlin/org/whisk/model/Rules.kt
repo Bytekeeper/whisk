@@ -38,7 +38,7 @@ data class JavaCompile(
 ) : RuleParameters
 
 data class PrebuiltJar(
-        val binary_jar: StringResource
+        val binary_jar: FileResource
 ) : RuleParameters
 
 data class RemoteFile(

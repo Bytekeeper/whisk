@@ -5,7 +5,7 @@ import org.whisk.execution.Success
 import org.whisk.java.JavaCompiler
 import org.whisk.model.FileResource
 import org.whisk.model.JavaCompile
-import java.io.File
+import org.whisk.model.nonRemoved
 import java.nio.file.Files
 import java.util.jar.JarEntry
 import java.util.jar.JarOutputStream
@@ -25,10 +25,10 @@ class JavaCompileHandler @Inject constructor(private val javaCompiler: JavaCompi
         val jarDir = whiskOut.resolve("jar")
 //
 
-        val deps = rule.cp.map { File(it.string) }
-        val exportedDeps = rule.exported_deps.map { File(it.string) }
+        val deps = rule.cp.nonRemoved.map(FileResource::file)
+        val exportedDeps = rule.exported_deps.nonRemoved.map(FileResource::file)
         val dependencies = deps + exportedDeps
-        javaCompiler.compile(rule.srcs.map { File(it.string) }, dependencies, classesDir.toFile())
+        javaCompiler.compile(rule.srcs.nonRemoved.map(FileResource::file), dependencies, classesDir.toFile())
 
         Files.createDirectories(jarDir)
         val jarName = jarDir.resolve("${execution.goalName}.jar")

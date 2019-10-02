@@ -6,6 +6,7 @@ import org.whisk.execution.Success
 import org.whisk.ext.ExtAdapter
 import org.whisk.model.AntlrGen
 import org.whisk.model.FileResource
+import org.whisk.model.nonRemoved
 import java.nio.file.Files
 import javax.inject.Inject
 import kotlin.streams.toList
@@ -18,7 +19,7 @@ class AntlrGenHandler @Inject constructor(private val extAdapter: ExtAdapter) :
     override fun execute(execution: ExecutionContext<AntlrGen>): RuleResult {
         val srcGenPath = execution.targetPath.resolve("antlr-gen")
         val rule = execution.ruleParameters
-        val args = rule.srcs.map { it.string } +
+        val args = rule.srcs.nonRemoved.map(FileResource::string) +
                 "-o" + srcGenPath.toAbsolutePath().toString() +
                 rule.arguments.map { it.string }
         val tool = extAdapter.antlrTool(rule.tool.map { it.path.toUri().toURL() })

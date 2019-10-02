@@ -2,9 +2,7 @@ package org.whisk.rule
 
 import org.whisk.execution.RuleResult
 import org.whisk.execution.Success
-import org.whisk.model.FileResource
 import org.whisk.model.PrebuiltJar
-import java.nio.file.Paths
 import javax.inject.Inject
 
 class PrebuiltJarHandler @Inject constructor() : RuleExecutor<PrebuiltJar> {
@@ -13,8 +11,7 @@ class PrebuiltJarHandler @Inject constructor() : RuleExecutor<PrebuiltJar> {
             execution: ExecutionContext<PrebuiltJar>
     ): RuleResult {
         val rule = execution.ruleParameters
-        val file = FileResource(Paths.get(rule.binary_jar.string).toAbsolutePath(), source = rule)
-        check(file.exists) { "${execution.goalName} file does not exist!" }
-        return Success(listOf(file))
+        check(rule.binary_jar.exists) { "Specified file in ${execution.goalFQN} does not exist!" }
+        return Success(listOf(rule.binary_jar))
     }
 }

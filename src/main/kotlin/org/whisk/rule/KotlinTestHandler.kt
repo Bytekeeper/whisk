@@ -4,7 +4,10 @@ import org.whisk.execution.Failed
 import org.whisk.execution.RuleResult
 import org.whisk.execution.Success
 import org.whisk.ext.ExtAdapter
+import org.whisk.model.FileResource
 import org.whisk.model.KotlinTest
+import org.whisk.model.StringResource
+import org.whisk.model.nonRemoved
 import java.io.File
 import javax.inject.Inject
 
@@ -22,11 +25,11 @@ class KotlinTestHandler @Inject constructor(private val extAdapter: ExtAdapter) 
 
         val dependencies = rule.cp.map { it.string }
 
-        val kotlinCompiler = extAdapter.kotlinCompiler(rule.compiler.map { it.file.toURI().toURL() })
+        val kotlinCompiler = extAdapter.kotlinCompiler(rule.compiler.nonRemoved.map(FileResource::url))
 
         val succeeded = kotlinCompiler.compile(
                 whiskOut.resolve("kotlin-cache"),
-                rule.srcs.map { it.string },
+                rule.srcs.nonRemoved.map(FileResource::string),
                 dependencies,
                 emptyList(),
                 emptyList(),
@@ -35,8 +38,8 @@ class KotlinTestHandler @Inject constructor(private val extAdapter: ExtAdapter) 
                 kaptClasses,
                 kaptDir.resolve("stubs"),
                 kaptDir.resolve("kotlinSources"),
-                rule.friend_paths.map { it.path },
-                rule.additional_parameters.map { it.string })
+                rule.friend_paths.nonRemoved.map(FileResource::path),
+                rule.additional_parameters.map(StringResource::string))
         if (!succeeded) return Failed()
 
         val tester = extAdapter.unitTestRunner(

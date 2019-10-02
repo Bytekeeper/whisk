@@ -6,6 +6,7 @@ import org.whisk.execution.RuleResult
 import org.whisk.execution.Success
 import org.whisk.model.FileResource
 import org.whisk.model.ProtocolCompile
+import org.whisk.model.nonRemoved
 import org.whisk.unzip
 import java.net.URL
 import java.nio.file.Files
@@ -34,11 +35,11 @@ class ProtobufCompilerHandler @Inject constructor(
         val protoc = protocDir.resolve("bin").resolve("protoc")
         Files.setPosixFilePermissions(protoc, setOf(PosixFilePermission.OWNER_EXECUTE))
         val params = mutableListOf(protoc.toString())
-        params += rule.imports.map { "-I${it.string}" }
+        params += rule.imports.nonRemoved.map { "-I${it.string}" }
         val outputDir = execution.targetPath.resolve("gen").resolve("protobuf")
         Files.createDirectories(outputDir)
         params += "--${rule.output_type.string}=$outputDir"
-        params += rule.srcs.map { it.string }
+        params += rule.srcs.nonRemoved.map(FileResource::string)
         val protocProcess = ProcessBuilder().command(params)
                 .inheritIO()
                 .start()

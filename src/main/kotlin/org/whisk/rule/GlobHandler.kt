@@ -37,11 +37,11 @@ class GlobHandler @Inject constructor() : RuleExecutor<Glob> {
 
     override fun execute(execution: ExecutionContext<Glob>): RuleResult {
         val rule = execution.ruleParameters
-        val base = execution.callPoint.modulePath ?: error("Unexpected glob in system buildlang file")
+        val base = execution.ruleRef.modulePath ?: error("Unexpected glob in system buildlang file")
         val srcs = GlobUtil.determineSources(base, rule.pattern)
                 .map { FileResource(base.resolve(it), base, rule) }
         if (srcs.isEmpty())
-            log.warn("No matching files in ${execution.goalName} for pattern ${rule.pattern.joinToString(", ")}")
+            log.warn("No matching files in ${execution.goalFQN} for pattern ${rule.pattern.joinToString(", ")}")
         return Success(srcs)
     }
 }
@@ -55,7 +55,7 @@ class RGlobHandler @Inject constructor() : RuleExecutor<RGlob> {
         val srcs = GlobUtil.determineSources(base, rule.pattern)
                 .map { FileResource(base.resolve(it), execution.ruleParameters.root.path, rule) }
         if (srcs.isEmpty())
-            log.warn("No matching files in ${execution.goalName} for pattern ${rule.pattern.joinToString(", ")}")
+            log.warn("No matching files in ${execution.goalFQN} for pattern ${rule.pattern.joinToString(", ")}")
         return Success(srcs)
     }
 }

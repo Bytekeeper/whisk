@@ -2,6 +2,7 @@ package org.whisk.rule
 
 import org.apache.logging.log4j.LogManager
 import org.whisk.StopWatch
+import org.whisk.buildlang.GoalDeclaration
 import org.whisk.buildlang.RuleCall
 import org.whisk.buildlang.SourceRef
 import org.whisk.execution.Failed
@@ -12,12 +13,15 @@ import javax.inject.Inject
 import kotlin.reflect.KClass
 
 class ExecutionContext<T : RuleParameters>(
-        val goalName: String,
+        val goalRef: SourceRef<GoalDeclaration>,
         val cacheDir: Path,
-        val callPoint: SourceRef<RuleCall>,
+        val ruleRef: SourceRef<RuleCall>,
         val ruleParameters: T,
         val targetPath: Path
-)
+) {
+    val goalName = goalRef.source.name.text
+    val goalFQN = (if (goalRef.module.isEmpty()) "" else "${goalRef.module}:") + goalName
+}
 
 
 class RuleProcessorRegistry @Inject constructor(
@@ -75,14 +79,14 @@ class Processor @Inject constructor(private val ruleProcessorRegistry: RuleProce
     fun process(execution: ExecutionContext<RuleParameters>): RuleResult {
         val ruleProcessor = ruleProcessorRegistry.getRuleProcessor(execution.ruleParameters)
         val stopWatch = StopWatch()
-        ruleProcessor.name?.let { log.info("======== Running $it") }
+        ruleProcessor.name?.let { log.info("======== Running ${execution.goalFQN}") }
 
         val result = ruleProcessor.execute(execution)
         ruleProcessor.name?.let {
             if (result is Failed)
-                log.info("======== Failed {} in {}ms", it, stopWatch.stop())
+                log.info("======== Failed {} in {}ms", execution.goalFQN, stopWatch.stop())
             else
-                log.info("======== Completed {} in {}ms", it, stopWatch.stop())
+                log.info("======== Completed {} in {}ms", execution.goalFQN, stopWatch.stop())
         }
 
         return result
