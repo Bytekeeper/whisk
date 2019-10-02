@@ -57,16 +57,18 @@ class KotlinCompilerImpl : KotlinCompiler {
         compilerArgs.noStdlib = true
         compilerArgs.classpathAsList = compileClasspath.map { File(it) }
         compilerArgs.pluginOptions = pluginOptions.toTypedArray()
-        compilerArgs.pluginClasspaths = plugins.toTypedArray()
+        compilerArgs.pluginClasspaths = if (pluginOptions.isNotEmpty()) plugins.toTypedArray() else null
         compilerArgs.friendPaths = friendPaths.map { it.toAbsolutePath().toString() }.toTypedArray()
         compilerArgs.freeArgs = additionalParameters + srcs
 
+//        return if (pluginOptions.isNotEmpty())
         return fullBuild(compilerArgs)
-//        return incrementalBuild(cacheDir, compilerArgs)
+//            incrementalBuild(cacheDir, compilerArgs)
     }
 
     private fun incrementalBuild(cacheDir: Path,
                                  compilerArgs: K2JVMCompilerArguments): Boolean {
+        log.debug("Using incremental compiler")
         compilerArgs.moduleName = "dummy"
         val reporter = MyReporter()
         makeIncrementally(cacheDir.toFile(),
@@ -78,22 +80,22 @@ class KotlinCompilerImpl : KotlinCompiler {
     }
 
     private fun fullBuild(compilerArgs: K2JVMCompilerArguments): Boolean {
+        log.debug("Using full compiler")
         return K2JVMCompiler().exec(MyMessageCollector(), Services.EMPTY, compilerArgs) == ExitCode.OK
     }
 
     inner class MyMessageCollector : MessageCollector {
         override fun clear() {
-            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
         }
 
         override fun hasErrors(): Boolean {
-            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+            error("Unexpected call to hasErrors")
         }
+
 
         override fun report(severity: CompilerMessageSeverity, message: String, location: CompilerMessageLocation?) {
             log.info("${location?.let { "$it: " } ?: ""}$message")
         }
-
     }
 
 

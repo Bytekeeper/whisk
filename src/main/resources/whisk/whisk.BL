@@ -8,7 +8,7 @@ export kotlin_compile, kotlin_test, maven_library, build_jar, prebuilt_jar, remo
 kotlin_compile(compiler, srcs:[], cp:[], exported_deps:[], kapt_processors: [], plugins: [], friend_paths: [], additional_parameters: [])
 
 # Rule to compile and run test on kotlin code
-kotlin_test(compiler, srcs:[], cp:[], friend_paths: [], additional_parameters: [])
+kotlin_test(compiler, srcs:[], cp:[], kapt_processors: [], plugins: [],friend_paths: [], additional_parameters: [])
 
 # Rule to compile java
 java_compile(srcs:[], cp:[], exported_deps:[], apt_deps: [])

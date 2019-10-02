@@ -26,13 +26,15 @@ class KotlinTestHandler @Inject constructor(private val extAdapter: ExtAdapter) 
         val dependencies = rule.cp.map { it.string }
 
         val kotlinCompiler = extAdapter.kotlinCompiler(rule.compiler.nonRemoved.map(FileResource::url))
+        val kaptAPClasspath = rule.kapt_processors.nonRemoved.map(FileResource::string)
+        val plugins = (rule.plugins + rule.compiler).nonRemoved.map(FileResource::string)
 
         val succeeded = kotlinCompiler.compile(
                 whiskOut.resolve("kotlin-cache"),
                 rule.srcs.nonRemoved.map(FileResource::string),
                 dependencies,
-                emptyList(),
-                emptyList(),
+                kaptAPClasspath,
+                plugins,
                 classesDir,
                 kaptDir.resolve("sources"),
                 kaptClasses,

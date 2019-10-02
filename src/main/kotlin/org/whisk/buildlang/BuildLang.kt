@@ -31,9 +31,11 @@ class BLErrorListener : BaseErrorListener() {
                         ": Multiparameter rule calls require named parameters: ie. rule(name=value, name2=value2) and not rule(value, value2)"
                     } else ""
                 } else ""
-        System.err.println("line $line:$charPositionInLine $msg$additionalInfo")
+        throw ParseError("line $line:$charPositionInLine $msg$additionalInfo")
     }
 }
+
+class ParseError(message: String) : Throwable(message)
 
 class BuildLangTransformer @Inject constructor() {
     fun buildFileFrom(ctx: BuildLangParser.BuildFileContext): BuildFile =
