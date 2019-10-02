@@ -8,14 +8,13 @@ import javax.tools.ToolProvider
 
 @Reusable
 class JavaCompiler @Inject constructor() {
-    fun compile(srcs: List<File>, compileClassPath: List<File>, target: File) {
+    fun compile(srcs: List<File>, compileClassPath: List<File>, target: File): Boolean {
         require(srcs.isNotEmpty())
         val compiler = ToolProvider.getSystemJavaCompiler()
         val fileManager = compiler.getStandardFileManager(null, null, null)
         val files = fileManager.getJavaFileObjectsFromFiles(srcs)
         fileManager.setLocation(StandardLocation.CLASS_OUTPUT, listOf(target))
         fileManager.setLocation(StandardLocation.CLASS_PATH, compileClassPath)
-        compiler.getTask(null, fileManager, null, null, null, files).call()
-
+        return compiler.getTask(null, fileManager, null, null, null, files).call()
     }
 }

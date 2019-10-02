@@ -1,5 +1,6 @@
-export kotlin_compile, kotlin_test, maven_library, build_jar, prebuilt_jar, remote_file, glob, antlr_gen, rglob,
-    exec, java_compile, protocol_compile
+export kotlin_compile, kotlin_test, java_compile, java_test,
+    maven_library, build_jar, prebuilt_jar, remote_file, glob, antlr_gen, rglob,
+    exec, protocol_compile
 
 # Define rules with "native" implementation
 # Usually rules are defined by "rule(...) = value", omitting "= value" marks them as being implemented in code
@@ -8,10 +9,13 @@ export kotlin_compile, kotlin_test, maven_library, build_jar, prebuilt_jar, remo
 kotlin_compile(compiler, srcs:[], cp:[], exported_deps:[], kapt_processors: [], plugins: [], friend_paths: [], additional_parameters: [])
 
 # Rule to compile and run test on kotlin code
-kotlin_test(compiler, srcs:[], cp:[], kapt_processors: [], plugins: [],friend_paths: [], additional_parameters: [])
+kotlin_test(compiler, srcs:[], cp:[], exported_deps:[], kapt_processors: [], plugins: [],friend_paths: [], additional_parameters: [])
 
 # Rule to compile java
 java_compile(srcs:[], cp:[], exported_deps:[], apt_deps: [])
+
+# Rule to compile java
+java_test(srcs:[], cp:[], exported_deps:[], apt_deps: [])
 
 # Rule to depend on maven artifacts (transitively)
 maven_library(artifacts:[], repository_urls:[], scopes:[])

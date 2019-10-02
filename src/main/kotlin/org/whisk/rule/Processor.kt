@@ -28,6 +28,7 @@ class RuleProcessorRegistry @Inject constructor(
         prebuiltJarHandler: PrebuiltJarHandler,
         kotlinCompileHandler: KotlinCompileHandler,
         javaCompileHandler: JavaCompileHandler,
+        javaTestHandler: JavaTestHandler,
         kotlinTestHandler: KotlinTestHandler,
         remoteFileHandler: RemoteFileHandler,
         javaBinaryHandler: BuildJarHandler,
@@ -45,6 +46,7 @@ class RuleProcessorRegistry @Inject constructor(
         register(kotlinCompileHandler)
         register(kotlinTestHandler)
         register(javaCompileHandler)
+        register(javaTestHandler)
         register(remoteFileHandler)
         register(javaBinaryHandler)
         register(mavenLibraryHandler)

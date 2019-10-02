@@ -8,7 +8,6 @@ import org.whisk.model.FileResource
 import org.whisk.model.KotlinTest
 import org.whisk.model.StringResource
 import org.whisk.model.nonRemoved
-import java.io.File
 import javax.inject.Inject
 
 class KotlinTestHandler @Inject constructor(private val extAdapter: ExtAdapter) : RuleExecutor<KotlinTest> {
@@ -23,7 +22,7 @@ class KotlinTestHandler @Inject constructor(private val extAdapter: ExtAdapter) 
         val kaptDir = whiskOut.resolve("kapt")
         val kaptClasses = kaptDir.resolve("classes")
 
-        val dependencies = rule.cp.map { it.string }
+        val dependencies = rule.cp.nonRemoved.map(FileResource::string)
 
         val kotlinCompiler = extAdapter.kotlinCompiler(rule.compiler.nonRemoved.map(FileResource::url))
         val kaptAPClasspath = rule.kapt_processors.nonRemoved.map(FileResource::string)
@@ -45,8 +44,7 @@ class KotlinTestHandler @Inject constructor(private val extAdapter: ExtAdapter) 
         if (!succeeded) return Failed()
 
         val tester = extAdapter.unitTestRunner(
-                dependencies.map { File(it).toURI().toURL() } +
-                        classesDir.toUri().toURL())
+                rule.cp.nonRemoved.map(FileResource::url) + classesDir.toUri().toURL())
         val failures = tester.test(classesDir)
 
         return if (failures == 0) Success(emptyList()) else Failed()

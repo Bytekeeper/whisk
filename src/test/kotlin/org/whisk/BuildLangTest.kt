@@ -4,10 +4,8 @@ import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
-import org.whisk.buildlang.BLErrorListener
 import org.whisk.buildlang.BuildLangLexer
 import org.whisk.buildlang.BuildLangParser
-import org.whisk.buildlang.BuildLangTransformer
 
 class BuildLangTest {
     @Test
@@ -38,20 +36,5 @@ class BuildLangTest {
     private fun parserFromString(source: String): BuildLangParser {
         val lexer = BuildLangLexer(CharStreams.fromString(source))
         return BuildLangParser(CommonTokenStream(lexer))
-    }
-
-    @Test
-    fun selftest() {
-        // GIVEN
-        val lexer = BuildLangLexer(CharStreams.fromFileName("WHISK.BL"))
-        val parser = BuildLangParser(CommonTokenStream(lexer))
-        parser.removeErrorListeners()
-        parser.addErrorListener(BLErrorListener())
-
-        // WHEN
-        val buildFile = BuildLangTransformer().buildFileFrom(parser.buildFile())
-
-        //THEN
-        println(buildFile)
     }
 }

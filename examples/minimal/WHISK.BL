@@ -2,7 +2,9 @@ import whisk
 
 export build
 
-build=java_compile(srcs=glob('src/**.java'), cp=implementation_deps)
+build=[
+    java_compile(srcs=glob('src/**.java'), cp=implementation_deps),
+    java_test(srcs=glob('test/**.java'), cp=test_deps)]
 
-implementation_deps = maven_library(
-    artifacts=['org.apache.logging.log4j:log4j-core:2.12.1'])
+implementation_deps = maven_library(artifacts=['org.apache.logging.log4j:log4j-core:2.12.1'])
+test_deps = maven_library(artifacts=['junit:junit:4.12'])

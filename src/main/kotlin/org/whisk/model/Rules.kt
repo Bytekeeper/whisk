@@ -40,6 +40,13 @@ data class JavaCompile(
         val apt_deps: List<FileResource> = emptyList()
 ) : RuleParameters
 
+data class JavaTest(
+        val srcs: List<FileResource>,
+        val cp: List<FileResource> = emptyList(),
+        var exported_deps: List<FileResource> = emptyList(),
+        val apt_deps: List<FileResource> = emptyList()
+) : RuleParameters
+
 data class PrebuiltJar(
         val binary_jar: FileResource
 ) : RuleParameters
@@ -91,6 +98,7 @@ class RuleRegistry @Inject constructor() {
         register<BuildJar>()
         register<MavenLibrary>()
         register<JavaCompile>()
+        register<JavaTest>()
         register<ProtocolCompile>()
         register<Glob>()
         register<AntlrGen>()
