@@ -2,4 +2,4 @@ import whisk,sub.module
 
 export build
 
-build=sub.module.build
+build=java_compile(srcs=glob('src/**.java'), cp=sub.module.build)

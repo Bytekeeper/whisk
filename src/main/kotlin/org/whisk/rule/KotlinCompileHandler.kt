@@ -5,6 +5,7 @@ import org.whisk.execution.Failed
 import org.whisk.execution.RuleResult
 import org.whisk.execution.Success
 import org.whisk.ext.ExtAdapter
+import org.whisk.java.ABI
 import org.whisk.java.JavaCompiler
 import org.whisk.model.FileResource
 import org.whisk.model.KotlinCompile
@@ -20,7 +21,8 @@ import javax.inject.Inject
 import kotlin.streams.toList
 
 class KotlinCompileHandler @Inject constructor(private val javaCompiler: JavaCompiler,
-                                               private val extAdapter: ExtAdapter) :
+                                               private val extAdapter: ExtAdapter,
+                                               private val abi: ABI) :
         RuleExecutor<KotlinCompile> {
     private val log = LogManager.getLogger()
 
@@ -43,8 +45,9 @@ class KotlinCompileHandler @Inject constructor(private val javaCompiler: JavaCom
             log.warn("No source files found in ${execution.goalFQN}")
             return Success(emptyList())
         }
-        val exportedDeps = rule.exported_deps.nonRemoved.map(FileResource::string)
-        val dependencies = rule.cp.nonRemoved.map(FileResource::string) + exportedDeps
+        val dependencies = (rule.cp.nonRemoved + rule.exported_deps.nonRemoved)
+                .map(FileResource::placeHolderOrReal)
+                .map(Path::toString)
         val kaptAPClasspath = rule.kapt_processors.nonRemoved.map(FileResource::string)
         val plugins = (rule.plugins + rule.compiler).nonRemoved.map(FileResource::string)
 
@@ -73,25 +76,34 @@ class KotlinCompileHandler @Inject constructor(private val javaCompiler: JavaCom
 
         Files.createDirectories(jarDir)
         val jarName = jarDir.resolve("${execution.goalName}.jar")
+        val abiJarName = jarDir.resolve("ABI-${execution.goalName}.jar")
         JarOutputStream(Files.newOutputStream(jarName))
                 .use { out ->
-                    val addToJar = { pathStream: Stream<Path> ->
-                        pathStream
-                                .forEach { path ->
-                                    val relativePath = classesDir.relativize(path)
-                                    if (Files.isRegularFile(path)) {
-                                        out.putNextEntry(JarEntry(relativePath.toString()))
-                                        Files.copy(path, out)
-                                    } else if (Files.isDirectory(path)) {
-                                        out.putNextEntry(JarEntry("$relativePath/"))
-                                    }
+                    JarOutputStream(Files.newOutputStream(abiJarName))
+                            .use { abiOut ->
+                                val addToJar = { pathStream: Stream<Path> ->
+                                    pathStream
+                                            .forEach { path ->
+                                                val relativePath = classesDir.relativize(path)
+                                                if (Files.isRegularFile(path)) {
+                                                    out.putNextEntry(JarEntry(relativePath.toString()))
+                                                    Files.copy(path, out)
+                                                    if (path.fileName.toString().endsWith(".class")) {
+                                                        abiOut.putNextEntry(JarEntry(relativePath.toString()))
+                                                        val reduced = abi.toReducedABIClass(path)
+                                                        abiOut.write(reduced, 0, reduced.size)
+                                                    }
+                                                } else if (path.root != path && Files.isDirectory(path)) {
+                                                    out.putNextEntry(JarEntry("$relativePath/"))
+                                                    abiOut.putNextEntry(JarEntry("$relativePath/"))
+                                                }
+                                            }
                                 }
-                    }
-
-                    Files.walk(classesDir).use(addToJar)
-                    Files.walk(kaptClasses).use(addToJar)
+                                Files.walk(classesDir).use(addToJar)
+                                Files.walk(kaptClasses).use(addToJar)
+                            }
                 }
 
-        return Success(rule.exported_deps + FileResource(jarName.toAbsolutePath(), source = rule))
+        return Success(rule.exported_deps + FileResource(jarName.toAbsolutePath(), source = rule, placeHolder = abiJarName.toAbsolutePath()))
     }
 }

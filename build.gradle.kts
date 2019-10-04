@@ -21,6 +21,7 @@ dependencies {
     implementation("org.apache.maven:maven-resolver-provider:3.6.1")
     implementation("org.apache.maven.resolver:maven-resolver-transport-http:1.4.0")
     implementation("org.apache.maven.resolver:maven-resolver-connector-basic:1.4.0")
+    implementation("org.ow2.asm:asm:7.2")
     compileOnly("junit:junit:4.12")
     testImplementation("junit:junit:4.12")
 

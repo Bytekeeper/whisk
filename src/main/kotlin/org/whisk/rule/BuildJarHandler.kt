@@ -29,6 +29,7 @@ class BuildJarHandler @Inject constructor() : RuleExecutor<BuildJar> {
 
         val jarName = rule.name?.string ?: "${execution.goalName}.jar"
         val jarFullName = jarDir.resolve(jarName)
+        Files.deleteIfExists(jarFullName)
 
         JarOutputStream(Files.newOutputStream(jarFullName))
                 .use { out ->

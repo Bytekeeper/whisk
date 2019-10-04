@@ -4,8 +4,7 @@ import java.nio.file.Path
 
 enum class Change {
     UNCHANGED,
-    NEW,
-    ABI_UNCHANGED,
+    ABI_COMPATIBLE_CHANGE,
     CHANGED,
     REMOVED
 }
@@ -13,10 +12,13 @@ enum class Change {
 interface Resource {
     val string: String
     val source: RuleParameters?
-    val change: Change get() = Change.NEW
+    val change: Change get() = Change.CHANGED
 }
 
-data class FileResource(val path: Path, val root: Path = path.root, override val source: RuleParameters?) : Resource {
+data class FileResource(val path: Path,
+                        val root: Path = path.root,
+                        override val source: RuleParameters?,
+                        val placeHolder: Path? = null) : Resource {
     init {
         check(path.isAbsolute)
         check(path.startsWith(root)) { "$path does not start with $root" }
@@ -27,6 +29,7 @@ data class FileResource(val path: Path, val root: Path = path.root, override val
     val url get() = path.toUri().toURL()
     val relativePath = root.relativize(path)
     override val string get() = path.toString()
+    val placeHolderOrReal = placeHolder ?: path
 }
 
 data class StringResource(override val string: String, override val source: RuleParameters?) : Resource

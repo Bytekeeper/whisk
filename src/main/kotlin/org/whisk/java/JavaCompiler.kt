@@ -15,6 +15,9 @@ class JavaCompiler @Inject constructor() {
         val files = fileManager.getJavaFileObjectsFromFiles(srcs)
         fileManager.setLocation(StandardLocation.CLASS_OUTPUT, listOf(target))
         fileManager.setLocation(StandardLocation.CLASS_PATH, compileClassPath)
-        return compiler.getTask(null, fileManager, null, null, null, files).call()
+        val options = listOf(
+                "-encoding", "UTF8",
+                "-sourcepath", "")
+        return compiler.getTask(null, fileManager, null, options, null, files).call()
     }
 }

@@ -51,3 +51,9 @@ fun <T> withTempFile(block: (Path) -> T): T {
         Files.delete(tempFile)
     }
 }
+
+fun Path.clean(): Boolean {
+    System.err.println("Would delete $this recursively")
+    return true
+//    toFile().deleteRecursively()
+}

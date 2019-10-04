@@ -1,5 +1,4 @@
-public class Test{
-        public static void main(String[]args){
+package test;
 
-        }
+public class Test{
 }
