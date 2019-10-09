@@ -6,6 +6,9 @@ import java.nio.file.Files
 import java.nio.file.Path
 import javax.inject.Inject
 
+/**
+ * https://docs.oracle.com/javase/specs/jls/se7/html/jls-13.html#jls-13.1
+ */
 class ABI @Inject constructor() {
     private val log = LogManager.getLogger()
 

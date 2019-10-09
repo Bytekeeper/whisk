@@ -10,7 +10,9 @@ import org.whisk.java.JavaCompiler
 import org.whisk.model.FileResource
 import org.whisk.model.KotlinCompile
 import org.whisk.model.StringResource
-import org.whisk.model.nonRemoved
+import org.whisk.state.RuleInvocationStore
+import org.whisk.state.toResources
+import org.whisk.state.toStorageFormat
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -22,7 +24,8 @@ import kotlin.streams.toList
 
 class KotlinCompileHandler @Inject constructor(private val javaCompiler: JavaCompiler,
                                                private val extAdapter: ExtAdapter,
-                                               private val abi: ABI) :
+                                               private val abi: ABI,
+                                               private var changeManager: RuleInvocationStore) :
         RuleExecutor<KotlinCompile> {
     private val log = LogManager.getLogger()
 
@@ -39,23 +42,32 @@ class KotlinCompileHandler @Inject constructor(private val javaCompiler: JavaCom
         val kaptClasses = kaptDir.resolve("classes")
         val jarDir = targetPath.resolve("jar")
 //
-
-        val ruleSrcs = rule.srcs.nonRemoved.map(FileResource::string)
-        if (ruleSrcs.isEmpty()) {
+        val sourceFiles = rule.srcs.map(FileResource::string)
+        if (sourceFiles.isEmpty()) {
             log.warn("No source files found in ${execution.goalFQN}")
-            return Success(emptyList())
+            return Success(rule.exported_deps)
         }
-        val dependencies = (rule.cp.nonRemoved + rule.exported_deps.nonRemoved)
+
+        val cacheFile = targetPath.resolve("last")
+        val lastInvocation = changeManager.readLastInvocation(cacheFile)
+        val currentCall = rule.toStorageFormat()
+
+        if (lastInvocation?.ruleCall == currentCall) {
+            log.info("No changes, not running kotlin compiler.")
+            return Success(lastInvocation.resultList.toResources(rule))
+        }
+
+        val dependencies = (rule.cp + rule.exported_deps)
                 .map(FileResource::placeHolderOrReal)
                 .map(Path::toString)
-        val kaptAPClasspath = rule.kapt_processors.nonRemoved.map(FileResource::string)
-        val plugins = (rule.plugins + rule.compiler).nonRemoved.map(FileResource::string)
+        val kaptAPClasspath = rule.kapt_processors.map(FileResource::string)
+        val plugins = (rule.plugins + rule.compiler).map(FileResource::string)
 
-        val kotlinCompiler = extAdapter.kotlinCompiler(rule.compiler.nonRemoved.map(FileResource::url))
+        val kotlinCompiler = extAdapter.kotlinCompiler(rule.compiler.map(FileResource::url))
 
         val succeeded = kotlinCompiler.compile(
                 targetPath.resolve("kotlin-cache"),
-                ruleSrcs,
+                sourceFiles,
                 dependencies,
                 kaptAPClasspath,
                 plugins,
@@ -64,12 +76,12 @@ class KotlinCompileHandler @Inject constructor(private val javaCompiler: JavaCom
                 kaptClasses,
                 kaptDir.resolve("stubs"),
                 kaptDir.resolve("kotlinSources"),
-                rule.friend_paths.nonRemoved.map(FileResource::path),
+                rule.friend_paths.map(FileResource::path),
                 rule.additional_parameters.map(StringResource::string))
         if (!succeeded) return Failed()
 
         val javaSources = Files.walk(kaptDir.resolve("sources")).use { it.filter { Files.isRegularFile(it) }.map { it.toFile() }.toList() } +
-                ruleSrcs.filter { it.endsWith(".java") }.map { File(it) }
+                sourceFiles.filter { it.endsWith(".java") }.map { File(it) }
         if (javaSources.isNotEmpty()) {
             javaCompiler.compile(javaSources, dependencies.map { File(it) } + classesDir.toFile(), classesDir.toFile())
         }
@@ -104,6 +116,8 @@ class KotlinCompileHandler @Inject constructor(private val javaCompiler: JavaCom
                             }
                 }
 
-        return Success(rule.exported_deps + FileResource(jarName.toAbsolutePath(), source = rule, placeHolder = abiJarName.toAbsolutePath()))
+        val resources = rule.exported_deps + FileResource(jarName.toAbsolutePath(), source = rule, placeHolder = abiJarName.toAbsolutePath())
+        changeManager.writeNewInvocation(cacheFile, currentCall, resources)
+        return Success(resources)
     }
 }

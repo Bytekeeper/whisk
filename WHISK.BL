@@ -8,9 +8,14 @@ whisk = build_jar(files= [main, rglob(pattern='**', root='src/main/resources')],
 main = kotlin_compile(
     compiler= compiler_deps,
     srcs = [glob('src/main/kotlin/**.kt'), grammar],
-    exported_deps=[log4j2_api, log4j2_core, implementation_deps, antlr4_runtime],
+    exported_deps=[log4j2_api, log4j2_core, implementation_deps, antlr4_runtime, java],
     cp=[compiler_deps, antlr4_compiler],
     kapt_processors=[dagger_compiler])
+
+java = java_compile(
+        srcs = protobuf_gen,
+        exported_deps = protobuf_lib
+    )
 
 unit_tests = kotlin_test(
     compiler= [compiler_deps],
@@ -23,6 +28,8 @@ test = [unit_tests, integration_tests]
 # Non-exposed goals that help building up the dependency graph
 grammar = antlr_gen(tool=antlr4_compiler, srcs=glob('src/main/antlr/**.g4'), arguments = '-visitor')
 
+protobuf_gen = protocol_compile(srcs=glob('src/main/proto/**.proto'), imports='src/main/proto')
+
 antlr4_runtime = prebuilt_jar('lib/antlr4-runtime-4.7.2.jar')
 
 junit4 = remote_file(url='http://central.maven.org/maven2/junit/junit/4.12/junit-4.12.jar')
@@ -33,6 +40,7 @@ log4j2_core = remote_file(url='http://central.maven.org/maven2/org/apache/loggin
 dagger_compiler = maven_library(artifacts=['com.google.dagger:dagger-compiler:2.22.1'])
 
 antlr4_compiler = maven_library(artifacts='org.antlr:antlr4:4.7.2')
+protobuf_lib = maven_library(artifacts='com.google.protobuf:protobuf-java:3.9.0')
 
 implementation_deps = maven_library(
     artifacts=['org.apache.maven:maven-resolver-provider:3.6.1',

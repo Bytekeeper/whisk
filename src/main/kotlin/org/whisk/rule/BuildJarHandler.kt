@@ -5,7 +5,9 @@ import org.whisk.execution.RuleResult
 import org.whisk.execution.Success
 import org.whisk.model.BuildJar
 import org.whisk.model.FileResource
-import org.whisk.model.nonRemoved
+import org.whisk.state.RuleInvocationStore
+import org.whisk.state.toResources
+import org.whisk.state.toStorageFormat
 import java.io.OutputStreamWriter
 import java.io.PrintWriter
 import java.nio.charset.StandardCharsets
@@ -15,7 +17,9 @@ import java.util.jar.JarInputStream
 import java.util.jar.JarOutputStream
 import javax.inject.Inject
 
-class BuildJarHandler @Inject constructor() : RuleExecutor<BuildJar> {
+class BuildJarHandler @Inject constructor(
+        private val ruleInvocationStore: RuleInvocationStore
+) : RuleExecutor<BuildJar> {
     private val log = LogManager.getLogger()
 
     override val name: String = "Jar Build"
@@ -24,8 +28,18 @@ class BuildJarHandler @Inject constructor() : RuleExecutor<BuildJar> {
             execution: ExecutionContext<BuildJar>
     ): RuleResult {
         val rule = execution.ruleParameters
-        val whiskOut = execution.targetPath
-        val jarDir = whiskOut.resolve("jar")
+        val targetPath = execution.targetPath
+
+        val cacheFile = targetPath.resolve("lastJar")
+        val lastInvocation = ruleInvocationStore.readLastInvocation(cacheFile)
+        val currentCall = rule.toStorageFormat()
+
+        if (lastInvocation?.ruleCall == currentCall) {
+            log.info("No changes, not building jar.")
+            return Success(lastInvocation.resultList.toResources(rule))
+        }
+
+        val jarDir = targetPath.resolve("jar")
 
         val jarName = rule.name?.string ?: "${execution.goalName}.jar"
         val jarFullName = jarDir.resolve(jarName)
@@ -44,7 +58,7 @@ class BuildJarHandler @Inject constructor() : RuleExecutor<BuildJar> {
                         usedNames += "META-INF/MANIFEST.MF"
                     }
 
-                    rule.files.nonRemoved.forEach { fr ->
+                    rule.files.forEach { fr ->
                         val file = fr.relativePath.toString()
                         if (!usedNames.contains(file)) {
                             if (file.endsWith(".jar")) {
@@ -72,6 +86,8 @@ class BuildJarHandler @Inject constructor() : RuleExecutor<BuildJar> {
                         }
                     }
                 }
-        return Success(listOf(FileResource(jarFullName.toAbsolutePath(), source = rule)))
+        val resources = listOf(FileResource(jarFullName.toAbsolutePath(), source = rule))
+        ruleInvocationStore.writeNewInvocation(cacheFile, currentCall, resources)
+        return Success(resources)
     }
 }

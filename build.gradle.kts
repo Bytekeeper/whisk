@@ -1,3 +1,4 @@
+import com.google.protobuf.gradle.ExecutableLocator
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 
@@ -8,9 +9,12 @@ plugins {
     id("com.github.ben-manes.versions") version "0.22.0"
     kotlin("kapt") version kotlinVersion
     antlr
+    id("com.google.protobuf") version "0.8.10"
+    idea
 }
 
 val spek_version = "2.0.7"
+val protobufVersion = "3.9.0"
 
 dependencies {
     implementation(kotlin("reflect"))
@@ -24,6 +28,8 @@ dependencies {
     implementation("org.ow2.asm:asm:7.2")
     compileOnly("junit:junit:4.12")
     testImplementation("junit:junit:4.12")
+    implementation(group = "com.google.protobuf", name = "protobuf-java", version = protobufVersion)
+//    implementation("com.github.javaparser:javaparser-core:3.15.0")
 
     implementation("com.google.dagger:dagger:2.24")
     kapt("com.google.dagger:dagger-compiler:2.24")
@@ -72,3 +78,10 @@ tasks.generateGrammarSource {
     outputDirectory = file("build/generated-src/antlr/main/org/whisk/buildlang")
     arguments = listOf("-visitor")
 }
+
+protobuf.protobuf.protoc(delegateClosureOf<ExecutableLocator> {
+    artifact = "com.google.protobuf:protoc:$protobufVersion"
+})
+
+idea.module
+

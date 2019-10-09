@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package org.whisk.proto;
+
+message Invocation {
+    RuleCall ruleCall = 1;
+    repeated ResourceInfo result = 2;
+}
+
+message RuleCall {
+    repeated RuleParam ruleParams = 1;
+}
+
+message RuleParam {
+    string name = 1;
+    repeated ResourceInfo resourceInfo = 2;
+}
+
+message ResourceInfo {
+    oneof kind {
+        FileInfo file = 1;
+        string string = 2;
+    }
+}
+
+message FileInfo {
+    string name = 1;
+    string root = 2;
+    string placeHolder = 3;
+    sint64 timestamp = 4;
+    sint64 length = 5;
+}

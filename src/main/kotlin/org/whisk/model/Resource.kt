@@ -12,7 +12,6 @@ enum class Change {
 interface Resource {
     val string: String
     val source: RuleParameters?
-    val change: Change get() = Change.CHANGED
 }
 
 data class FileResource(val path: Path,
@@ -33,5 +32,3 @@ data class FileResource(val path: Path,
 }
 
 data class StringResource(override val string: String, override val source: RuleParameters?) : Resource
-
-val List<FileResource>.nonRemoved get() = filter { it.change != Change.REMOVED }

@@ -7,7 +7,9 @@ import org.whisk.java.ABI
 import org.whisk.java.JavaCompiler
 import org.whisk.model.FileResource
 import org.whisk.model.JavaCompile
-import org.whisk.model.nonRemoved
+import org.whisk.state.RuleInvocationStore
+import org.whisk.state.toResources
+import org.whisk.state.toStorageFormat
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.jar.JarEntry
@@ -15,7 +17,8 @@ import java.util.jar.JarOutputStream
 import javax.inject.Inject
 
 class JavaCompileHandler @Inject constructor(private val javaCompiler: JavaCompiler,
-                                             private val abi: ABI) :
+                                             private val abi: ABI,
+                                             private val ruleInvocationStore: RuleInvocationStore) :
         RuleExecutor<JavaCompile> {
     private val log = LogManager.getLogger()
 
@@ -23,17 +26,27 @@ class JavaCompileHandler @Inject constructor(private val javaCompiler: JavaCompi
 
     override fun execute(execution: ExecutionContext<JavaCompile>): RuleResult {
         val rule = execution.ruleParameters
+        val targetPath = execution.targetPath
 
-        val whiskOut = execution.targetPath
-        val classesDir = whiskOut.resolve("classes")
+        val cacheFile = targetPath.resolve("lastJavac")
+        val lastInvocation = ruleInvocationStore.readLastInvocation(cacheFile)
+        val currentCall = rule.toStorageFormat()
+
+        if (lastInvocation?.ruleCall == currentCall) {
+            log.info("No changes, not running javac compiler.")
+            return Success(lastInvocation.resultList.toResources(rule))
+        }
+
+        val classesDir = targetPath.resolve("classes")
         Files.createDirectories(classesDir)
-        val jarDir = whiskOut.resolve("jar")
+        val jarDir = targetPath.resolve("jar")
 //
 
-        val dependencies = (rule.cp.nonRemoved + rule.exported_deps.nonRemoved)
+        val dependencies = (rule.cp + rule.exported_deps)
                 .map(FileResource::placeHolderOrReal)
                 .map(Path::toFile)
-        javaCompiler.compile(rule.srcs.nonRemoved.map(FileResource::file), dependencies, classesDir.toFile())
+
+        javaCompiler.compile(rule.srcs.map(FileResource::file), dependencies, classesDir.toFile())
 
         Files.createDirectories(jarDir)
         val jarName = jarDir.resolve("${execution.goalName}.jar")
@@ -48,10 +61,12 @@ class JavaCompileHandler @Inject constructor(private val javaCompiler: JavaCompi
                                                 val relativePath = classesDir.relativize(path)
                                                 if (Files.isRegularFile(path)) {
                                                     out.putNextEntry(JarEntry(relativePath.toString()))
-                                                    abiOut.putNextEntry(JarEntry(relativePath.toString()))
                                                     Files.copy(path, out)
-                                                    val reduced = abi.toReducedABIClass(path)
-                                                    abiOut.write(reduced, 0, reduced.size)
+                                                    if (path.fileName.toString().endsWith(".class")) {
+                                                        abiOut.putNextEntry(JarEntry(relativePath.toString()))
+                                                        val reduced = abi.toReducedABIClass(path)
+                                                        abiOut.write(reduced, 0, reduced.size)
+                                                    }
                                                 } else if (path.root != path && Files.isDirectory(path)) {
                                                     out.putNextEntry(JarEntry("$relativePath/"))
                                                     abiOut.putNextEntry(JarEntry("$relativePath/"))
@@ -61,6 +76,8 @@ class JavaCompileHandler @Inject constructor(private val javaCompiler: JavaCompi
                             }
                 }
 
-        return Success(rule.exported_deps + FileResource(jarName.toAbsolutePath(), source = rule, placeHolder = abiJarName.toAbsolutePath()))
+        val resources = rule.exported_deps + FileResource(jarName.toAbsolutePath(), source = rule, placeHolder = abiJarName.toAbsolutePath())
+        ruleInvocationStore.writeNewInvocation(cacheFile, currentCall, resources)
+        return Success(resources)
     }
 }

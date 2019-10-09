@@ -1,45 +1,54 @@
 package org.whisk.rule
 
+import org.apache.logging.log4j.LogManager
 import org.whisk.DownloadManager
 import org.whisk.execution.Failed
 import org.whisk.execution.RuleResult
 import org.whisk.execution.Success
 import org.whisk.model.FileResource
 import org.whisk.model.ProtocolCompile
-import org.whisk.model.nonRemoved
+import org.whisk.state.RuleInvocationStore
+import org.whisk.state.toResources
+import org.whisk.state.toStorageFormat
 import org.whisk.unzip
 import java.net.URL
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermission
 import javax.inject.Inject
 import kotlin.streams.toList
 
 class ProtobufCompilerHandler @Inject constructor(
-        private val downloadManager: DownloadManager
+        private val downloadManager: DownloadManager,
+        private val ruleInvocationStore: RuleInvocationStore
 ) :
         RuleExecutor<ProtocolCompile> {
+    private val log = LogManager.getLogger()
 
     override val name: String = "Protobuf Code Generation"
 
     override fun execute(execution: ExecutionContext<ProtocolCompile>): RuleResult {
-        val protocDir = execution.cacheDir.resolve("protoc")
-        if (!protocDir.toFile().exists()) {
-            val download = downloadManager.download(
-                    protocDir,
-                    URL("https://github.com/protocolbuffers/protobuf/releases/download/v3.9.1/protoc-3.9.1-linux-x86_64.zip")
-            )
-            download.unzip(protocDir)
-        }
         val rule = execution.ruleParameters
 
+        val cacheFile = execution.targetPath.resolve("protocLast")
+        val lastInvocation = ruleInvocationStore.readLastInvocation(cacheFile)
+        val currentRuleCall = rule.toStorageFormat()
+
+        if (currentRuleCall == lastInvocation?.ruleCall) {
+            log.info("No changes, not running protobuf compiler.")
+            return Success(lastInvocation.resultList.toResources(rule))
+        }
+
+        val protocDir = execution.cacheDir.resolve("protoc")
+        ensureProtocIsAvailable(protocDir)
         val protoc = protocDir.resolve("bin").resolve("protoc")
         Files.setPosixFilePermissions(protoc, setOf(PosixFilePermission.OWNER_EXECUTE))
         val params = mutableListOf(protoc.toString())
-        params += rule.imports.nonRemoved.map { "-I${it.string}" }
+        params += rule.imports.map { "-I${it.string}" }
         val outputDir = execution.targetPath.resolve("gen").resolve("protobuf")
         Files.createDirectories(outputDir)
         params += "--${rule.output_type.string}=$outputDir"
-        params += rule.srcs.nonRemoved.map(FileResource::string)
+        params += rule.srcs.map(FileResource::string)
         val protocProcess = ProcessBuilder().command(params)
                 .inheritIO()
                 .start()
@@ -50,7 +59,18 @@ class ProtobufCompilerHandler @Inject constructor(
                 pathStream.filter { Files.isRegularFile(it) }
                         .map { FileResource(it.toAbsolutePath(), source = rule) }.toList()
             }
+            ruleInvocationStore.writeNewInvocation(cacheFile, currentRuleCall, result)
             Success(result)
         } else Failed()
+    }
+
+    private fun ensureProtocIsAvailable(protocDir: Path) {
+        if (!protocDir.toFile().exists()) {
+            val download = downloadManager.download(
+                    protocDir,
+                    URL("https://github.com/protocolbuffers/protobuf/releases/download/v3.9.1/protoc-3.9.1-linux-x86_64.zip")
+            )
+            download.unzip(protocDir)
+        }
     }
 }

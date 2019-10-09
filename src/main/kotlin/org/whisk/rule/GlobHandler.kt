@@ -28,7 +28,7 @@ internal object GlobUtil {
                             .filter {
                                 matcher.matches(it.toString())
                             }.toList()
-                }
+                }.sortedBy { it.fileName.toString() }
     }
 }
 
@@ -40,6 +40,7 @@ class GlobHandler @Inject constructor() : RuleExecutor<Glob> {
         val base = execution.ruleRef.modulePath ?: error("Unexpected glob in system buildlang file")
         val srcs = GlobUtil.determineSources(base, rule.pattern)
                 .map { FileResource(base.resolve(it), base, rule) }
+
         if (srcs.isEmpty())
             log.warn("No matching files in ${execution.goalFQN} for pattern ${rule.pattern.joinToString(", ")}")
         return Success(srcs)
