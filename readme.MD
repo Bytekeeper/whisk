@@ -67,6 +67,8 @@ Besides being an interesting topic:
     * Execution order like gradle
     * But not by declaring task dependencies "indirectly"
 
+# Guide
+
 ## Build Lang
 ```text
 # Load exposed goals/functions from the package whisk and core.test
@@ -88,3 +90,8 @@ bla(a,b) = blub(a = a, b = [b])
 doit = bla('test', [])
 ```
 
+## Rules
+
+### Anon Rules
+By default, rules cannot be called from within other rules. This prevents complexity in build scripts and also allows 
+easier management of generated file by Whisk. 
