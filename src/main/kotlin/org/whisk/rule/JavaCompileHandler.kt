@@ -28,8 +28,7 @@ class JavaCompileHandler @Inject constructor(private val javaCompiler: JavaCompi
         val rule = execution.ruleParameters
         val targetPath = execution.targetPath
 
-        val cacheFile = targetPath.resolve("lastJavac")
-        val lastInvocation = ruleInvocationStore.readLastInvocation(cacheFile)
+        val lastInvocation = ruleInvocationStore.readLastInvocation(execution)
         val currentCall = rule.toStorageFormat()
 
         if (lastInvocation?.ruleCall == currentCall) {
@@ -77,7 +76,7 @@ class JavaCompileHandler @Inject constructor(private val javaCompiler: JavaCompi
                 }
 
         val resources = rule.exported_deps + FileResource(jarName.toAbsolutePath(), source = rule, placeHolder = abiJarName.toAbsolutePath())
-        ruleInvocationStore.writeNewInvocation(cacheFile, currentCall, resources)
+        ruleInvocationStore.writeNewInvocation(execution, currentCall, resources)
         return Success(resources)
     }
 }

@@ -48,8 +48,7 @@ class KotlinCompileHandler @Inject constructor(private val javaCompiler: JavaCom
             return Success(rule.exported_deps)
         }
 
-        val cacheFile = targetPath.resolve("last")
-        val lastInvocation = changeManager.readLastInvocation(cacheFile)
+        val lastInvocation = changeManager.readLastInvocation(execution)
         val currentCall = rule.toStorageFormat()
 
         if (lastInvocation?.ruleCall == currentCall) {
@@ -76,7 +75,7 @@ class KotlinCompileHandler @Inject constructor(private val javaCompiler: JavaCom
                 kaptClasses,
                 kaptDir.resolve("stubs"),
                 kaptDir.resolve("kotlinSources"),
-                rule.friend_paths.map(FileResource::path),
+                rule.friend_paths.map(FileResource::placeHolderOrReal),
                 rule.additional_parameters.map(StringResource::string))
         if (!succeeded) return Failed()
 
@@ -117,7 +116,7 @@ class KotlinCompileHandler @Inject constructor(private val javaCompiler: JavaCom
                 }
 
         val resources = rule.exported_deps + FileResource(jarName.toAbsolutePath(), source = rule, placeHolder = abiJarName.toAbsolutePath())
-        changeManager.writeNewInvocation(cacheFile, currentCall, resources)
+        changeManager.writeNewInvocation(execution, currentCall, resources)
         return Success(resources)
     }
 }

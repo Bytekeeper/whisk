@@ -18,19 +18,19 @@ class ABI @Inject constructor() {
 
         val filteredVisitor = object : ClassVisitor(Opcodes.ASM7, classWriter) {
             override fun visitInnerClass(name: String, outerName: String?, innerName: String?, access: Int) {
-                if (couldBeAccessedByDepends(access))
+                if (couldBeAccessedByDependends(access))
                     super.visitInnerClass(name, outerName, innerName, access)
             }
 
             override fun visitField(access: Int, name: String, descriptor: String, signature: String?, value: Any?): FieldVisitor? =
-                    if (couldBeAccessedByDepends(access))
+                    if (couldBeAccessedByDependends(access))
                         super.visitField(access, name, descriptor, signature, value)
                     else {
                         null
                     }
 
             override fun visitMethod(access: Int, name: String, descriptor: String, signature: String?, exceptions: Array<out String>?): MethodVisitor? =
-                    if (couldBeAccessedByDepends(access))
+                    if (couldBeAccessedByDependends(access))
                         super.visitMethod(access, name, descriptor, signature, exceptions)
                     else {
                         null
@@ -40,7 +40,7 @@ class ABI @Inject constructor() {
         return classWriter.toByteArray()
     }
 
-    private fun couldBeAccessedByDepends(access: Int) = access and Opcodes.ACC_PRIVATE == 0
+    private fun couldBeAccessedByDependends(access: Int) = access and Opcodes.ACC_PRIVATE == 0
 
     private val debugClassVisitor = object : ClassVisitor(Opcodes.ASM7) {
         override fun visitModule(name: String?, access: Int, version: String?): ModuleVisitor? {
@@ -48,7 +48,7 @@ class ABI @Inject constructor() {
         }
 
         override fun visitField(access: Int, name: String, descriptor: String, signature: String?, value: Any?): FieldVisitor? {
-            if (couldBeAccessedByDepends(access)) {
+            if (couldBeAccessedByDependends(access)) {
                 println("$name: $descriptor")
             }
             return null
@@ -59,7 +59,7 @@ class ABI @Inject constructor() {
         }
 
         override fun visitMethod(access: Int, name: String?, descriptor: String?, signature: String?, exceptions: Array<out String>?): MethodVisitor? {
-            if (couldBeAccessedByDepends(access)) {
+            if (couldBeAccessedByDependends(access)) {
                 println("$name(): $descriptor")
             }
             return null

@@ -30,8 +30,7 @@ class BuildJarHandler @Inject constructor(
         val rule = execution.ruleParameters
         val targetPath = execution.targetPath
 
-        val cacheFile = targetPath.resolve("lastJar")
-        val lastInvocation = ruleInvocationStore.readLastInvocation(cacheFile)
+        val lastInvocation = ruleInvocationStore.readLastInvocation(execution)
         val currentCall = rule.toStorageFormat()
 
         if (lastInvocation?.ruleCall == currentCall) {
@@ -43,6 +42,7 @@ class BuildJarHandler @Inject constructor(
 
         val jarName = rule.name?.string ?: "${execution.goalName}.jar"
         val jarFullName = jarDir.resolve(jarName)
+        Files.createDirectories(jarFullName.parent)
         Files.deleteIfExists(jarFullName)
 
         JarOutputStream(Files.newOutputStream(jarFullName))
@@ -87,7 +87,7 @@ class BuildJarHandler @Inject constructor(
                     }
                 }
         val resources = listOf(FileResource(jarFullName.toAbsolutePath(), source = rule))
-        ruleInvocationStore.writeNewInvocation(cacheFile, currentCall, resources)
+        ruleInvocationStore.writeNewInvocation(execution, currentCall, resources)
         return Success(resources)
     }
 }

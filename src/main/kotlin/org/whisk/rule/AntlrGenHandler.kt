@@ -25,8 +25,7 @@ class AntlrGenHandler @Inject constructor(private val extAdapter: ExtAdapter,
         val srcGenPath = execution.targetPath.resolve("antlr-gen")
         val rule = execution.ruleParameters
 
-        val cacheFile = execution.targetPath.resolve("antlrlast")
-        val lastInvocation = ruleInvocationStore.readLastInvocation(cacheFile)
+        val lastInvocation = ruleInvocationStore.readLastInvocation(execution)
         val currentRuleCall = rule.toStorageFormat()
 
         if (currentRuleCall == lastInvocation?.ruleCall) {
@@ -50,7 +49,7 @@ class AntlrGenHandler @Inject constructor(private val extAdapter: ExtAdapter,
                         .filter { it.toString().endsWith(".java") }
                         .toList()
             }.map { FileResource(it.toAbsolutePath(), source = rule) }
-            ruleInvocationStore.writeNewInvocation(cacheFile, currentRuleCall, javaSources)
+            ruleInvocationStore.writeNewInvocation(execution, currentRuleCall, javaSources)
             Success(javaSources)
         }
     }

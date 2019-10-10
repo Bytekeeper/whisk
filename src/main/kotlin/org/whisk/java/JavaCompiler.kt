@@ -10,7 +10,7 @@ import javax.tools.ToolProvider
 class JavaCompiler @Inject constructor() {
     fun compile(srcs: List<File>, compileClassPath: List<File>, target: File): Boolean {
         require(srcs.isNotEmpty())
-        val compiler = ToolProvider.getSystemJavaCompiler()
+        val compiler = ToolProvider.getSystemJavaCompiler() ?: error("Java compiler not found, toolchain missing?")
         val fileManager = compiler.getStandardFileManager(null, null, null)
         val files = fileManager.getJavaFileObjectsFromFiles(srcs)
         fileManager.setLocation(StandardLocation.CLASS_OUTPUT, listOf(target))

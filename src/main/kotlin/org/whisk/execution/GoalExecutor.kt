@@ -89,13 +89,16 @@ class GoalExecutor constructor(private val processor: Processor) {
             val ruleParams = ctor.callBy(kParameters)
             return forkJoinTask {
                 val realModulePath = (source.modulePath ?: Paths.get("")).toAbsolutePath()
+                val targetPath = Paths.get("whisk-out")
+                        .resolve(Paths.get("").toAbsolutePath().relativize(realModulePath))
+                        .resolve(goal.name)
                 processor.process(
                         ExecutionContext(
                                 goal.source,
                                 Paths.get(".whisk"),
                                 source,
                                 ruleParams,
-                                Paths.get("whisk-out").resolve(Paths.get("").toAbsolutePath().relativize(realModulePath))))
+                                targetPath))
             }.fork()
         }
 

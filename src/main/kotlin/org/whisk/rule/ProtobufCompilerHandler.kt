@@ -30,8 +30,7 @@ class ProtobufCompilerHandler @Inject constructor(
     override fun execute(execution: ExecutionContext<ProtocolCompile>): RuleResult {
         val rule = execution.ruleParameters
 
-        val cacheFile = execution.targetPath.resolve("protocLast")
-        val lastInvocation = ruleInvocationStore.readLastInvocation(cacheFile)
+        val lastInvocation = ruleInvocationStore.readLastInvocation(execution)
         val currentRuleCall = rule.toStorageFormat()
 
         if (currentRuleCall == lastInvocation?.ruleCall) {
@@ -59,7 +58,7 @@ class ProtobufCompilerHandler @Inject constructor(
                 pathStream.filter { Files.isRegularFile(it) }
                         .map { FileResource(it.toAbsolutePath(), source = rule) }.toList()
             }
-            ruleInvocationStore.writeNewInvocation(cacheFile, currentRuleCall, result)
+            ruleInvocationStore.writeNewInvocation(execution, currentRuleCall, result)
             Success(result)
         } else Failed()
     }

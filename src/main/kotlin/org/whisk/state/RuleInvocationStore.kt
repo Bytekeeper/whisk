@@ -6,6 +6,7 @@ import org.whisk.model.Resource
 import org.whisk.model.RuleParameters
 import org.whisk.model.StringResource
 import org.whisk.proto.LastState
+import org.whisk.rule.ExecutionContext
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -22,12 +23,20 @@ class RuleInvocationStore @Inject constructor() {
                 }
             } else null
 
+    fun readLastInvocation(executionContext: ExecutionContext<out RuleParameters>) = readLastInvocation(toLastCallPath(executionContext))
+
+    private fun toLastCallPath(executionContext: ExecutionContext<out RuleParameters>) =
+            executionContext.targetPath.resolve(executionContext.ruleRef.source.rule.text + ".lastcall")
+
     fun readLastInvocation(path: Path): LastState.Invocation? = readLastState(path, LastState.Invocation::parseFrom)
 
 
     fun writeNewInvocation(path: Path, ruleParameters: RuleParameters, result: List<Resource>): LastState.Invocation? {
         return writeNewInvocation(path, ruleParameters.toStorageFormat(), result)
     }
+
+    fun writeNewInvocation(executionContext: ExecutionContext<out RuleParameters>, ruleCall: LastState.RuleCall, result: List<Resource> = emptyList()) =
+            writeNewInvocation(toLastCallPath(executionContext), ruleCall, result)
 
     fun writeNewInvocation(path: Path, ruleCall: LastState.RuleCall, result: List<Resource>): LastState.Invocation? {
         val invocationBuilder = LastState.Invocation.newBuilder()
