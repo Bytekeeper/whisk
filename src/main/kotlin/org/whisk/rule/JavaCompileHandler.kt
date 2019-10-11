@@ -5,7 +5,6 @@ import org.whisk.execution.RuleResult
 import org.whisk.execution.Success
 import org.whisk.java.ABI
 import org.whisk.java.JavaCompiler
-import org.whisk.java.JavaSource
 import org.whisk.model.FileResource
 import org.whisk.model.JavaCompile
 import org.whisk.state.RuleInvocationStore
@@ -47,6 +46,8 @@ class JavaCompileHandler @Inject constructor(private val javaCompiler: JavaCompi
                 .map(Path::toFile)
 
         javaCompiler.compile(rule.srcs.map(FileResource::file), dependencies, classesDir.toFile())
+//        val js = JavaSource()
+//        rule.srcs.map { it.path }.forEach { js.test(it) }
 
         Files.createDirectories(jarDir)
         val jarName = jarDir.resolve("${execution.goalName}.jar")

@@ -29,7 +29,7 @@ dependencies {
     compileOnly("junit:junit:4.12")
     testImplementation("junit:junit:4.12")
     implementation(group = "com.google.protobuf", name = "protobuf-java", version = protobufVersion)
-//    implementation("com.github.javaparser:javaparser-core:3.15.0")
+    implementation("com.github.javaparser:javaparser-core:3.15.0")
 
     implementation("com.google.dagger:dagger:2.24")
     kapt("com.google.dagger:dagger-compiler:2.24")
