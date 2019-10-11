@@ -40,7 +40,7 @@ log4j2_core = remote_file(url='http://central.maven.org/maven2/org/apache/loggin
 dagger_compiler = maven_library(artifacts=['com.google.dagger:dagger-compiler:2.22.1'])
 
 antlr4_compiler = maven_library(artifacts='org.antlr:antlr4:4.7.2')
-protobuf_lib = maven_library(artifacts='com.google.protobuf:protobuf-java:3.9.0')
+protobuf_lib = maven_library(artifacts='com.google.protobuf:protobuf-java:3.10.0')
 
 implementation_deps = maven_library(
     artifacts=['org.apache.maven:maven-resolver-provider:3.6.1',

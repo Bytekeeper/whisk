@@ -2,6 +2,7 @@ package org.whisk.rule
 
 import org.apache.logging.log4j.LogManager
 import org.whisk.DownloadManager
+import org.whisk.Environment
 import org.whisk.execution.Failed
 import org.whisk.execution.RuleResult
 import org.whisk.execution.Success
@@ -20,7 +21,8 @@ import kotlin.streams.toList
 
 class ProtobufCompilerHandler @Inject constructor(
         private val downloadManager: DownloadManager,
-        private val ruleInvocationStore: RuleInvocationStore
+        private val ruleInvocationStore: RuleInvocationStore,
+        private val environment: Environment
 ) :
         RuleExecutor<ProtocolCompile> {
     private val log = LogManager.getLogger()
@@ -39,13 +41,8 @@ class ProtobufCompilerHandler @Inject constructor(
         }
 
         val protocDir = execution.cacheDir.resolve("protoc")
-        ensureProtocIsAvailable(protocDir)
-        val protoc = protocDir.resolve("bin").resolve("protoc")
-        try {
-            Files.setPosixFilePermissions(protoc, setOf(PosixFilePermission.OWNER_EXECUTE))
-        } catch (e: UnsupportedOperationException) {
-            // No biggie, 'tis Windows?
-        }
+
+        val protoc = ensureProtocIsAvailable(protocDir)
         val params = mutableListOf(protoc.toString())
         params += rule.imports.map { "-I${it.string}" }
         val outputDir = execution.targetPath.resolve("gen").resolve("protobuf")
@@ -67,13 +64,29 @@ class ProtobufCompilerHandler @Inject constructor(
         } else Failed()
     }
 
-    private fun ensureProtocIsAvailable(protocDir: Path) {
+    private fun ensureProtocIsAvailable(protocDir: Path): Path {
         if (!protocDir.toFile().exists()) {
+            val url = when {
+                environment.isWindows -> "https://github.com/protocolbuffers/protobuf/releases/download/v3.10.0/protoc-3.10.0-win64.zip"
+                environment.isLinux -> "https://github.com/protocolbuffers/protobuf/releases/download/v3.10.0/protoc-3.10.0-linux-x86_64.zip"
+                else -> error("Unsupported operating system")
+            }
+
             val download = downloadManager.download(
                     protocDir,
-                    URL("https://github.com/protocolbuffers/protobuf/releases/download/v3.9.1/protoc-3.9.1-linux-x86_64.zip")
+                    URL(url)
             )
             download.unzip(protocDir)
         }
+        val protocExecutable = when {
+            environment.isWindows -> protocDir.resolve("bin").resolve("protoc.exe")
+            environment.isLinux -> {
+                val executable = protocDir.resolve("bin").resolve("protoc")
+                Files.setPosixFilePermissions(executable, setOf(PosixFilePermission.OWNER_EXECUTE))
+                executable
+            }
+            else -> error("Unsupported operating system")
+        }
+        return protocExecutable
     }
 }
