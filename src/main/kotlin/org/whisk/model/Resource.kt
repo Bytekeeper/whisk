@@ -2,13 +2,6 @@ package org.whisk.model
 
 import java.nio.file.Path
 
-enum class Change {
-    UNCHANGED,
-    ABI_COMPATIBLE_CHANGE,
-    CHANGED,
-    REMOVED
-}
-
 interface Resource {
     val string: String
     val source: RuleParameters?

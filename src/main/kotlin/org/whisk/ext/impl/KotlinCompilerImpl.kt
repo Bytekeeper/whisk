@@ -52,7 +52,11 @@ class KotlinCompilerImpl : KotlinCompiler {
                     ).map { "plugin:org.jetbrains.kotlin.kapt3:$it" }
         } else emptyList()
 
-        val compilerArgs = K2JVMCompilerArguments()
+        val compilerArgs = try {
+            K2JVMCompilerArguments()
+        } catch (e: NoClassDefFoundError) {
+            error("Kotlin compiler not found, make sure to supply the compiler to the respective rules.")
+        }
         compilerArgs.destinationAsFile = targetDirectory.toFile()
         compilerArgs.noStdlib = true
         compilerArgs.classpathAsList = compileClasspath.map { File(it) }

@@ -5,6 +5,7 @@ import org.whisk.execution.RuleResult
 import org.whisk.execution.Success
 import org.whisk.java.ABI
 import org.whisk.java.JavaCompiler
+import org.whisk.java.JavaSource
 import org.whisk.model.FileResource
 import org.whisk.model.JavaCompile
 import org.whisk.state.RuleInvocationStore

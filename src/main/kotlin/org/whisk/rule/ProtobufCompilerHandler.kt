@@ -41,7 +41,11 @@ class ProtobufCompilerHandler @Inject constructor(
         val protocDir = execution.cacheDir.resolve("protoc")
         ensureProtocIsAvailable(protocDir)
         val protoc = protocDir.resolve("bin").resolve("protoc")
-        Files.setPosixFilePermissions(protoc, setOf(PosixFilePermission.OWNER_EXECUTE))
+        try {
+            Files.setPosixFilePermissions(protoc, setOf(PosixFilePermission.OWNER_EXECUTE))
+        } catch (e: UnsupportedOperationException) {
+            // No biggie, 'tis Windows?
+        }
         val params = mutableListOf(protoc.toString())
         params += rule.imports.map { "-I${it.string}" }
         val outputDir = execution.targetPath.resolve("gen").resolve("protobuf")
