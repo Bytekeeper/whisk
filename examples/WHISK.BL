@@ -2,7 +2,7 @@ import whisk
 
 build_examples(binary) = [minimal(binary), protobuf(binary), antlr(binary), submodules(binary)]
 
-minimal(binary) = exec(work_dir='examples/minimal', command='/usr/bin/java', arguments=['-jar', binary, 'build'])
-protobuf(binary) = exec(work_dir='examples/protobuf', command='/usr/bin/java', arguments=['-jar', binary, 'build'])
-antlr(binary) = exec(work_dir='examples/antlr', command='/usr/bin/java', arguments=['-jar', binary, 'build'])
-submodules(binary) = exec(work_dir='examples/submodules', command='/usr/bin/java', arguments=['-jar', binary, 'build'])
+minimal(binary) = exec(work_dir='minimal', command='/usr/bin/java', arguments=['-jar', binary, 'build'])
+protobuf(binary) = exec(work_dir='protobuf', command='/usr/bin/java', arguments=['-jar', binary, 'build'])
+antlr(binary) = exec(work_dir='antlr', command='/usr/bin/java', arguments=['-jar', binary, 'build'])
+submodules(binary) = exec(work_dir='submodules', command='/usr/bin/java', arguments=['-jar', binary, 'build'])

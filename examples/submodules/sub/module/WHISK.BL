@@ -2,4 +2,7 @@ import whisk
 
 export build
 
-build=java_compile(srcs=glob('src/main/java/**.java'))
+build=java_compile(srcs=[glob('src/main/java/**.java'),
+    # Check if autoconversion from string -> path uses module path as base
+    'src/main/java/Test2.java'
+    ])

@@ -10,6 +10,9 @@ import javax.inject.Inject
 import kotlin.reflect.KClass
 
 
+val NO_MODULE = "<no module>"
+fun String.toModulePath() = replace('.', '/')
+
 class SourceRef<out S>(moduleInfo: ModuleInfo, val source: S) {
     val module: String = moduleInfo.name
     val modulePath: Path? = moduleInfo.path?.toAbsolutePath()
@@ -108,7 +111,7 @@ interface ModuleLoader {
 
 class SystemModuleLoader : ModuleLoader {
     override fun load(module: String): ModuleInfo? =
-            javaClass.getResourceAsStream("/whisk/" + module.replace('.', '/') + ".BL")
+            javaClass.getResourceAsStream("/whisk/" + module.toModulePath() + ".BL")
                     ?.let {
                         ModuleInfo(module, null, CharStreams.fromStream(it))
                     }
@@ -117,7 +120,7 @@ class SystemModuleLoader : ModuleLoader {
 class PathModuleLoader(private val parent: ModuleLoader, private val basePath: Path) : ModuleLoader {
     override fun load(module: String): ModuleInfo =
             parent.load(module) ?: kotlin.run {
-                val modulePath = basePath.resolve(module.replace('.', '/'))
+                val modulePath = basePath.resolve(module.toModulePath())
                 ModuleInfo(module, modulePath, CharStreams.fromPath(modulePath.resolve("WHISK.BL")))
             }
 }

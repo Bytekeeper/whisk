@@ -51,6 +51,9 @@ fun main(vararg args: String) {
 
     val goalToTask = mutableMapOf<ResolvedGoal, ForkJoinTask<RuleResult>>()
     val tasks = mutableListOf<ForkJoinTask<RuleResult>>()
+    val buildContext = BuildContext(
+            projectPath = Paths.get("")
+    )
 
 
     while (pending.isNotEmpty()) {
@@ -63,7 +66,7 @@ fun main(vararg args: String) {
             node.parents.forEach { parent ->
                 parent.dependencies -= node
             }
-            val task = ruleEval.eval(goalToTask, node.goal)
+            val task = ruleEval.eval(buildContext, goalToTask, node.goal)
             tasks += task
             goalToTask[node.goal] = task
         }

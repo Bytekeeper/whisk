@@ -1,5 +1,6 @@
 package org.whisk.model
 
+import org.whisk.buildlang.NO_MODULE
 import javax.inject.Inject
 import kotlin.reflect.KClass
 
@@ -70,7 +71,7 @@ data class MavenLibrary(
 data class ProtocolCompile(
         val srcs: List<FileResource>,
         val imports: List<FileResource>,
-        val output_type: StringResource = StringResource("java_out", null)
+        val output_type: StringResource = StringResource("java_out", null, NO_MODULE)
 ) : RuleParameters
 
 data class Exec(

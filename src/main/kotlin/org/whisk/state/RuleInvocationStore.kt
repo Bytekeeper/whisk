@@ -86,7 +86,9 @@ private fun resourceToStorageFormat(res: Resource, riBuilder: LastState.Resource
                 .setPlaceHolder(res.placeHolder?.toString() ?: "")
                 .setLength(Files.size(res.path))
                 .setTimestamp(Files.getLastModifiedTime(res.path).toMillis())
-        is StringResource -> riBuilder.string = res.string
+        is StringResource -> riBuilder.stringBuilder
+                .setString(res.string)
+                .setDefiningModule(res.definingModule)
     }
 }
 
@@ -97,6 +99,6 @@ private fun LastState.ResourceInfo.storageFormatToResource(source: RuleParameter
                     Paths.get(file.root),
                     source,
                     if (file.placeHolder.isNotEmpty()) Paths.get(file.placeHolder) else null)
-            LastState.ResourceInfo.KindCase.STRING -> StringResource(string, source)
+            LastState.ResourceInfo.KindCase.STRING -> StringResource(string.string, source, string.definingModule)
             else -> error("Unknown resource type ${kindCase}")
         }

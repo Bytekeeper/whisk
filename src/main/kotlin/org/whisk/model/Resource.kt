@@ -24,4 +24,7 @@ data class FileResource(val path: Path,
     val placeHolderOrReal = placeHolder ?: path
 }
 
-data class StringResource(override val string: String, override val source: RuleParameters?) : Resource
+data class StringResource(
+        override val string: String,
+        override val source: RuleParameters?,
+        val definingModule: String) : Resource

@@ -19,7 +19,7 @@ message RuleParam {
 message ResourceInfo {
     oneof kind {
         FileInfo file = 1;
-        string string = 2;
+        StringInfo string = 2;
     }
 }
 
@@ -29,4 +29,9 @@ message FileInfo {
     string placeHolder = 3;
     sint64 timestamp = 4;
     sint64 length = 5;
+}
+
+message StringInfo {
+    string string = 1;
+    string definingModule = 2;
 }
