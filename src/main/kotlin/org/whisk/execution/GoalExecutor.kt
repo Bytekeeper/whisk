@@ -20,6 +20,7 @@ import kotlin.reflect.full.primaryConstructor
 
 class GoalExecutor constructor(private val processor: Processor) {
     private val log = LogManager.getLogger()
+    private val emptyResult = forkJoinTask<RuleResult> { Success(emptyList()) }.fork()
 
     fun eval(buildContext: BuildContext, goalToTask: Map<ResolvedGoal, ForkJoinTask<RuleResult>>, goal: ResolvedGoal): ForkJoinTask<RuleResult> = GoalCall(goalToTask, goal).eval(buildContext)
 
@@ -47,8 +48,10 @@ class GoalExecutor constructor(private val processor: Processor) {
                         val resultsToJoin = value.items.map { eval(buildContext, it, passedParameters) }.map { it.join() }
                         resultsToJoin.firstOrNull { it is Failed } ?: Success(resultsToJoin.flatMap { it.resources })
                     }.fork()
-                    is ResolvedGoalCall -> goalTask[value.goal]
-                            ?: error("Goal ${value.goal.name} should have been processed, but was not (yet)")
+                    is ResolvedGoalCall -> goalTask[value.goal] ?: run {
+                        log.warn("${value.goal.name} was not processed! It might be skipped which is ok but unchecked, or a graph resolving error occurred.")
+                        emptyResult
+                    }
                     is ResolvedRuleParamValue -> forkJoinTask {
                         passedParameters[value.parameter.name]
                                 ?: error("Could not retrieve value for parameter ${value.parameter.name}")

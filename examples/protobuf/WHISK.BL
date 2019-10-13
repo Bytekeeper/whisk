@@ -2,5 +2,8 @@ import whisk
 
 export build
 
-build=protocol_compile(srcs=glob('src/**.proto'), imports= 'src')
+build=protocol_compile(dist=protoc, srcs=glob('src/**.proto'), imports= 'src')
 
+protoc = [on_windows(protoc_windows), on_linux(protoc_linux)]
+protoc_linux = remote_file(url='https://github.com/protocolbuffers/protobuf/releases/download/v3.10.0/protoc-3.10.0-linux-x86_64.zip')
+protoc_windows = remote_file(url='https://github.com/protocolbuffers/protobuf/releases/download/v3.10.0/protoc-3.10.0-win64.zip')

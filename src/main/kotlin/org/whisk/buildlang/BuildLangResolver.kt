@@ -75,7 +75,7 @@ class GlobalTable : SymbolTable {
 
     override fun resolveRule(modules: List<String>, name: String): ResolvedRule =
             modules.mapNotNull { this.modules[it]?.resolveRule(name) }.singleOrNull()
-                    ?: throw RuleNotFoundException("Unknown rule $name")
+                    ?: throw RuleNotFoundException("Unknown rule $name, maybe it is not exported?")
 
     fun exposedGoalsOf(module: String) =
             modules[module]?.exposedGoals() ?: emptyList()

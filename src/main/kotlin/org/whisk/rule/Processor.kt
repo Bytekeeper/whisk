@@ -37,7 +37,9 @@ class RuleProcessorRegistry @Inject constructor(
         globHandler: GlobHandler,
         rGlobHandler: RGlobHandler,
         antlrGenHandler: AntlrGenHandler,
-        execHandler: ExecHandler
+        execHandler: ExecHandler,
+        onWindowsHandler: OnWindowsHandler,
+        onLinuxHandler: OnLinuxHandler
 ) {
     private val processors = mutableMapOf<KClass<out RuleParameters>, RuleExecutor<out RuleParameters>>()
 
@@ -55,6 +57,8 @@ class RuleProcessorRegistry @Inject constructor(
         register(rGlobHandler)
         register(antlrGenHandler)
         register(execHandler)
+        register(onWindowsHandler)
+        register(onLinuxHandler)
     }
 
     inline fun <reified T : RuleParameters> register(ruleHandler: RuleExecutor<T>) {
@@ -67,13 +71,19 @@ class RuleProcessorRegistry @Inject constructor(
         processors[kClass] = ruleHandler
     }
 
+    fun getRuleProcessor(paramClass: KClass<out RuleParameters>) =
+            processors[paramClass] as? RuleExecutor<RuleParameters>
+                    ?: throw UnsupportedRuleModel(paramClass)
+
     fun getRuleProcessor(model: RuleParameters) =
             processors[model::class] as? RuleExecutor<RuleParameters>
                     ?: throw UnsupportedRuleModel(model)
 }
 
-class UnsupportedRuleModel(model: RuleParameters) :
-        RuntimeException("No processor for '${model::class.simpleName}' was registered! Is the handler registered and implementing the correct interface?")
+class UnsupportedRuleModel(modelClass: KClass<out RuleParameters>) :
+        RuntimeException("No processor for '${modelClass::class.simpleName}' was registered! Is the handler registered and implementing the correct interface?") {
+    constructor(model: RuleParameters) : this(model::class.java.kotlin)
+}
 
 class Processor @Inject constructor(private val ruleProcessorRegistry: RuleProcessorRegistry) {
     private val log = LogManager.getLogger()

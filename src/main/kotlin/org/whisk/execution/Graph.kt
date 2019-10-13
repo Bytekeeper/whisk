@@ -1,24 +1,25 @@
 package org.whisk.execution
 
 import org.whisk.buildlang.*
+import org.whisk.rule.RuleProcessorRegistry
 import javax.inject.Inject
 
 
 data class Node(var goal: ResolvedGoal, val dependencies: List<Node>)
 class Graph(val nodes: List<Node>)
 
-class GraphBuilder @Inject constructor() {
+class GraphBuilder @Inject constructor(private val processorRegistry: RuleProcessorRegistry) {
     fun buildFrom(availableGoals: List<ResolvedGoal>, goal: String): Graph {
         val entryGoal = availableGoals.singleOrNull { it.name == goal }
                 ?: throw IllegalArgumentException("No such goal $goal, valid goals are ${availableGoals.joinToString { it.name }}. Did you 'expose' the goal?")
-        val graphVisitor = GraphVisitor()
+        val graphVisitor = GraphVisitor(processorRegistry)
 
         graphVisitor.visitGoal(entryGoal)
 
         return Graph(graphVisitor.symbolToNode.values.toList())
     }
 
-    class GraphVisitor {
+    class GraphVisitor(private val processorRegistry: RuleProcessorRegistry) {
         val symbolToNode = mutableMapOf<Any, Node>()
         private val visited = mutableSetOf<Any>()
 
@@ -37,7 +38,12 @@ class GraphBuilder @Inject constructor() {
         private fun visitValue(value: ResolvedValue<Value>): List<Node> =
                 when (value) {
                     is ResolvedRuleCall -> (value.rule.value?.let { visitValue(it) }
-                            ?: emptyList()) + value.params.flatMap { visitValue(it.value) }
+                            ?: emptyList()) + run {
+                        (value.rule.nativeRule?.let {
+                            processorRegistry.getRuleProcessor(it).determineDependencies(value.params)
+                        } ?: value.params)
+                                .flatMap { visitValue(it.value) }
+                    }
                     is ResolvedStringValue -> emptyList()
                     is ResolvedGoalCall -> listOf(visitGoal(value.goal))
                     is ResolvedListValue -> value.items.flatMap { visitValue(it) }

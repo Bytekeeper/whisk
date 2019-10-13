@@ -5,6 +5,7 @@ export main,whisk,unit_tests,integration_tests,test
 
 # Define goals that can be called
 whisk = build_jar(files= [main, rglob(pattern='**', root='src/main/resources')], main_class='org.whisk.MainKt')
+
 main = kotlin_compile(
     compiler= compiler_deps,
     srcs = [glob('src/main/kotlin/**.kt'), grammar],
@@ -22,13 +23,19 @@ unit_tests = kotlin_test(
     srcs=[glob('src/test/kotlin/**.kt')],
     cp=[main, test_deps, junit4],
     friend_paths=main)
+
 integration_tests = build_examples(whisk)
+
 test = [unit_tests, integration_tests]
 
 # Non-exposed goals that help building up the dependency graph
 grammar = antlr_gen(tool=antlr4_compiler, srcs=glob('src/main/antlr/**.g4'), arguments = '-visitor')
 
-protobuf_gen = protocol_compile(srcs=glob('src/main/proto/**.proto'), imports='src/main/proto')
+protobuf_gen = protocol_compile(dist=protoc, srcs=glob('src/main/proto/**.proto'), imports='src/main/proto')
+
+protoc = [on_windows(protoc_windows), on_linux(protoc_linux)]
+protoc_linux = remote_file(url='https://github.com/protocolbuffers/protobuf/releases/download/v3.10.0/protoc-3.10.0-linux-x86_64.zip')
+protoc_windows = remote_file(url='https://github.com/protocolbuffers/protobuf/releases/download/v3.10.0/protoc-3.10.0-win64.zip')
 
 antlr4_runtime = prebuilt_jar('lib/antlr4-runtime-4.7.2.jar')
 

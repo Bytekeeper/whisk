@@ -1,6 +1,6 @@
 export kotlin_compile, kotlin_test, java_compile, java_test,
     maven_library, build_jar, prebuilt_jar, remote_file, glob, antlr_gen, rglob,
-    exec, protocol_compile
+    exec, protocol_compile, on_windows, on_linux
 
 # Define rules with "native" implementation
 # Usually rules are defined by "rule(...) = value", omitting "= value" marks them as being implemented in code
@@ -44,4 +44,10 @@ antlr_gen(tool:[], srcs: [], arguments: [])
 exec(work_dir?, command, arguments:[])
 
 # Run protoc
-protocol_compile(srcs: [], imports: [], output_type?)
+protocol_compile(dist?, srcs: [], imports: [], output_type?)
+
+# Evaluates to passthrough, but only on windows - empty otherwise
+on_windows(passthrough:[])
+
+# Evaluates to passthrough, but only on linux - empty otherwise
+on_linux(passthrough:[])

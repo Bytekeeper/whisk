@@ -12,9 +12,9 @@ import org.whisk.state.RuleInvocationStore
 import org.whisk.state.toResources
 import org.whisk.state.toStorageFormat
 import org.whisk.unzip
-import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.nio.file.attribute.PosixFilePermission
 import javax.inject.Inject
 import kotlin.streams.toList
@@ -42,7 +42,7 @@ class ProtobufCompilerHandler @Inject constructor(
 
         val protocDir = execution.cacheDir.resolve("protoc")
 
-        val protoc = ensureProtocIsAvailable(protocDir)
+        val protoc = ensureProtocIsAvailable(rule.dist?.path, protocDir)
         val params = mutableListOf(protoc.toString())
         params += rule.imports.map { "-I${it.string}" }
         val outputDir = execution.targetPath.resolve("gen").resolve("protobuf")
@@ -64,29 +64,27 @@ class ProtobufCompilerHandler @Inject constructor(
         } else Failed()
     }
 
-    private fun ensureProtocIsAvailable(protocDir: Path): Path {
-        if (!protocDir.toFile().exists()) {
-            val url = when {
-                environment.isWindows -> "https://github.com/protocolbuffers/protobuf/releases/download/v3.10.0/protoc-3.10.0-win64.zip"
-                environment.isLinux -> "https://github.com/protocolbuffers/protobuf/releases/download/v3.10.0/protoc-3.10.0-linux-x86_64.zip"
-                else -> error("Unsupported operating system")
+    private fun ensureProtocIsAvailable(dist: Path?, protocDir: Path): Path {
+        if (dist == null) {
+            return when {
+                environment.isWindows -> Paths.get("protoc.exe")
+                environment.isLinux -> Paths.get("protoc")
+                else -> error("Unsupported OS")
             }
-
-            val download = downloadManager.download(
-                    protocDir,
-                    URL(url)
-            )
-            download.unzip(protocDir)
-        }
-        val protocExecutable = when {
-            environment.isWindows -> protocDir.resolve("bin").resolve("protoc.exe")
-            environment.isLinux -> {
-                val executable = protocDir.resolve("bin").resolve("protoc")
-                Files.setPosixFilePermissions(executable, setOf(PosixFilePermission.OWNER_EXECUTE))
-                executable
+        } else {
+            if (!protocDir.toFile().exists()) {
+                dist.unzip(protocDir)
             }
-            else -> error("Unsupported operating system")
+            val protocExecutable = when {
+                environment.isWindows -> protocDir.resolve("bin").resolve("protoc.exe")
+                environment.isLinux -> {
+                    val executable = protocDir.resolve("bin").resolve("protoc")
+                    Files.setPosixFilePermissions(executable, setOf(PosixFilePermission.OWNER_EXECUTE))
+                    executable
+                }
+                else -> error("Unsupported OS")
+            }
+            return protocExecutable
         }
-        return protocExecutable
     }
 }

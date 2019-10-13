@@ -69,6 +69,7 @@ data class MavenLibrary(
 ) : RuleParameters
 
 data class ProtocolCompile(
+        val dist: FileResource?,
         val srcs: List<FileResource>,
         val imports: List<FileResource>,
         val output_type: StringResource = StringResource("java_out", null, NO_MODULE)
@@ -80,13 +81,10 @@ data class Exec(
         val arguments: List<Resource>
 ) : RuleParameters
 
-data class Glob(val pattern: List<StringResource>) : RuleParameters {
-    init {
-        check(pattern.isNotEmpty()) { "glob() call requires at least one argument" }
-    }
-}
-
+data class Glob(val pattern: List<StringResource>) : RuleParameters
 data class RGlob(val pattern: List<StringResource>, val root: FileResource) : RuleParameters
+data class OnWindows(val passthrough: List<Resource>) : RuleParameters
+data class OnLinux(val passthrough: List<Resource>) : RuleParameters
 
 class RuleRegistry @Inject constructor() {
     private val models = mutableMapOf<String, KClass<out RuleParameters>>()
@@ -105,6 +103,8 @@ class RuleRegistry @Inject constructor() {
         register<AntlrGen>()
         register<Exec>()
         register<RGlob>()
+        register<OnWindows>()
+        register<OnLinux>()
     }
 
     inline fun <reified T : RuleParameters> register() {
