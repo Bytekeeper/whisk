@@ -22,7 +22,7 @@ fun main(vararg args: String) {
     val processor = application.processor()
     val graphBuilder = application.graphBuilder()
 
-    val resolvedGoals = application.resolver().resolve(PathModuleLoader(SystemModuleLoader(), Paths.get("")), "")
+    val resolvedGoals = application.resolver().resolve(PathModuleLoader(SystemModuleLoader(), Paths.get("")), "_")
     val graph = graphBuilder.buildFrom(resolvedGoals, args[0])
 
     Authenticator.setDefault(object : Authenticator() {

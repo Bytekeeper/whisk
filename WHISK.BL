@@ -19,12 +19,12 @@ java = java_compile(
     )
 
 unit_tests = kotlin_test(
-    compiler= [compiler_deps],
+    compiler= compiler_deps,
     srcs=[glob('src/test/kotlin/**.kt')],
     cp=[main, test_deps, junit4],
     friend_paths=main)
 
-integration_tests = build_examples(whisk)
+integration_tests = build_examples
 
 test = [unit_tests, integration_tests]
 

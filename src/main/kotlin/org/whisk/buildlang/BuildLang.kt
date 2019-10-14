@@ -5,7 +5,7 @@ import javax.inject.Inject
 
 data class GoalDeclaration(val name: Token, val value: Value)
 data class RuleDefinition(val name: Token, val ruleParamDefs: List<RuleParamDef>, val value: Value?, val anon: Boolean = false)
-data class BuildFile(val import: Import, val export: Export, val declarations: List<GoalDeclaration>, val definitions: List<RuleDefinition>)
+data class BuildFile(val import: Import, val export: Export, val goals: List<GoalDeclaration>, val rules: List<RuleDefinition>)
 interface Value
 data class RefValue(val ref: BuildLangParser.QNameContext) : Value
 data class StringValue(val value: String) : Value

@@ -1,6 +1,7 @@
 package org.whisk.rule
 
 import org.apache.logging.log4j.LogManager
+import org.whisk.execution.Failed
 import org.whisk.execution.RuleResult
 import org.whisk.execution.Success
 import org.whisk.java.ABI
@@ -45,40 +46,45 @@ class JavaCompileHandler @Inject constructor(private val javaCompiler: JavaCompi
                 .map(FileResource::placeHolderOrReal)
                 .map(Path::toFile)
 
-        javaCompiler.compile(rule.srcs.map(FileResource::file), dependencies, classesDir.toFile())
+        val result = javaCompiler.compile(rule.srcs.map(FileResource::file), dependencies, classesDir.toFile())
+        return if (result) {
 //        val js = JavaSource()
 //        rule.srcs.map { it.path }.forEach { js.test(it) }
 
-        Files.createDirectories(jarDir)
-        val jarName = jarDir.resolve("${execution.goalName}.jar")
-        val abiJarName = jarDir.resolve("ABI-${execution.goalName}.jar")
-        JarOutputStream(Files.newOutputStream(jarName))
-                .use { out ->
-                    JarOutputStream(Files.newOutputStream(abiJarName))
-                            .use { abiOut ->
-                                Files.walk(classesDir).use { pathStream ->
-                                    pathStream
-                                            .forEach { path ->
-                                                val relativePath = classesDir.relativize(path)
-                                                if (Files.isRegularFile(path)) {
-                                                    out.putNextEntry(JarEntry(relativePath.toString()))
-                                                    Files.copy(path, out)
-                                                    if (path.fileName.toString().endsWith(".class")) {
-                                                        abiOut.putNextEntry(JarEntry(relativePath.toString()))
-                                                        val reduced = abi.toReducedABIClass(path)
-                                                        abiOut.write(reduced, 0, reduced.size)
+            Files.createDirectories(jarDir)
+            val jarName = jarDir.resolve("${execution.goalName}.jar")
+            val abiJarName = jarDir.resolve("ABI-${execution.goalName}.jar")
+            JarOutputStream(Files.newOutputStream(jarName))
+                    .use { out ->
+                        JarOutputStream(Files.newOutputStream(abiJarName))
+                                .use { abiOut ->
+                                    Files.walk(classesDir).use { pathStream ->
+                                        pathStream
+                                                .forEach { path ->
+                                                    val relativePath = classesDir.relativize(path)
+                                                    if (Files.isRegularFile(path)) {
+                                                        out.putNextEntry(JarEntry(relativePath.toString()))
+                                                        Files.copy(path, out)
+                                                        if (path.fileName.toString().endsWith(".class")) {
+                                                            abiOut.putNextEntry(JarEntry(relativePath.toString()))
+                                                            val reduced = abi.toReducedABIClass(path)
+                                                            abiOut.write(reduced, 0, reduced.size)
+                                                        }
+                                                    } else if (path.root != path && Files.isDirectory(path)) {
+                                                        out.putNextEntry(JarEntry("$relativePath/"))
+                                                        abiOut.putNextEntry(JarEntry("$relativePath/"))
                                                     }
-                                                } else if (path.root != path && Files.isDirectory(path)) {
-                                                    out.putNextEntry(JarEntry("$relativePath/"))
-                                                    abiOut.putNextEntry(JarEntry("$relativePath/"))
                                                 }
-                                            }
+                                    }
                                 }
-                            }
-                }
+                    }
 
-        val resources = rule.exported_deps + FileResource(jarName.toAbsolutePath(), source = rule, placeHolder = abiJarName.toAbsolutePath())
-        ruleInvocationStore.writeNewInvocation(execution, currentCall, resources)
-        return Success(resources)
+            val resources = rule.exported_deps + FileResource(jarName.toAbsolutePath(), source = rule, placeHolder = abiJarName.toAbsolutePath())
+            ruleInvocationStore.writeNewInvocation(execution, currentCall, resources)
+            log.info("JAVA: ${rule.srcs.joinToString()} \n ${resources.joinToString()}")
+            Success(resources)
+        } else {
+            Failed()
+        }
     }
 }

@@ -113,8 +113,11 @@ class RuleRegistry @Inject constructor() {
 
     }
 
-    fun <T : RuleParameters> register(kClass: KClass<T>) {
-        models[kClass.simpleName!!.replace(Regex("([^_A-Z])([A-Z])"), "$1_$2").toLowerCase()] = kClass
+    fun <T : RuleParameters> register(kClass: KClass<T>) =
+            register(kClass.simpleName!!.replace(Regex("([^_A-Z])([A-Z])"), "$1_$2").toLowerCase(), kClass)
+
+    fun <T : RuleParameters> register(name: String, kClass: KClass<T>) {
+        models[name] = kClass
     }
 
     fun getRuleClass(name: String) = models[name] ?: throw UnsupportedRule(name)

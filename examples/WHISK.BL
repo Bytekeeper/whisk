@@ -1,8 +1,11 @@
-import whisk
+import whisk, _
 
-build_examples(binary) = [minimal(binary), protobuf(binary), antlr(binary), submodules(binary)]
+build_examples = [minimal, protobuf, antlr, submodules, currying]
+binary = _.whisk
 
-minimal(binary) = exec(work_dir='minimal', command='/usr/bin/java', arguments=['-jar', binary, 'build'])
-protobuf(binary) = exec(work_dir='protobuf', command='/usr/bin/java', arguments=['-jar', binary, 'build'])
-antlr(binary) = exec(work_dir='antlr', command='/usr/bin/java', arguments=['-jar', binary, 'build'])
-submodules(binary) = exec(work_dir='submodules', command='/usr/bin/java', arguments=['-jar', binary, 'build'])
+minimal = exec(work_dir='minimal', command='/usr/bin/java', arguments=['-jar', binary, 'build'])
+protobuf = exec(work_dir='protobuf', command='/usr/bin/java', arguments=['-jar', binary, 'build'])
+antlr = exec(work_dir='antlr', command='/usr/bin/java', arguments=['-jar', binary, 'build'])
+submodules = exec(work_dir='submodules', command='/usr/bin/java', arguments=['-jar', binary, 'build'])
+currying = exec(work_dir='currying', command='/usr/bin/java', arguments=['-jar', binary, 'build'])
+

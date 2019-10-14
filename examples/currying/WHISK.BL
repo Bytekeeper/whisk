@@ -1,0 +1,10 @@
+import whisk
+
+export build
+
+build=jc
+
+implementation_deps = maven_library(artifacts=['org.apache.logging.log4j:log4j-core:2.12.1'])
+
+jc = jc(glob('src/**.java'))
+jc(srcs:[]) = java_compile(srcs=srcs, cp=implementation_deps)

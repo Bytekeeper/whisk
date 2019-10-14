@@ -47,7 +47,7 @@ exec(work_dir?, command, arguments:[])
 protocol_compile(dist?, srcs: [], imports: [], output_type?)
 
 # Evaluates to passthrough, but only on windows - empty otherwise
-on_windows(passthrough:[])
+anon on_windows(passthrough:[])
 
 # Evaluates to passthrough, but only on linux - empty otherwise
-on_linux(passthrough:[])
+anon on_linux(passthrough:[])

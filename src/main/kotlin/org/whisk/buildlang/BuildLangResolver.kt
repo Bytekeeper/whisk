@@ -11,7 +11,7 @@ import kotlin.reflect.KClass
 
 
 val NO_MODULE = "<no module>"
-fun String.toModulePath() = replace('.', '/')
+fun String.toModulePath() = if (this == "_") "" else replace('.', '/')
 
 class SourceRef<out S>(moduleInfo: ModuleInfo, val source: S) {
     val module: String = moduleInfo.name
@@ -145,17 +145,17 @@ class BuildLangResolver @Inject constructor(
             parser.addErrorListener(BLErrorListener())
             val buildFile = buildLangTransformer.buildFileFrom(parser.buildFile())
             val exposed = buildFile.export.exports.map { it.text }.toSet()
-            val invalidExposed = exposed.filter { exp -> buildFile.declarations.none { it.name.text == exp } && buildFile.definitions.none { it.name.text == exp } }
+            val invalidExposed = exposed.filter { exp -> buildFile.goals.none { it.name.text == exp } && buildFile.rules.none { it.name.text == exp } }
             if (invalidExposed.isNotEmpty()) throw InvalidExposed("Cannot expose undefined rules/goals: ${invalidExposed.joinToString()}")
 
-            buildFile.declarations.forEach { decl ->
+            buildFile.goals.forEach { decl ->
                 val goalName = decl.name.text
                 val resolvedGoal = ResolvedGoal(SourceRef(moduleInfo, decl), goalName, null)
                 if (exposed.isEmpty() || exposed.contains(goalName))
                     globalTable.registerGoal(resolvedGoal)
                 localTable.registerGoal(resolvedGoal)
             }
-            buildFile.definitions.forEach { def ->
+            buildFile.rules.forEach { def ->
                 val ruleName = def.name.text
                 val params = def.ruleParamDefs
                         .map { ResolvedRuleParamDef(SourceRef(moduleInfo, it), it.name.text, it.type, it.optional) }
@@ -173,7 +173,8 @@ class BuildLangResolver @Inject constructor(
                     when (value) {
                         is RuleCall -> {
                             val rule = localTable.resolveRule(importedModules, value.rule.text)
-                            if (!rule.anon && !allowNonAnon) throw IllegalRuleCall("'${rule.name}' is not anonymously callable, but is called from ${value.rule.ID.toPos(module)}")
+                            if (!rule.anon && !allowNonAnon)
+                                throw IllegalRuleCall("'${rule.name}' is not anonymously callable, but is called from ${value.rule.ID.toPos(module)}")
                             ResolvedRuleCall(SourceRef(moduleInfo, value), rule,
                                     value.params.map { param ->
                                         val name = param.name?.text
@@ -192,23 +193,23 @@ class BuildLangResolver @Inject constructor(
                                     }
                                     ?: ResolvedGoalCall(SourceRef(moduleInfo, value), localTable.resolveGoal(importedModules, value.ref.text))
                         }
-                        is ListValue -> ResolvedListValue(SourceRef(moduleInfo, value), value.items.map { resolveValue(it, parameters, true) })
+                        is ListValue -> ResolvedListValue(SourceRef(moduleInfo, value), value.items.map { resolveValue(it, parameters, false) })
                         else -> throw InternalBuildLangError("Unknown value $value")
                     }
 
 
-            buildFile.declarations.forEach { decl ->
+            buildFile.goals.forEach { goal ->
                 val resolvedGoal = try {
-                    localTable.resolveGoal(importedModules, decl.name.text)
+                    localTable.resolveGoal(importedModules, goal.name.text)
                 } catch (e: GoalNotFoundException) {
-                    throw GoalNotFoundException("${decl.name.toPos(module)} in goal ${decl.name.text}: ${e.message}", e)
+                    throw GoalNotFoundException("${goal.name.toPos(module)} in goal ${goal.name.text}: ${e.message}", e)
                 }
-                resolvedGoal.value = resolveValue(decl.value, emptyList(), true)
+                resolvedGoal.value = resolveValue(goal.value, emptyList(), true)
             }
-            buildFile.definitions.forEach { def ->
-                val resolvedRule = localTable.resolveRule(importedModules, def.name.text)
-                if (def.value != null) {
-                    resolvedRule.value = resolveValue(def.value, resolvedRule.params, !def.anon)
+            buildFile.rules.forEach { rule ->
+                val resolvedRule = localTable.resolveRule(importedModules, rule.name.text)
+                if (rule.value != null) {
+                    resolvedRule.value = resolveValue(rule.value, resolvedRule.params, !rule.anon)
                 } else {
                     resolvedRule.nativeRule = ruleRegistry.getRuleClass(resolvedRule.name)
                 }
