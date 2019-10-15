@@ -5,10 +5,7 @@ import org.whisk.BuildContext
 import org.whisk.StopWatch
 import org.whisk.buildlang.*
 import org.whisk.forkJoinTask
-import org.whisk.model.FileResource
-import org.whisk.model.Resource
-import org.whisk.model.RuleParameters
-import org.whisk.model.StringResource
+import org.whisk.model.*
 import org.whisk.rule.ExecutionContext
 import org.whisk.rule.Processor
 import java.nio.file.Paths
@@ -44,6 +41,7 @@ class GoalExecutor constructor(private val processor: Processor) {
                 when (value) {
                     is ResolvedRuleCall -> ruleCall(buildContext, value, passedParameters)
                     is ResolvedStringValue -> forkJoinTask<RuleResult> { Success(listOf(StringResource(value.value, null, value.source.module))) }.fork()
+                    is ResolvedBoolValue -> forkJoinTask<RuleResult> { Success(listOf(BooleanResource(value.value, null))) }.fork()
                     is ResolvedListValue -> forkJoinTask {
                         val resultsToJoin = value.items.map { eval(buildContext, it, passedParameters) }.map { it.join() }
                         resultsToJoin.firstOrNull { it is Failed } ?: Success(resultsToJoin.flatMap { it.resources })

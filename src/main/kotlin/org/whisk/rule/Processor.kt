@@ -39,7 +39,8 @@ class RuleProcessorRegistry @Inject constructor(
         antlrGenHandler: AntlrGenHandler,
         execHandler: ExecHandler,
         onWindowsHandler: OnWindowsHandler,
-        onLinuxHandler: OnLinuxHandler
+        onLinuxHandler: OnLinuxHandler,
+        kTlintHandler: KTlintHandler
 ) {
     private val processors = mutableMapOf<KClass<out RuleParameters>, RuleExecutor<out RuleParameters>>()
 
@@ -59,6 +60,7 @@ class RuleProcessorRegistry @Inject constructor(
         register(execHandler)
         register(onWindowsHandler)
         register(onLinuxHandler)
+        register(kTlintHandler)
     }
 
     inline fun <reified T : RuleParameters> register(ruleHandler: RuleExecutor<T>) {

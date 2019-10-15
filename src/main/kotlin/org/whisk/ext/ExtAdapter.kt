@@ -1,10 +1,12 @@
 package org.whisk.ext
 
 import org.whisk.ext.bridge.AntlrTool
+import org.whisk.ext.bridge.KTlintRunner
 import org.whisk.ext.bridge.KotlinCompiler
 import org.whisk.ext.bridge.UnitTester
 import org.whisk.ext.impl.AntlrToolImpl
 import org.whisk.ext.impl.JUnit4Runner
+import org.whisk.ext.impl.KTlintRunnerImpl
 import org.whisk.ext.impl.KotlinCompilerImpl
 import java.net.URL
 import java.util.concurrent.ConcurrentHashMap
@@ -33,8 +35,15 @@ class ExtAdapter @Inject constructor() {
             ExtClassLoader(unitLibraryClassPath.toTypedArray())
                     .loadClass(JUnit4Runner::class.java.name).newInstance() as UnitTester
 
+    fun ktLinter(cp: List<URL>) =
+            ktLinterCache.computeIfAbsent(CacheKey(cp, null)) {
+                ExtClassLoader(cp.toTypedArray())
+                        .loadClass(KTlintRunnerImpl::class.java.name).newInstance() as KTlintRunner
+            }
+
     companion object {
         private val kotlinCompilerCache = ConcurrentHashMap<CacheKey, KotlinCompiler>()
+        private val ktLinterCache = ConcurrentHashMap<CacheKey, KTlintRunner>()
     }
 
     private data class CacheKey(private val classpath: List<URL>, private val parent: ClassLoader?)

@@ -9,6 +9,7 @@ data class BuildFile(val import: Import, val export: Export, val goals: List<Goa
 interface Value
 data class RefValue(val ref: BuildLangParser.QNameContext) : Value
 data class StringValue(val value: String) : Value
+data class BoolValue(val value: Boolean) : Value
 data class ListValue(val items: List<Value> = emptyList()) : Value
 data class RuleCall(val rule: BuildLangParser.QNameContext, val params: List<RuleParam>) : Value
 data class RuleParam(val name: Token?, val value: Value)
@@ -42,13 +43,13 @@ class BuildLangTransformer @Inject constructor() {
             BuildFile(
                     Import(ctx.imports()?.packages ?: emptyList()),
                     Export(ctx.exports()?.rules ?: emptyList()),
-                    ctx.declarations.map(::declarationFrom),
-                    ctx.definitions.map(::definitionFrom))
+                    ctx.goals.map(::goalFrom),
+                    ctx.rules.map(::ruleFrom))
 
-    private fun declarationFrom(ctx: BuildLangParser.DeclarationContext): GoalDeclaration =
+    private fun goalFrom(ctx: BuildLangParser.GoalDefContext): GoalDeclaration =
             GoalDeclaration(ctx.name, ValueVisitor.visitChildren(ctx))
 
-    private fun definitionFrom(ctx: BuildLangParser.DefinitionContext): RuleDefinition {
+    private fun ruleFrom(ctx: BuildLangParser.RuleDefContext): RuleDefinition {
         val ruleParamDefs = ctx.params.map(::ruleParamDefFrom)
         return RuleDefinition(ctx.name, ruleParamDefs, ValueVisitor.visitChildren(ctx), ctx.ANON() != null)
     }
@@ -77,5 +78,9 @@ private object ValueVisitor : BuildLangParserBaseVisitor<Value>() {
                 else ctx.params.map { RuleParam(it.name, visitChildren(it)) }
 
         return RuleCall(ctx.name, ruleParams)
+    }
+
+    override fun visitBool(ctx: BuildLangParser.BoolContext): Value {
+        return BoolValue(ctx.TRUE() != null)
     }
 }

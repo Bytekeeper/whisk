@@ -1,11 +1,9 @@
-package org.whisk
+package org.whisk.buildlang
 
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
-import org.whisk.buildlang.BuildLangLexer
-import org.whisk.buildlang.BuildLangParser
 
 class BuildLangTest {
     @Test
@@ -26,11 +24,25 @@ class BuildLangTest {
         val parser = parserFromString("a(a,b:[])")
 
         // WHEN
-        val item = parser.definition()
+        val item = parser.ruleDef()
 
         // THEN
         assertThat(item.name.text).isEqualTo("a")
         assertThat(item.params).hasSize(2)
+    }
+
+    @Test
+    fun `should parse true`() {
+        // GIVEN
+        val parser = parserFromString("a= true")
+
+        // WHEN
+        val item = parser.goalDef()
+
+        // THEN
+        assertThat(item.name.text).isEqualTo("a")
+        assertThat(item.value.listItem().bool().TRUE()).isNotNull
+
     }
 
     private fun parserFromString(source: String): BuildLangParser {

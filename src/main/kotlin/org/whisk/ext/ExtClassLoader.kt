@@ -21,21 +21,21 @@ class ExtClassLoader : URLClassLoader {
 
     override fun loadClass(name: String, resolve: Boolean): Class<*> =
             synchronized(getClassLoadingLock(name)) {
-                if (name.startsWith("org.whisk.ext.bridge"))
-                    super.loadClass(name, resolve)
-                else if (name.startsWith("org.whisk.ext.impl") || name == "org.whisk.WhiskIOKt") {
-                    findLoadedClass(name) ?: kotlin.run {
+                when {
+                    name.startsWith("org.whisk.ext.bridge") -> super.loadClass(name, resolve)
+                    name.startsWith("org.whisk.ext.impl") || name == "org.whisk.WhiskIOKt" -> findLoadedClass(name)
+                            ?: kotlin.run {
                         val classContent = getResource(name.replace('.', '/') + ".class")
                                 ?.openStream()?.use {
                                     it.readBytes()
                                 } ?: error("Could not find class $name")
                         defineClass(name, classContent, 0, classContent.size)
                     }
-                } else
-                    try {
+                    else -> try {
                         findLoadedClass(name) ?: findClass(name)
                     } catch (e: ClassNotFoundException) {
                         super.loadClass(name, resolve)
                     }
+                }
             }
 }

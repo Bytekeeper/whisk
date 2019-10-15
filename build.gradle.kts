@@ -17,16 +17,18 @@ val spek_version = "2.0.7"
 val protobufVersion = "3.9.0"
 
 dependencies {
+    compileOnly(kotlin("compiler-embeddable"))
+    compileOnly("junit:junit:4.12")
+    compileOnly("com.puppycrawl.tools:checkstyle:8.25")
+    compileOnly("com.pinterest:ktlint:0.35.0")
     implementation(kotlin("reflect"))
     implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.12.1")
-    compileOnly(kotlin("compiler-embeddable"))
     implementation("org.apache.logging.log4j:log4j-core:2.12.1")
     implementation("org.apache.logging.log4j:log4j-iostreams:2.12.1")
     implementation("org.apache.maven:maven-resolver-provider:3.6.1")
     implementation("org.apache.maven.resolver:maven-resolver-transport-http:1.4.0")
     implementation("org.apache.maven.resolver:maven-resolver-connector-basic:1.4.0")
     implementation("org.ow2.asm:asm:7.2")
-    compileOnly("junit:junit:4.12")
     testImplementation("junit:junit:4.12")
     implementation(group = "com.google.protobuf", name = "protobuf-java", version = protobufVersion)
     implementation("com.github.javaparser:javaparser-core:3.15.0")

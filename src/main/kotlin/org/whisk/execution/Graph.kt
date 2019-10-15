@@ -44,7 +44,7 @@ class GraphBuilder @Inject constructor(private val processorRegistry: RuleProces
                         } ?: value.params)
                                 .flatMap { visitValue(it.value) }
                     }
-                    is ResolvedStringValue -> emptyList()
+                    is ResolvedStringValue, is ResolvedBoolValue -> emptyList()
                     is ResolvedGoalCall -> listOf(visitGoal(value.goal))
                     is ResolvedListValue -> value.items.flatMap { visitValue(it) }
                     is ResolvedRuleParamValue -> emptyList()

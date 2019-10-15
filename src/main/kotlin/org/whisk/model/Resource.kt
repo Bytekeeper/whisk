@@ -28,3 +28,9 @@ data class StringResource(
         override val string: String,
         override val source: RuleParameters?,
         val definingModule: String) : Resource
+
+data class BooleanResource(
+        val value: Boolean,
+        override val source: RuleParameters?) : Resource {
+    override val string: String = value.toString()
+}

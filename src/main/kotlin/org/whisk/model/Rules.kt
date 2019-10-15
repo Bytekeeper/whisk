@@ -85,6 +85,10 @@ data class Glob(val pattern: List<StringResource>) : RuleParameters
 data class RGlob(val pattern: List<StringResource>, val root: FileResource) : RuleParameters
 data class OnWindows(val passthrough: List<Resource>) : RuleParameters
 data class OnLinux(val passthrough: List<Resource>) : RuleParameters
+data class KtLint(
+        val linter: List<FileResource>,
+        val srcs: List<FileResource>,
+        val ignore_errors: BooleanResource = BooleanResource(false, null)) : RuleParameters
 
 class RuleRegistry @Inject constructor() {
     private val models = mutableMapOf<String, KClass<out RuleParameters>>()
@@ -105,6 +109,7 @@ class RuleRegistry @Inject constructor() {
         register<RGlob>()
         register<OnWindows>()
         register<OnLinux>()
+        register<KtLint>()
     }
 
     inline fun <reified T : RuleParameters> register() {

@@ -81,7 +81,6 @@ class JavaCompileHandler @Inject constructor(private val javaCompiler: JavaCompi
 
             val resources = rule.exported_deps + FileResource(jarName.toAbsolutePath(), source = rule, placeHolder = abiJarName.toAbsolutePath())
             ruleInvocationStore.writeNewInvocation(execution, currentCall, resources)
-            log.info("JAVA: ${rule.srcs.joinToString()} \n ${resources.joinToString()}")
             Success(resources)
         } else {
             Failed()

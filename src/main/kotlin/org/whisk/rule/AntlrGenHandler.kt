@@ -14,8 +14,9 @@ import java.nio.file.Files
 import javax.inject.Inject
 import kotlin.streams.toList
 
-class AntlrGenHandler @Inject constructor(private val extAdapter: ExtAdapter,
-                                          private val ruleInvocationStore: RuleInvocationStore) :
+class AntlrGenHandler @Inject constructor(
+        private val extAdapter: ExtAdapter,
+        private val ruleInvocationStore: RuleInvocationStore) :
         RuleExecutor<AntlrGen> {
     private val log = LogManager.getLogger()
 
@@ -42,8 +43,7 @@ class AntlrGenHandler @Inject constructor(private val extAdapter: ExtAdapter,
 
         return if (numErrors > 0) {
             Failed()
-        }
-        else {
+        } else {
             val javaSources = Files.walk(srcGenPath).use { files ->
                 files.filter { Files.isRegularFile(it) }
                         .filter { it.toString().endsWith(".java") }

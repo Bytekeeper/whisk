@@ -26,6 +26,7 @@ data class ResolvedRule(override val source: SourceRef<RuleDefinition>, val name
 
 interface ResolvedValue<out S> : WithSourceRef<S>
 data class ResolvedStringValue(override val source: SourceRef<StringValue>, val value: String) : ResolvedValue<StringValue>
+data class ResolvedBoolValue(override val source: SourceRef<BoolValue>, val value: Boolean) : ResolvedValue<BoolValue>
 data class ResolvedListValue(override val source: SourceRef<ListValue>, val items: List<ResolvedValue<Value>> = emptyList()) : ResolvedValue<ListValue>
 data class ResolvedRuleCall(override val source: SourceRef<RuleCall>, val rule: ResolvedRule, val params: List<ResolvedRuleParam>) : ResolvedValue<RuleCall>
 data class ResolvedGoalCall(override val source: SourceRef<RefValue>, val goal: ResolvedGoal) : ResolvedValue<RefValue>
@@ -194,6 +195,7 @@ class BuildLangResolver @Inject constructor(
                                     ?: ResolvedGoalCall(SourceRef(moduleInfo, value), localTable.resolveGoal(importedModules, value.ref.text))
                         }
                         is ListValue -> ResolvedListValue(SourceRef(moduleInfo, value), value.items.map { resolveValue(it, parameters, false) })
+                        is BoolValue -> ResolvedBoolValue(SourceRef(moduleInfo, value), value.value)
                         else -> throw InternalBuildLangError("Unknown value $value")
                     }
 

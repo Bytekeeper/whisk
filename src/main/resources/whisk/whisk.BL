@@ -1,6 +1,6 @@
 export kotlin_compile, kotlin_test, java_compile, java_test,
     maven_library, build_jar, prebuilt_jar, remote_file, glob, antlr_gen, rglob,
-    exec, protocol_compile, on_windows, on_linux
+    exec, protocol_compile, on_windows, on_linux, kt_lint
 
 # Define rules with "native" implementation
 # Usually rules are defined by "rule(...) = value", omitting "= value" marks them as being implemented in code
@@ -51,3 +51,7 @@ anon on_windows(passthrough:[])
 
 # Evaluates to passthrough, but only on linux - empty otherwise
 anon on_linux(passthrough:[])
+
+
+# Runs ktlint (https://ktlint.github.io/)
+kt_lint(linter:[], srcs:[], ignore_errors?)

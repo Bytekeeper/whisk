@@ -8,6 +8,8 @@ package org.whisk.buildlang;
 IMPORT: 'import';
 EXPORT: 'export';
 ANON: 'anon';
+TRUE: 'true';
+FALSE: 'false';
 
 COMMENT: '#' ~[\r\n]* '\r'?  '\n'? -> channel(HIDDEN);
 ID : [_a-zA-Z] [_a-zA-Z0-9]* ;             // match lower-case identifiers
