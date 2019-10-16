@@ -1,5 +1,6 @@
 package org.whisk
 
+import org.apache.logging.log4j.LogManager
 import org.whisk.buildlang.PathModuleLoader
 import org.whisk.buildlang.ResolvedGoal
 import org.whisk.buildlang.SystemModuleLoader
@@ -10,7 +11,9 @@ import java.net.Authenticator
 import java.net.PasswordAuthentication
 import java.nio.file.Paths
 import java.util.concurrent.Callable
+import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.ForkJoinTask
+import kotlin.math.max
 import kotlin.system.exitProcess
 
 fun <T> forkJoinTask(producer: () -> T) = ForkJoinTask.adapt(Callable { producer() })
@@ -18,6 +21,7 @@ fun <T> forkJoinTask(producer: () -> T) = ForkJoinTask.adapt(Callable { producer
 class BuildNode(val goal: ResolvedGoal, val parents: MutableList<BuildNode> = mutableListOf(), val dependencies: MutableList<BuildNode> = mutableListOf())
 
 fun main(vararg args: String) {
+    LogManager.getContext()
     val application = DaggerApplication.create()
     val processor = application.processor()
     val graphBuilder = application.graphBuilder()
@@ -71,7 +75,15 @@ fun main(vararg args: String) {
             goalToTask[node.goal] = task
         }
     }
-    tasks.forEach { it.fork() }
-    tasks.forEach { it.join() }
+    val fjp = ForkJoinPool(max(Runtime.getRuntime().availableProcessors() * 3 / 2, 4))
+    tasks.forEach { fjp.execute(it) }
+//    while (tasks.any { !it.isDone }) {
+//        println("Main: Parallelism: ${fjp.parallelism}")
+//        println("Main: Active Threads: ${fjp.activeThreadCount}")
+//        println("Main: Task Count: ${fjp.queuedTaskCount}")
+//        println("Main: Steal Count: ${fjp.stealCount}")
+//        TimeUnit.SECONDS.sleep(1)
+//    }
+    tasks.forEach { it.quietlyJoin() }
     if (goalToTask.values.any { it.get() is Failed }) exitProcess(1)
 }

@@ -143,7 +143,7 @@ class BuildLangResolver @Inject constructor(
             val lexer = BuildLangLexer(moduleInfo.data)
             val parser = BuildLangParser(CommonTokenStream(lexer))
             parser.removeErrorListeners()
-            parser.addErrorListener(BLErrorListener())
+            parser.addErrorListener(BLErrorListener(module))
             val buildFile = buildLangTransformer.buildFileFrom(parser.buildFile())
             val exposed = buildFile.export.exports.map { it.text }.toSet()
             val invalidExposed = exposed.filter { exp -> buildFile.goals.none { it.name.text == exp } && buildFile.rules.none { it.name.text == exp } }

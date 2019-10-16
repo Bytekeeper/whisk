@@ -24,7 +24,7 @@ enum class ParamType {
 
 fun Token.toPos(module: String) = "Module '$module': $line:${charPositionInLine + 1}"
 
-class BLErrorListener : BaseErrorListener() {
+class BLErrorListener(private val module: String) : BaseErrorListener() {
     override fun syntaxError(recognizer: Recognizer<*, *>?, offendingSymbol: Any?, line: Int, charPositionInLine: Int, msg: String?, e: RecognitionException?) {
         val additionalInfo =
                 if (e is NoViableAltException) {
@@ -32,7 +32,7 @@ class BLErrorListener : BaseErrorListener() {
                         ": Multiparameter rule calls require named parameters: ie. rule(name=value, name2=value2) and not rule(value, value2)"
                     } else ""
                 } else ""
-        throw ParseError("line $line:$charPositionInLine $msg$additionalInfo")
+        throw ParseError("In module '$module' line $line:$charPositionInLine $msg$additionalInfo")
     }
 }
 
