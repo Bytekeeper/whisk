@@ -31,16 +31,27 @@ class RuleInvocationStore @Inject constructor() {
     fun readLastInvocation(path: Path): LastState.Invocation? = readLastState(path, LastState.Invocation::parseFrom)
 
 
-    fun writeNewInvocation(path: Path, ruleParameters: RuleParameters, result: List<Resource>): LastState.Invocation? {
-        return writeNewInvocation(path, ruleParameters.toStorageFormat(), result)
-    }
+    fun writeNewInvocation(path: Path,
+                           ruleParameters: RuleParameters,
+                           result: List<Resource>,
+                           messages: List<String>): LastState.Invocation? =
+            writeNewInvocation(path, ruleParameters.toStorageFormat(), result, messages)
 
-    fun writeNewInvocation(executionContext: ExecutionContext<out RuleParameters>, ruleCall: LastState.RuleCall, result: List<Resource> = emptyList()) =
-            writeNewInvocation(toLastCallPath(executionContext), ruleCall, result)
+    fun writeNewInvocation(
+            executionContext: ExecutionContext<out RuleParameters>,
+            ruleCall: LastState.RuleCall,
+            result: List<Resource> = emptyList(),
+            messages: List<String> = emptyList()) =
+            writeNewInvocation(toLastCallPath(executionContext), ruleCall, result, messages)
 
-    fun writeNewInvocation(path: Path, ruleCall: LastState.RuleCall, result: List<Resource>): LastState.Invocation? {
+    fun writeNewInvocation(
+            path: Path,
+            ruleCall: LastState.RuleCall,
+            result: List<Resource>,
+            messages: List<String>): LastState.Invocation? {
         val invocationBuilder = LastState.Invocation.newBuilder()
         invocationBuilder.ruleCall = ruleCall
+        invocationBuilder.addAllMessage(messages)
         result.forEach {
             resourceToStorageFormat(it, invocationBuilder.addResultBuilder())
         }

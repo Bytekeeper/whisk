@@ -5,6 +5,7 @@ package org.whisk.proto;
 message Invocation {
     RuleCall ruleCall = 1;
     repeated ResourceInfo result = 2;
+    repeated string message = 3;
 }
 
 message RuleCall {
