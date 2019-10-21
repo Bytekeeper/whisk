@@ -34,3 +34,5 @@ data class BooleanResource(
         override val source: RuleParameters?) : Resource {
     override val string: String = value.toString()
 }
+
+interface DatabaseResource : Resource

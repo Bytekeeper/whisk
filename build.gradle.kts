@@ -21,6 +21,10 @@ dependencies {
     compileOnly("junit:junit:4.12")
     compileOnly("com.puppycrawl.tools:checkstyle:8.25")
     compileOnly("com.pinterest:ktlint:0.35.0")
+    compileOnly("org.mybatis.generator:mybatis-generator-core:1.3.7")
+    compileOnly("org.sonarsource.sonarlint.core:sonarlint-core:4.6.0.2652")
+    compileOnly("com.h2database:h2:1.4.200")
+
     implementation(kotlin("reflect"))
     implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.12.1")
     implementation("org.apache.logging.log4j:log4j-core:2.12.1")

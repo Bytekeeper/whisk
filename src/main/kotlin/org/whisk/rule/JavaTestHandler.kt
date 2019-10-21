@@ -23,7 +23,7 @@ class JavaTestHandler @Inject constructor(private val javaCompiler: JavaCompiler
         Files.createDirectories(classesDir)
 
         val deps = rule.cp.map(FileResource::file)
-        val exportedDeps = rule.exported_deps.map(FileResource::file)
+        val exportedDeps = rule.exported_cp.map(FileResource::file)
         val dependencies = deps + exportedDeps
         val succeeded = javaCompiler.compile(rule.srcs.map(FileResource::file), dependencies, classesDir.toFile())
         if (!succeeded) return Failed()

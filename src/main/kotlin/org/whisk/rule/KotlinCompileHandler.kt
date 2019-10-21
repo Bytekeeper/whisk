@@ -45,7 +45,7 @@ class KotlinCompileHandler @Inject constructor(private val javaCompiler: JavaCom
         val sourceFiles = rule.srcs.map(FileResource::string)
         if (sourceFiles.isEmpty()) {
             log.warn("No source files found in ${execution.goalFQN}")
-            return Success(rule.exported_deps)
+            return Success(rule.exported_cp)
         }
 
         val lastInvocation = changeManager.readLastInvocation(execution)
@@ -56,7 +56,7 @@ class KotlinCompileHandler @Inject constructor(private val javaCompiler: JavaCom
             return Success(lastInvocation.resultList.toResources(rule))
         }
 
-        val dependencies = (rule.cp + rule.exported_deps)
+        val dependencies = (rule.cp + rule.exported_cp)
                 .map(FileResource::placeHolderOrReal)
                 .map(Path::toString)
         val kaptAPClasspath = rule.kapt_processors.map(FileResource::string)
@@ -115,7 +115,7 @@ class KotlinCompileHandler @Inject constructor(private val javaCompiler: JavaCom
                             }
                 }
 
-        val resources = rule.exported_deps + FileResource(jarName.toAbsolutePath(), source = rule, placeHolder = abiJarName.toAbsolutePath())
+        val resources = rule.exported_cp + FileResource(jarName.toAbsolutePath(), source = rule, placeHolder = abiJarName.toAbsolutePath())
         changeManager.writeNewInvocation(execution, currentCall, resources)
         return Success(resources)
     }

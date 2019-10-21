@@ -1,13 +1,7 @@
 package org.whisk.ext
 
-import org.whisk.ext.bridge.AntlrTool
-import org.whisk.ext.bridge.KTlintRunner
-import org.whisk.ext.bridge.KotlinCompiler
-import org.whisk.ext.bridge.UnitTester
-import org.whisk.ext.impl.AntlrToolImpl
-import org.whisk.ext.impl.JUnit4Runner
-import org.whisk.ext.impl.KTlintRunnerImpl
-import org.whisk.ext.impl.KotlinCompilerImpl
+import org.whisk.ext.bridge.*
+import org.whisk.ext.impl.*
 import java.net.URL
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
@@ -40,6 +34,14 @@ class ExtAdapter @Inject constructor() {
                 ExtClassLoader(cp.toTypedArray())
                         .loadClass(KTlintRunnerImpl::class.java.name).newInstance() as KTlintRunner
             }
+
+    fun mybatisGenerator(cp: List<URL>) =
+            ExtClassLoader(cp.toTypedArray())
+                    .loadClass(MyBatisGeneratorImpl::class.java.name).newInstance() as MyBatisGeneratorRunner
+
+    fun h2DbTool(cp: List<URL>) =
+            ExtClassLoader(cp.toTypedArray())
+                    .loadClass(H2DbRunnerImpl::class.java.name).newInstance() as H2DbRunner
 
     companion object {
         private val kotlinCompilerCache = ConcurrentHashMap<CacheKey, KotlinCompiler>()

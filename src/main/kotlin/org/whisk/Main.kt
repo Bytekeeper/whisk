@@ -85,5 +85,7 @@ fun main(vararg args: String) {
 //        TimeUnit.SECONDS.sleep(1)
 //    }
     tasks.forEach { it.quietlyJoin() }
+
+    application.cleaner().run()
     if (goalToTask.values.any { it.get() is Failed }) exitProcess(1)
 }

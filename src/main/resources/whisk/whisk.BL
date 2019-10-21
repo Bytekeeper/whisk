@@ -1,21 +1,21 @@
 export kotlin_compile, kotlin_test, java_compile, java_test,
     maven_library, build_jar, prebuilt_jar, remote_file, glob, antlr_gen, rglob,
-    exec, protocol_compile, on_windows, on_linux, kt_lint
+    exec, protocol_compile, on_windows, on_linux, kt_lint, mybatis_gen, h2_db
 
 # Define rules with "native" implementation
 # Usually rules are defined by "rule(...) = value", omitting "= value" marks them as being implemented in code
 
 # Rule to compile kotlin (and potentially java)
-kotlin_compile(compiler, srcs:[], cp:[], exported_deps:[], kapt_processors: [], plugins: [], friend_paths: [], additional_parameters: [])
+kotlin_compile(compiler, srcs:[], cp:[], exported_cp:[], kapt_processors: [], plugins: [], friend_paths: [], additional_parameters: [], res:[])
 
 # Rule to compile and run test on kotlin code
-kotlin_test(compiler, srcs:[], cp:[], exported_deps:[], kapt_processors: [], plugins: [],friend_paths: [], additional_parameters: [])
+kotlin_test(compiler, srcs:[], cp:[], exported_cp:[], kapt_processors: [], plugins: [],friend_paths: [], additional_parameters: [])
 
 # Rule to compile java
-java_compile(srcs:[], cp:[], exported_deps:[], apt_deps: [])
+java_compile(srcs:[], cp:[], exported_cp:[], apt_deps: [], res: [])
 
 # Rule to compile java
-java_test(srcs:[], cp:[], exported_deps:[], apt_deps: [])
+java_test(srcs:[], cp:[], exported_cp:[], apt_deps: [])
 
 # Rule to depend on maven artifacts (transitively)
 maven_library(artifacts:[], repository_urls:[], scopes:[])
@@ -55,3 +55,9 @@ anon on_linux(passthrough:[])
 
 # Runs ktlint (https://ktlint.github.io/)
 kt_lint(linter:[], srcs:[], ignore_errors?)
+
+# Runs mybatis generation
+mybatis_gen(tool:[], config)
+
+# Run a h2 database
+h2_db(tool:[], options:[])

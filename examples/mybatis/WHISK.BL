@@ -1,0 +1,7 @@
+import whisk
+
+export build
+
+build=mybatis_gen(tool=mybatis_generator_core, config='config.xml')
+
+mybatis_generator_core = maven_library(artifacts='org.mybatis.generator:mybatis-generator-core:1.3.7')

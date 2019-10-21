@@ -1,11 +1,13 @@
 package org.whisk.rule
 
 import org.apache.logging.log4j.LogManager
+import org.whisk.copy
 import org.whisk.execution.Failed
 import org.whisk.execution.RuleResult
 import org.whisk.execution.Success
 import org.whisk.java.ABI
 import org.whisk.java.JavaCompiler
+import org.whisk.java.JavaSource
 import org.whisk.model.FileResource
 import org.whisk.model.JavaCompile
 import org.whisk.state.RuleInvocationStore
@@ -42,20 +44,21 @@ class JavaCompileHandler @Inject constructor(private val javaCompiler: JavaCompi
         val jarDir = targetPath.resolve("jar")
 //
 
-        val dependencies = (rule.cp + rule.exported_deps)
+        val dependencies = (rule.cp + rule.exported_cp)
                 .map(FileResource::placeHolderOrReal)
                 .map(Path::toFile)
 
         val result = javaCompiler.compile(rule.srcs.map(FileResource::file), dependencies, classesDir.toFile())
         return if (result) {
-//        val js = JavaSource()
-//        rule.srcs.map { it.path }.forEach { js.test(it) }
+            val js = JavaSource()
+            rule.srcs.map { it.path }.forEach { js.test(it) }
 
             Files.createDirectories(jarDir)
             val jarName = jarDir.resolve("${execution.goalName}.jar")
             val abiJarName = jarDir.resolve("ABI-${execution.goalName}.jar")
             JarOutputStream(Files.newOutputStream(jarName))
                     .use { out ->
+                        rule.res.copy(out)
                         JarOutputStream(Files.newOutputStream(abiJarName))
                                 .use { abiOut ->
                                     Files.walk(classesDir).use { pathStream ->
@@ -79,7 +82,7 @@ class JavaCompileHandler @Inject constructor(private val javaCompiler: JavaCompi
                                 }
                     }
 
-            val resources = rule.exported_deps + FileResource(jarName.toAbsolutePath(), source = rule, placeHolder = abiJarName.toAbsolutePath())
+            val resources = rule.exported_cp + FileResource(jarName.toAbsolutePath(), source = rule, placeHolder = abiJarName.toAbsolutePath())
             ruleInvocationStore.writeNewInvocation(execution, currentCall, resources)
             Success(resources)
         } else {

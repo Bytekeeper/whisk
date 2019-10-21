@@ -9,8 +9,8 @@ whisk = build_jar(files= [main, rglob(pattern='**', root='src/main/resources')],
 main = kotlin_compile(
     compiler= kotlin_compiler_deps,
     srcs = [main_srcs, grammar],
-    exported_deps=[log4j2_api, log4j2_core, implementation_deps, antlr4_runtime, whisk_protobuf_lib],
-    cp=[kotlin_compiler_deps, antlr4_compiler, checkstyle_deps, ktlint_deps],
+    exported_cp=[log4j2_api, log4j2_core, implementation_deps, antlr4_runtime, whisk_protobuf_lib],
+    cp=[kotlin_compiler_deps, antlr4_compiler, checkstyle_deps, ktlint_deps, mybatis_generator_core, h2_db_mvn],
     kapt_processors=[dagger_compiler])
 
 main_srcs = glob('src/main/kotlin/**.kt')
@@ -19,7 +19,7 @@ run_lint = kt_lint(linter=ktlint_deps, srcs=main_srcs, ignore_errors=true)
 
 whisk_protobuf_lib = java_compile(
         srcs = protobuf_gen,
-        exported_deps = protobuf_lib
+        exported_cp = protobuf_java
     )
 
 unit_tests = kotlin_test(
@@ -58,7 +58,7 @@ checkstyle_deps = maven_library(artifacts='com.puppycrawl.tools:checkstyle:8.25'
 
 antlr4_compiler = maven_library(artifacts=['org.antlr:antlr4:4.7.2'])
 
-protobuf_lib = maven_library(artifacts='com.google.protobuf:protobuf-java:3.10.0')
+protobuf_java = maven_library(artifacts='com.google.protobuf:protobuf-java:3.10.0')
 
 implementation_deps = maven_library(
     artifacts=['org.apache.maven:maven-resolver-provider:3.6.1',
@@ -78,5 +78,7 @@ test_deps = maven_library(artifacts=['org.assertj:assertj-core:3.13.2'])
 
 ktlint_deps = maven_library(artifacts='com.pinterest:ktlint:0.35.0')
 
-#mybatis_deps = maven_library(artifacts='org.mybatis.generator:mybatis-generator-core:1.3.7')
-#sonarlint_core_deps = maven_library(artifacts='org.sonarsource.sonarlint.core:sonarlint-core:4.6.0.2652')
+mybatis_generator_core = maven_library(artifacts='org.mybatis.generator:mybatis-generator-core:1.3.7')
+# sonarlint_core = maven_library(artifacts='org.sonarsource.sonarlint.core:sonarlint-core:4.6.0.2652')
+
+h2_db_mvn = maven_library(artifacts='com.h2database:h2:1.4.200')

@@ -1,11 +1,21 @@
 import whisk, _
 
-build_examples = [minimal, protobuf, antlr, submodules, currying]
+build_examples = [
+    java_minimal,
+    protobuf,
+    antlr,
+    submodules,
+    currying,
+#    mybatis,
+    h2test
+]
+
 binary = _.whisk
 
-minimal = exec(work_dir='minimal', command='/usr/bin/java', arguments=['-jar', binary, 'build'])
+java_minimal = exec(work_dir='java_minimal', command='/usr/bin/java', arguments=['-jar', binary, 'build'])
 protobuf = exec(work_dir='protobuf', command='/usr/bin/java', arguments=['-jar', binary, 'build'])
 antlr = exec(work_dir='antlr', command='/usr/bin/java', arguments=['-jar', binary, 'build'])
 submodules = exec(work_dir='submodules', command='/usr/bin/java', arguments=['-jar', binary, 'build'])
 currying = exec(work_dir='currying', command='/usr/bin/java', arguments=['-jar', binary, 'build'])
-
+# mybatis =  exec(work_dir='mybatis', command='/usr/bin/java', arguments=['-jar', binary, 'build'])
+h2test =  exec(work_dir='h2test', command='/usr/bin/java', arguments=['-jar', binary, 'build'])

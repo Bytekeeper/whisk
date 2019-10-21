@@ -16,18 +16,19 @@ data class KotlinCompile(
         val compiler: List<FileResource>,
         val srcs: List<FileResource>,
         val cp: List<FileResource> = emptyList(),
-        var exported_deps: List<FileResource> = emptyList(),
+        var exported_cp: List<FileResource> = emptyList(),
         val kapt_processors: List<FileResource> = emptyList(),
         val plugins: List<FileResource> = emptyList(),
         val friend_paths: List<FileResource> = emptyList(),
-        val additional_parameters: List<StringResource>
+        val additional_parameters: List<StringResource>,
+        var res: List<FileResource>
 ) : RuleParameters
 
 data class KotlinTest(
         val compiler: List<FileResource>,
         val srcs: List<FileResource>,
         val cp: List<FileResource> = emptyList(),
-        var exported_deps: List<FileResource> = emptyList(),
+        var exported_cp: List<FileResource> = emptyList(),
         val kapt_processors: List<FileResource> = emptyList(),
         val plugins: List<FileResource> = emptyList(),
         val friend_paths: List<FileResource>,
@@ -37,14 +38,15 @@ data class KotlinTest(
 data class JavaCompile(
         val srcs: List<FileResource>,
         val cp: List<FileResource> = emptyList(),
-        var exported_deps: List<FileResource> = emptyList(),
-        val apt_deps: List<FileResource> = emptyList()
+        var exported_cp: List<FileResource> = emptyList(),
+        val apt_deps: List<FileResource> = emptyList(),
+        val res: List<FileResource>
 ) : RuleParameters
 
 data class JavaTest(
         val srcs: List<FileResource>,
         val cp: List<FileResource> = emptyList(),
-        var exported_deps: List<FileResource> = emptyList(),
+        var exported_cp: List<FileResource> = emptyList(),
         val apt_deps: List<FileResource> = emptyList()
 ) : RuleParameters
 
@@ -90,6 +92,15 @@ data class KtLint(
         val srcs: List<FileResource>,
         val ignore_errors: BooleanResource = BooleanResource(false, null)) : RuleParameters
 
+data class MybatisGen(
+        val tool: List<FileResource>,
+        val config: FileResource
+) : RuleParameters
+
+data class H2Db(
+        val tool: List<FileResource>
+) : RuleParameters
+
 class RuleRegistry @Inject constructor() {
     private val models = mutableMapOf<String, KClass<out RuleParameters>>()
 
@@ -110,6 +121,8 @@ class RuleRegistry @Inject constructor() {
         register<OnWindows>()
         register<OnLinux>()
         register<KtLint>()
+        register<MybatisGen>()
+        register<H2Db>()
     }
 
     inline fun <reified T : RuleParameters> register() {

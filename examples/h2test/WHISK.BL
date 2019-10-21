@@ -1,0 +1,7 @@
+import whisk
+
+export build
+
+build=h2_db(tool=h2_db_mvn)
+
+h2_db_mvn = maven_library(artifacts='com.h2database:h2:1.4.200')

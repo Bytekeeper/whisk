@@ -4,6 +4,7 @@ import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.body.FieldDeclaration
 import com.github.javaparser.ast.body.MethodDeclaration
+import com.github.javaparser.ast.expr.FieldAccessExpr
 import com.github.javaparser.ast.stmt.BlockStmt
 import java.nio.file.Path
 import javax.inject.Inject
@@ -29,6 +30,9 @@ class JavaSource @Inject constructor() {
                 }.forEach {
                     println(it)
                 }
-
+        compilationUnit.findAll(FieldAccessExpr::class.java)
+                .forEach {
+                    println(it)
+                }
     }
 }
