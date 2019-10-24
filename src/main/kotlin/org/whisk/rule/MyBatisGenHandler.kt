@@ -11,8 +11,9 @@ class MyBatisGenHandler @Inject constructor(
 ) : RuleExecutor<MybatisGen> {
     override fun execute(execution: ExecutionContext<MybatisGen>): RuleResult {
         val rule = execution.ruleParameters
-        extAdapter.mybatisGenerator(rule.tool.map { it.url })
-                .process(rule.config.file)
+        extAdapter.mybatisGenerator(rule.tool.map { it.url }) {
+            it.process(rule.config.file)
+        }
         return Success(emptyList())
     }
 

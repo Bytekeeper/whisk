@@ -6,7 +6,7 @@ build_examples = [
     antlr,
     submodules,
     currying,
-#    mybatis,
+    # mybatis,
     h2test
 ]
 
@@ -17,5 +17,5 @@ protobuf = exec(work_dir='protobuf', command='/usr/bin/java', arguments=['-jar',
 antlr = exec(work_dir='antlr', command='/usr/bin/java', arguments=['-jar', binary, 'build'])
 submodules = exec(work_dir='submodules', command='/usr/bin/java', arguments=['-jar', binary, 'build'])
 currying = exec(work_dir='currying', command='/usr/bin/java', arguments=['-jar', binary, 'build'])
-# mybatis =  exec(work_dir='mybatis', command='/usr/bin/java', arguments=['-jar', binary, 'build'])
+mybatis =  exec(work_dir='mybatis', command='/usr/bin/java', arguments=['-jar', binary, 'build'])
 h2test =  exec(work_dir='h2test', command='/usr/bin/java', arguments=['-jar', binary, 'build'])

@@ -35,13 +35,25 @@ class ExtAdapter @Inject constructor() {
                         .loadClass(KTlintRunnerImpl::class.java.name).newInstance() as KTlintRunner
             }
 
-    fun mybatisGenerator(cp: List<URL>) =
-            ExtClassLoader(cp.toTypedArray())
-                    .loadClass(MyBatisGeneratorImpl::class.java.name).newInstance() as MyBatisGeneratorRunner
+    fun mybatisGenerator(cp: List<URL>, cb: (MyBatisGeneratorRunner) -> Unit) =
+            ExtClassLoader(cp.toTypedArray()).withContextClassLoader {
+                val tool = loadClass(MyBatisGeneratorImpl::class.java.name).newInstance() as MyBatisGeneratorRunner
+                cb(tool)
+            }
 
     fun h2DbTool(cp: List<URL>) =
             ExtClassLoader(cp.toTypedArray())
                     .loadClass(H2DbRunnerImpl::class.java.name).newInstance() as H2DbRunner
+
+    fun ClassLoader.withContextClassLoader(cb: ClassLoader.() -> Unit) {
+        val oldContextClassLoader = Thread.currentThread().contextClassLoader
+        try {
+            Thread.currentThread().contextClassLoader = this
+            cb(this)
+        } finally {
+            Thread.currentThread().contextClassLoader = oldContextClassLoader
+        }
+    }
 
     companion object {
         private val kotlinCompilerCache = ConcurrentHashMap<CacheKey, KotlinCompiler>()

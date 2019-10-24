@@ -1,6 +1,7 @@
 package org.whisk.rule
 
 import org.apache.logging.log4j.LogManager
+import org.whisk.copy
 import org.whisk.execution.Failed
 import org.whisk.execution.RuleResult
 import org.whisk.execution.Success
@@ -90,6 +91,7 @@ class KotlinCompileHandler @Inject constructor(private val javaCompiler: JavaCom
         val abiJarName = jarDir.resolve("ABI-${execution.goalName}.jar")
         JarOutputStream(Files.newOutputStream(jarName))
                 .use { out ->
+                    rule.res.copy(out)
                     JarOutputStream(Files.newOutputStream(abiJarName))
                             .use { abiOut ->
                                 val addToJar = { pathStream: Stream<Path> ->
