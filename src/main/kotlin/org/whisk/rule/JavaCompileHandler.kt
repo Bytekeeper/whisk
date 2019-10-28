@@ -82,7 +82,8 @@ class JavaCompileHandler @Inject constructor(private val javaCompiler: JavaCompi
                                 }
                     }
 
-            val resources = rule.exported_cp + FileResource(jarName.toAbsolutePath(), source = rule, placeHolder = abiJarName.toAbsolutePath())
+            val resources = rule.exported_cp +
+                    FileResource(jarName.toAbsolutePath(), jarDir.toAbsolutePath(), rule, abiJarName.toAbsolutePath())
             ruleInvocationStore.writeNewInvocation(execution, currentCall, resources)
             Success(resources)
         } else {

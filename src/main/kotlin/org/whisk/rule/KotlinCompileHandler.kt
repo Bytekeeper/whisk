@@ -15,6 +15,9 @@ import org.whisk.state.RuleInvocationStore
 import org.whisk.state.toResources
 import org.whisk.state.toStorageFormat
 import java.io.File
+import java.io.OutputStreamWriter
+import java.io.PrintWriter
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.jar.JarEntry
@@ -87,13 +90,20 @@ class KotlinCompileHandler @Inject constructor(private val javaCompiler: JavaCom
         }
 
         Files.createDirectories(jarDir)
-        val jarName = jarDir.resolve("${execution.goalName}.jar")
+        val jarName = jarDir.resolve("${rule.jar_name ?: execution.goalName}.jar")
         val abiJarName = jarDir.resolve("ABI-${execution.goalName}.jar")
         JarOutputStream(Files.newOutputStream(jarName))
                 .use { out ->
                     rule.res.copy(out)
                     JarOutputStream(Files.newOutputStream(abiJarName))
                             .use { abiOut ->
+                                rule.main_class?.let {
+                                    out.putNextEntry(JarEntry("META-INF/MANIFEST.MF"))
+                                    val writer = PrintWriter(OutputStreamWriter(out, StandardCharsets.UTF_8))
+                                    writer.print("Main-Class: ")
+                                    writer.println(it.string)
+                                    writer.flush()
+                                }
                                 val addToJar = { pathStream: Stream<Path> ->
                                     pathStream
                                             .forEach { path ->
@@ -117,7 +127,8 @@ class KotlinCompileHandler @Inject constructor(private val javaCompiler: JavaCom
                             }
                 }
 
-        val resources = rule.exported_cp + FileResource(jarName.toAbsolutePath(), source = rule, placeHolder = abiJarName.toAbsolutePath())
+        val resources = rule.exported_cp +
+                FileResource(jarName.toAbsolutePath(), jarDir.toAbsolutePath(), rule, abiJarName.toAbsolutePath())
         changeManager.writeNewInvocation(execution, currentCall, resources)
         return Success(resources)
     }

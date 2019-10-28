@@ -16,10 +16,9 @@ class RemoteFileHandler @Inject constructor(private val downloadManager: Downloa
             execution: ExecutionContext<RemoteFile>
     ): RuleResult {
         val rule = execution.ruleParameters
-        val whiskDir = execution.cacheDir
         val url = URL(rule.url.string)
-        val targetFile = downloadManager.download(whiskDir, url)
-        return Success(listOf(FileResource(targetFile.toAbsolutePath(), source = rule)))
+        val targetFile = downloadManager.download(execution.cacheDir, url)
+        return Success(listOf(FileResource(targetFile.toAbsolutePath(), execution.cacheDir.toAbsolutePath(), rule)))
     }
 
 }

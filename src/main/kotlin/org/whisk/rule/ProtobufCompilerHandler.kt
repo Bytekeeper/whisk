@@ -45,7 +45,7 @@ class ProtobufCompilerHandler @Inject constructor(
         val protoc = ensureProtocIsAvailable(rule.dist?.path, protocDir)
         val params = mutableListOf(protoc.toString())
         params += rule.imports.map { "-I${it.string}" }
-        val outputDir = execution.targetPath.resolve("gen").resolve("protobuf")
+        val outputDir = execution.targetPath.resolve("gen")
         Files.createDirectories(outputDir)
         params += "--${rule.output_type.string}=$outputDir"
         params += rule.srcs.map(FileResource::string)
@@ -57,7 +57,7 @@ class ProtobufCompilerHandler @Inject constructor(
         return if (exitCode == 0) {
             val result = Files.walk(outputDir).use { pathStream ->
                 pathStream.filter { Files.isRegularFile(it) }
-                        .map { FileResource(it.toAbsolutePath(), source = rule) }.toList()
+                        .map { FileResource(it.toAbsolutePath(), outputDir.toAbsolutePath(), rule) }.toList()
             }
             ruleInvocationStore.writeNewInvocation(execution, currentRuleCall, result)
             Success(result)

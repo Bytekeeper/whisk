@@ -22,17 +22,17 @@ class JavaSource @Inject constructor() {
                             .asSequence()
                             .filter { it !is BlockStmt }.map { it.toString() }
                             .joinToString()
-                    println(x)
+//                    println(x)
                 }
         compilationUnit.findAll(FieldDeclaration::class.java)
                 .filter {
                     !it.isPrivate
                 }.forEach {
-                    println(it)
+                    //                    println(it)
                 }
         compilationUnit.findAll(FieldAccessExpr::class.java)
                 .forEach {
-                    println(it)
+                    //                    println(it)
                 }
     }
 }

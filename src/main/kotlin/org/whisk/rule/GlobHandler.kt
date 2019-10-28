@@ -41,8 +41,10 @@ class GlobHandler @Inject constructor() : RuleExecutor<Glob> {
         val srcs = GlobUtil.determineSources(base, rule.pattern)
                 .map { FileResource(base.resolve(it), base, rule) }
 
-        if (srcs.isEmpty())
-            log.warn("No matching files in ${execution.goalFQN} for pattern ${rule.pattern.joinToString(", ")}")
+        if (srcs.isEmpty()) {
+            val patterns = rule.pattern.joinToString(", ", "'", "'") { it.string }
+            log.warn("No matching files for ${execution.goalFQN} for pattern $patterns")
+        }
         return Success(srcs)
     }
 }
@@ -55,8 +57,10 @@ class RGlobHandler @Inject constructor() : RuleExecutor<RGlob> {
         val base = execution.ruleParameters.root.path
         val srcs = GlobUtil.determineSources(base, rule.pattern)
                 .map { FileResource(base.resolve(it), execution.ruleParameters.root.path, rule) }
-        if (srcs.isEmpty())
-            log.warn("No matching files in ${execution.goalFQN} for pattern ${rule.pattern.joinToString(", ")}")
+        if (srcs.isEmpty()) {
+            val patterns = rule.pattern.joinToString(", ", "'", "'") { it.string }
+            log.warn("No matching files for ${execution.goalFQN} in path ${rule.root.string} for pattern $patterns")
+        }
         return Success(srcs)
     }
 }

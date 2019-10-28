@@ -38,10 +38,8 @@ class BuildJarHandler @Inject constructor(
             return Success(lastInvocation.resultList.toResources(rule))
         }
 
-        val jarDir = targetPath.resolve("jar")
-
         val jarName = rule.name?.string ?: "${execution.goalName}.jar"
-        val jarFullName = jarDir.resolve(jarName)
+        val jarFullName = targetPath.resolve(jarName)
         Files.createDirectories(jarFullName.parent)
         Files.deleteIfExists(jarFullName)
 
@@ -58,25 +56,33 @@ class BuildJarHandler @Inject constructor(
                         usedNames += "META-INF/MANIFEST.MF"
                     }
 
-                    rule.files.forEach { fr ->
+                    rule.archives.forEach { fr ->
                         val file = fr.relativePath.toString()
                         if (!usedNames.contains(file)) {
-                            if (file.endsWith(".jar")) {
-                                JarInputStream(Files.newInputStream(fr.path))
-                                        .use { jar ->
-                                            var entry = jar.nextJarEntry
-                                            while (entry != null) {
-                                                if (!usedNames.contains(entry.name)) {
-                                                    out.putNextEntry(JarEntry(entry.name))
+                            JarInputStream(Files.newInputStream(fr.path))
+                                    .use { jar ->
+                                        var entry = jar.nextJarEntry
+                                        while (entry != null) {
+                                            if (!usedNames.contains(entry.name)) {
+                                                out.putNextEntry(JarEntry(entry.name))
+                                                if (!entry.name.endsWith("/"))
                                                     jar.copyTo(out)
-                                                    usedNames += entry.name
-                                                } else if (!entry.isDirectory) {
-                                                    log.warn("Duplicate file $file:${entry.name}")
-                                                }
-                                                entry = jar.nextJarEntry
+                                                usedNames += entry.name
+                                            } else if (!entry.isDirectory) {
+                                                log.warn("Duplicate file $file:${entry.name}")
                                             }
+                                            entry = jar.nextJarEntry
                                         }
-                            } else if (!Files.isDirectory(fr.path)) {
+                                    }
+                        }
+                    }
+
+                    rule.files.forEach { fr ->
+                        val file = fr.relativePath.toString()
+                        if (!usedNames.contains(file) && file.isNotEmpty()) {
+                            if (Files.isDirectory(fr.path)) {
+                                out.putNextEntry(JarEntry(file + "/"))
+                            } else {
                                 out.putNextEntry(JarEntry(file))
                                 Files.copy(fr.path, out)
                             }
@@ -86,7 +92,7 @@ class BuildJarHandler @Inject constructor(
                         }
                     }
                 }
-        val resources = listOf(FileResource(jarFullName.toAbsolutePath(), source = rule))
+        val resources = listOf(FileResource(jarFullName.toAbsolutePath(), execution.targetPath.toAbsolutePath(), rule))
         ruleInvocationStore.writeNewInvocation(execution, currentCall, resources)
         return Success(resources)
     }

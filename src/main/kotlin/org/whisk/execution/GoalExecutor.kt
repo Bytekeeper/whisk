@@ -108,10 +108,15 @@ class GoalExecutor constructor(private val processor: Processor) {
                 when {
                     resource.javaClass.kotlin.isSubclassOf(expectedResource as KClass<*>) -> resource
                     expectedResource == FileResource::class && resource is StringResource -> {
-                        val filePath = buildContext.projectPath
+                        val modulePath = buildContext.projectPath
                                 .resolve(resource.definingModule.toModulePath())
+                                .toAbsolutePath()
+                        val filePath = modulePath
                                 .resolve(resource.string)
-                        FileResource(filePath.toAbsolutePath(), source = resource.source)
+                        FileResource(
+                                filePath,
+                                if (filePath.startsWith(modulePath)) modulePath else filePath.root,
+                                resource.source)
                     }
                     else -> error("Cannot convert $resource to $expectedResource")
                 }

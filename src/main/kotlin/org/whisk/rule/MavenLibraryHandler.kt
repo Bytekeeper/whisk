@@ -126,7 +126,7 @@ class MavenLibraryHandler @Inject constructor(
                             )
                         }.fork()
                     }.toList()
-                }.map { FileResource(it.join().toAbsolutePath(), source = rule) }.toList()
+                }.map { FileResource(it.join().toAbsolutePath(), execution.cacheDir.toAbsolutePath(), rule) }.toList()
         return Success(forwardDeps)
     }
 

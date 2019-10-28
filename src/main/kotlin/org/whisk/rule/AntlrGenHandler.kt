@@ -23,7 +23,7 @@ class AntlrGenHandler @Inject constructor(
     override val name: String = "Antlr Code Generation"
 
     override fun execute(execution: ExecutionContext<AntlrGen>): RuleResult {
-        val srcGenPath = execution.targetPath.resolve("antlr-gen")
+        val srcGenPath = execution.targetPath.resolve("gen")
         val rule = execution.ruleParameters
 
         val lastInvocation = ruleInvocationStore.readLastInvocation(execution)
@@ -48,7 +48,7 @@ class AntlrGenHandler @Inject constructor(
                 files.filter { Files.isRegularFile(it) }
                         .filter { it.toString().endsWith(".java") }
                         .toList()
-            }.map { FileResource(it.toAbsolutePath(), source = rule) }
+            }.map { FileResource(it.toAbsolutePath(), srcGenPath.toAbsolutePath(), rule) }
             ruleInvocationStore.writeNewInvocation(execution, currentRuleCall, javaSources)
             Success(javaSources)
         }

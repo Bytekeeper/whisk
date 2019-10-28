@@ -4,7 +4,10 @@ import whisk,examples
 export main,whisk,unit_tests,integration_tests,test
 
 # Define goals that can be called
-whisk = build_jar(files= [main, rglob(pattern='**', root='src/main/resources')], main_class='org.whisk.MainKt')
+whisk = build_jar(
+    archives=main,
+    files= rglob(pattern='**', root='src/main/resources'),
+    main_class='org.whisk.MainKt')
 
 main = kotlin_compile(
     compiler= kotlin_compiler_deps,

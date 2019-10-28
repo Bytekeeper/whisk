@@ -8,11 +8,12 @@ interface Resource {
 }
 
 data class FileResource(val path: Path,
-                        val root: Path = path.root,
+                        val root: Path,
                         override val source: RuleParameters?,
                         val placeHolder: Path? = null) : Resource {
     init {
-        check(path.isAbsolute)
+        check(path.isAbsolute) { "Absolute path for $path is required" }
+        check(root.isAbsolute) { "Absolute path for $root is required" }
         check(path.startsWith(root)) { "$path does not start with $root" }
     }
 

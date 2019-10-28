@@ -6,13 +6,13 @@ export kotlin_compile, kotlin_test, java_compile, java_test,
 # Usually rules are defined by "rule(...) = value", omitting "= value" marks them as being implemented in code
 
 # Rule to compile kotlin (and potentially java)
-kotlin_compile(compiler, srcs:[], cp:[], exported_cp:[], kapt_processors: [], plugins: [], friend_paths: [], additional_parameters: [], res:[])
+kotlin_compile(jar_name, compiler, srcs:[], cp:[], exported_cp:[], kapt_processors: [], plugins: [], friend_paths: [], additional_parameters: [], res:[], main_class)
 
 # Rule to compile and run test on kotlin code
 kotlin_test(compiler, srcs:[], cp:[], exported_cp:[], kapt_processors: [], plugins: [],friend_paths: [], additional_parameters: [])
 
 # Rule to compile java
-java_compile(srcs:[], cp:[], exported_cp:[], apt_deps: [], res: [])
+java_compile(jar_name, srcs:[], cp:[], exported_cp:[], apt_deps: [], res: [], main_class)
 
 # Rule to compile java
 java_test(srcs:[], cp:[], exported_cp:[], apt_deps: [])
@@ -21,7 +21,7 @@ java_test(srcs:[], cp:[], exported_cp:[], apt_deps: [])
 maven_library(artifacts:[], repository_urls:[], scopes:[])
 
 # Rule to build a jar from a list of files
-build_jar(name?,files:[],main_class)
+build_jar(name?, files:[],archives:[], main_class)
 
 # Rule to depend on a locally existing jar file
 prebuilt_jar(binary_jar)

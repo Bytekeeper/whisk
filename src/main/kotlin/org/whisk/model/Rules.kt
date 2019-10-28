@@ -13,6 +13,7 @@ data class AntlrGen(
 ) : RuleParameters
 
 data class KotlinCompile(
+        val jar_name: StringResource?,
         val compiler: List<FileResource>,
         val srcs: List<FileResource>,
         val cp: List<FileResource> = emptyList(),
@@ -21,7 +22,8 @@ data class KotlinCompile(
         val plugins: List<FileResource> = emptyList(),
         val friend_paths: List<FileResource> = emptyList(),
         val additional_parameters: List<StringResource>,
-        var res: List<FileResource>
+        val res: List<FileResource>,
+        val main_class: StringResource?
 ) : RuleParameters
 
 data class KotlinTest(
@@ -36,11 +38,13 @@ data class KotlinTest(
 ) : RuleParameters
 
 data class JavaCompile(
+        val jar_name: StringResource?,
         val srcs: List<FileResource>,
         val cp: List<FileResource> = emptyList(),
         var exported_cp: List<FileResource> = emptyList(),
         val apt_deps: List<FileResource> = emptyList(),
-        val res: List<FileResource>
+        val res: List<FileResource>,
+        val main_class: StringResource?
 ) : RuleParameters
 
 data class JavaTest(
@@ -61,6 +65,7 @@ data class RemoteFile(
 data class BuildJar(
         val name: StringResource?,
         val files: List<FileResource>,
+        val archives: List<FileResource>,
         val main_class: StringResource?
 ) : RuleParameters
 
