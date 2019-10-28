@@ -4,6 +4,6 @@ script:
   - ./gradlew build -s
   - ls -al build/libs
   - java -jar build/libs/whisk.jar test
-  - cp whisk-out/whisk/jar/whisk.jar .
+  - cp whisk-out/whisk/whisk.jar .
   - rm -rf whisk-out
   - java -jar whisk.jar test

@@ -63,6 +63,7 @@ class MavenLibraryHandler @Inject constructor(
         var verifyFiles = false
 
         if (!depFile.toFile().exists()) {
+            log.info("Resolving maven dependencies for ${execution.goalName}")
             verifyFiles = true
             val configuredRepos = rule.repository_urls.mapIndexed { i, item ->
                 val repositoryBuilder = RemoteRepository.Builder("repo$i", "default", if (item.string.endsWith('/')) item.string else item.string + '/')
@@ -84,8 +85,6 @@ class MavenLibraryHandler @Inject constructor(
                 emptyList<RemoteRepository>()
             val repos = configuredRepos + additionalRepos
             val repositoryLayouts = repos.map { it to repositoryLayoutProvider.newRepositoryLayout(session, it) }
-
-            log.info("Resolving maven dependencies for ${execution.goalName}")
 
             val collectRequest = CollectRequest(
                     rule.artifacts
