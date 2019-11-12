@@ -5,4 +5,5 @@ export build
 build=java_compile(srcs=[glob('src/main/java/**.java'),
     # Check if autoconversion from string -> path uses module path as base
     'src/main/java/Test2.java'
-    ])
+    # Check if rglob works
+    ], res=rglob(pattern='**', root='src/main/resources'))

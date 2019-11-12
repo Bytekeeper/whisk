@@ -10,7 +10,6 @@ import java.nio.file.StandardCopyOption
 import java.security.MessageDigest
 import java.util.jar.JarEntry
 import java.util.jar.JarOutputStream
-import java.util.zip.ZipOutputStream
 
 fun <T> InputStream.readChunked(initial: T, handler: (T, ByteArray, Int) -> T): T {
     val buf = ByteArray(4096)
@@ -69,8 +68,9 @@ fun Iterable<FileResource>.copy(targetDir: Path) = forEach {
 }
 
 fun Iterable<FileResource>.copy(out: JarOutputStream) = forEach {
-    if (it.root == it.path)
-        error("Copying of files without relative base is not possible.")
-    out.putNextEntry(JarEntry(it.relativePath.toString()))
-    Files.copy(it.path, out)
+    // Skip "."
+    if (it.root != it.path) {
+        out.putNextEntry(JarEntry(it.relativePath.toString()))
+        Files.copy(it.path, out)
+    }
 }

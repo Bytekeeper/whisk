@@ -34,6 +34,12 @@ class JavaCompileHandler @Inject constructor(private val javaCompiler: JavaCompi
         val lastInvocation = ruleInvocationStore.readLastInvocation(execution)
         val currentCall = rule.toStorageFormat()
 
+        val sourceFiles = rule.srcs.map(FileResource::file)
+        if (sourceFiles.isEmpty()) {
+            log.warn("No source files found in ${execution.goalFQN}")
+            return Success(rule.exported_cp)
+        }
+
         if (lastInvocation?.ruleCall == currentCall) {
             log.info("No changes, not running javac compiler.")
             return Success(lastInvocation.resultList.toResources(rule))
@@ -48,7 +54,7 @@ class JavaCompileHandler @Inject constructor(private val javaCompiler: JavaCompi
                 .map(FileResource::placeHolderOrReal)
                 .map(Path::toFile)
 
-        val result = javaCompiler.compile(rule.srcs.map(FileResource::file), dependencies, classesDir.toFile())
+        val result = javaCompiler.compile(sourceFiles, dependencies, classesDir.toFile())
         return if (result) {
             val js = JavaSource()
             rule.srcs.map { it.path }.forEach { js.test(it) }
