@@ -71,6 +71,8 @@ fun Iterable<FileResource>.copy(out: JarOutputStream) = forEach {
     // Skip "."
     if (it.root != it.path) {
         out.putNextEntry(JarEntry(it.relativePath.toString()))
-        Files.copy(it.path, out)
+        if (Files.isRegularFile(it.path)) {
+            Files.copy(it.path, out)
+        }
     }
 }
