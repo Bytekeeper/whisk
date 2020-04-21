@@ -13,7 +13,15 @@ Goals are parameter-less targets a build can produce. They define the rules to e
 the CLI or by rules.
 
 Rules are parametrized descriptions on what step to perform. They can not be called from the CLI. They can be called
-by other rules or goals. Think of rules as a mean to the end of executing a goal. 
+by other rules or goals. Think of rules as a means to the end of executing a goal.
+
+When executing a rule (invoked by some goal), all rules it depends on will be executed - in parallel:
+![Goal and rule dependencies](dependencies.png) 
+
+The only "primitive" currently supported are `strings`. Besides that, rules can take various other resources as inputs.
+They can also generate all kinds of resources.
+![Rule anatomy](rules.png)
+
 
 ## Status
 Current CI uses gradle to build `whisk`. The resulting application is then used to build itself: 
